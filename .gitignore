@@ -1,0 +1,14 @@
+# Compilati di Maven
+target/
+*.db
+
+# File degli IDE (IntelliJ, Eclipse, NetBeans)
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# File di sistema
+.DS_Store
+Thumbs.db
