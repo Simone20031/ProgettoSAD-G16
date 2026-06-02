@@ -1,0 +1,14 @@
+com\musicplayer\IBrano.class
+com\musicplayer\MainApp.class
+com\musicplayer\LibreriaView.class
+com\musicplayer\PathUtils.class
+com\musicplayer\Brano.class
+com\musicplayer\ValidazioneException.class
+com\musicplayer\LibreriaController.class
+com\musicplayer\LibreriaView$GridPaneHelper.class
+com\musicplayer\persistence\SongMetadata.class
+com\musicplayer\persistence\MetadataService.class
+com\musicplayer\BranoCreator.class
+com\musicplayer\Tag.class
+com\musicplayer\Libreria.class
+com\musicplayer\BranoFactory.class
