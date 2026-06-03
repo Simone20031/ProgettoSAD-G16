@@ -98,8 +98,30 @@ public class Libreria {
     }
 
     public void eliminaPlaylist(Playlist p) {
-        // Playlist non implementata in questo momento
-        // observer disabilitato in questo momento
+        if (p != null) {
+            playlist.remove(p);
+        }
+    }
+
+    public void rinominaPlaylist(Playlist p, String nuovoNome) throws ValidazioneException {
+        if (p == null) return;
+        if (nuovoNome == null || nuovoNome.isBlank()) {
+            p.rinomina(nuovoNome); // This will throw ValidazioneException(CAMPO_MANCANTE)
+            return;
+        }
+
+        String nomeTrim = nuovoNome.trim();
+        // Controlla se esiste già un'altra playlist con lo stesso nome
+        boolean duplicato = playlist.stream()
+                .anyMatch(pl -> pl != p && pl.getNome().equalsIgnoreCase(nomeTrim));
+        if (duplicato) {
+            throw new ValidazioneException(
+                    "Esiste già una playlist con il nome '" + nomeTrim + "'!",
+                    ValidazioneException.TipoErrore.GENERICO,
+                    "nome");
+        }
+        
+        p.rinomina(nomeTrim);
     }
     // ── Stato interno ─────────────────────────────────────────────────────────
 
