@@ -173,7 +173,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     MenuItem miElimina = new MenuItem("Elimina");
                     miElimina.setOnAction(e -> handleEliminaPlaylist());
 
-                    menu.getItems().addAll(miRinomina, miElimina);
+                    MenuItem miAggiungi = new MenuItem("Aggiungi Brano");
+                    miAggiungi.setOnAction(e -> handleAggiungiBranoAllaPlaylist());
+
+                    menu.getItems().addAll(miRinomina, miElimina, miAggiungi);
 
                     btnOpzioni.setOnAction(e -> {
                         playlistListView.getSelectionModel().select(getIndex());
@@ -491,6 +494,78 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 libreriaController.eliminaPlaylist(p);
             }
         });
+    }
+
+    private void handleAggiungiBranoAllaPlaylist() {
+        String sel = playlistListView.getSelectionModel().getSelectedItem();
+        if (sel == null) return;
+
+        String name = extractPlaylistName(sel);
+        Playlist p = findPlaylistByName(name);
+        if (p == null) return;
+
+        // Trova i brani non ancora nella playlist
+        List<IBrano> disponibili = libreriaController.getBrani().stream()
+                .filter(b -> !p.contieneBrano(b))
+                .toList();
+
+        if (disponibili.isEmpty()) {
+            mostraErrore(new ValidazioneException("Tutti i brani sono già presenti in questa playlist.", ValidazioneException.TipoErrore.GENERICO, ""));
+            return;
+        }
+
+        Dialog<IBrano> dialog = new Dialog<>();
+        dialog.setTitle("Aggiungi Brano");
+        dialog.setHeaderText("Seleziona il brano da aggiungere alla playlist '" + p.getNome() + "'");
+
+        ListView<String> lv = new ListView<>();
+        List<String> displayNames = new java.util.ArrayList<>();
+        for (IBrano ib : disponibili) {
+            if (ib instanceof Brano brano) {
+                String fn = PathUtils.filenameFromPath(brano.getPercorsoFile());
+                displayNames.add((brano.getTitolo() != null && !brano.getTitolo().isBlank()) ? brano.getTitolo() + " — " + fn : fn);
+            }
+        }
+        lv.getItems().addAll(displayNames);
+        lv.setPrefSize(300, 250);
+
+        dialog.getDialogPane().setContent(lv);
+
+        ButtonType btnAggiungi = new ButtonType("Aggiungi", ButtonBar.ButtonData.OK_DONE);
+        ButtonType btnAnnulla = new ButtonType("Annulla", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(btnAggiungi, btnAnnulla);
+
+        // Disabilita "Aggiungi" finché non si seleziona qualcosa
+        javafx.scene.Node btnAgg = dialog.getDialogPane().lookupButton(btnAggiungi);
+        btnAgg.setDisable(true);
+        lv.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
+            btnAgg.setDisable(newV == null);
+        });
+
+        btnAgg.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            int idx = lv.getSelectionModel().getSelectedIndex();
+            if (idx >= 0) {
+                IBrano branoScelto = disponibili.get(idx);
+                try {
+                    libreriaController.aggiungiBranoAPlaylist(p, branoScelto);
+                    // Se successo, non consumiamo l'evento: il dialog si chiude da solo.
+                } catch (ValidazioneException ex) {
+                    // Se c'è un errore (es. DUPLICATO), fermiamo la chiusura del dialog
+                    event.consume();
+                    mostraErrore(ex);
+                }
+            }
+        });
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == btnAggiungi) {
+                int idx = lv.getSelectionModel().getSelectedIndex();
+                if (idx >= 0) return disponibili.get(idx);
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
     }
 
     // =========================================================================

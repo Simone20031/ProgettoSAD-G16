@@ -33,10 +33,21 @@ public class Playlist {
         this.nome = nuovoNome.trim();
     }
 
-    public void aggiungiBrano(IBrano brano) {
-        if (!brani.contains(brano)) {
-            brani.add(brano);
+    public boolean contieneBrano(IBrano brano) {
+        return brani.contains(brano);
+    }
+
+    public void aggiungiBrano(IBrano brano) throws ValidazioneException {
+        if (brano == null) {
+            throw new ValidazioneException("Il brano non può essere nullo", ValidazioneException.TipoErrore.CAMPO_MANCANTE, "brano");
         }
+        if (contieneBrano(brano)) {
+            throw new ValidazioneException(
+                    "Il brano è già presente nella playlist",
+                    ValidazioneException.TipoErrore.DUPLICATO,
+                    "brano");
+        }
+        brani.add(brano);
     }
     public void rimuoviBrano(IBrano brano) {
         brani.remove(brano);

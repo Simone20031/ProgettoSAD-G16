@@ -10,7 +10,8 @@ public class ValidazioneException extends Exception {
     public enum TipoErrore {
         CAMPO_MANCANTE,
         FORMATO_NON_VALIDO,
-        GENERICO
+        GENERICO,
+        DUPLICATO
     }
 
     private final TipoErrore tipo;

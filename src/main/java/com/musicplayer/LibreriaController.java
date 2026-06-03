@@ -219,6 +219,17 @@ public class LibreriaController {
         System.out.println("Rimuovi '" + brano.getTitolo() + "' da playlist '" + playlistName + "'");
     }
 
+    public void aggiungiBranoAPlaylist(Playlist p, IBrano brano) throws ValidazioneException {
+        if (p == null || brano == null) return;
+        Comando cmd = new AggiungiAPlaylistCmd(p, brano);
+        cmd.esegui(); // Può lanciare ValidazioneException(DUPLICATO)
+        
+        // Notifichiamo la View per l'aggiornamento
+        if (view != null) {
+            view.onPlaylistAggiornata();
+        }
+    }
+
     // =========================================================================
     // Lettura modello
     // =========================================================================
