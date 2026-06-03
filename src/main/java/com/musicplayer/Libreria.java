@@ -16,6 +16,7 @@ public class Libreria {
 
     private final List<IBrano>   catalogo = new ArrayList<>();
     private final List<Playlist> playlist = new ArrayList<>();
+    private final List<LibreriaObserver> observers = new ArrayList<>();
 
     private Libreria() {}
     
@@ -93,13 +94,13 @@ public class Libreria {
 
         Playlist nuova = new Playlist(nomeTrim);
         playlist.add(nuova);
-        // observer disabilitato in questo momento
+        notificaObserver();
         return nuova;
     }
 
     public void eliminaPlaylist(Playlist p) {
-        if (p != null) {
-            playlist.remove(p);
+        if (p != null && playlist.remove(p)) {
+            notificaObserver();
         }
     }
 
@@ -122,6 +123,7 @@ public class Libreria {
         }
         
         p.rinomina(nomeTrim);
+        notificaObserver();
     }
     // ── Stato interno ─────────────────────────────────────────────────────────
 
@@ -137,11 +139,19 @@ public class Libreria {
 
     public boolean isEmpty() { return catalogo.isEmpty(); }
 
-    // Observer disabilitato in questo momento
-    // public void addObserver(LibreriaObserver o)    { /*  observer disabilitato in questo momento */ }
-    // public void removeObserver(LibreriaObserver o) { /*  observer disabilitato in questo momento */ }
+    // Observer pattern
+    public void addObserver(LibreriaObserver o)    { 
+        if (!observers.contains(o)) observers.add(o); 
+    }
+    public void removeObserver(LibreriaObserver o) { 
+        observers.remove(o); 
+    }
 
     // Permette a componenti esterni di forzare una notifica di aggiornamento playlist
-    public void notificaObserver() { /* observer disabilitato in questo momento */ }
+    public void notificaObserver() { 
+        for (LibreriaObserver o : observers) {
+            o.onPlaylistAggiornata();
+        }
+    }
     
 }

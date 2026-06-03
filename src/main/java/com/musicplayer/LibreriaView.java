@@ -17,6 +17,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Dialog;
@@ -35,7 +36,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-public class LibreriaView implements Initializable {
+public class LibreriaView implements Initializable, LibreriaObserver {
 
     @FXML private ListView<String> songListView;
     @FXML private Button addBtn;
@@ -78,6 +79,7 @@ public class LibreriaView implements Initializable {
         } catch (IOException ignored) {}
 
         libreriaController.setView(this);
+        Libreria.getInstance().addObserver(this);
         libreriaController.caricaDaCSV();
         MetadataService.caricaMappaDalCSV(metadataMap);
         refreshList();
@@ -106,8 +108,11 @@ public class LibreriaView implements Initializable {
         playlistListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 currentPlaylist = findPlaylistByName(extractPlaylistName(newVal));
-                updatePlaylistHeader();
+            } else {
+                currentPlaylist = null;
             }
+            updatePlaylistHeader();
+            refreshList();
         });
 
         // CellFactory: inserisce il pulsante "⋮" in ogni riga
@@ -164,7 +169,11 @@ public class LibreriaView implements Initializable {
 
                     MenuItem miRinomina = new MenuItem("Rinomina");
                     miRinomina.setOnAction(e -> handleRinominaPlaylist());
-                    menu.getItems().add(miRinomina);
+                    
+                    MenuItem miElimina = new MenuItem("Elimina");
+                    miElimina.setOnAction(e -> handleEliminaPlaylist());
+
+                    menu.getItems().addAll(miRinomina, miElimina);
 
                     btnOpzioni.setOnAction(e -> {
                         playlistListView.getSelectionModel().select(getIndex());
@@ -249,7 +258,8 @@ public class LibreriaView implements Initializable {
 
     private void refreshList() {
         songListView.getItems().clear();
-        for (IBrano ib : libreriaController.getBrani()) {
+        List<IBrano> braniDaMostrare = (currentPlaylist != null) ? currentPlaylist.getBrani() : libreriaController.getBrani();
+        for (IBrano ib : braniDaMostrare) {
             if (ib instanceof Brano b) {
                 String fn = PathUtils.filenameFromPath(b.getPercorsoFile());
                 String display = (b.getTitolo() != null && !b.getTitolo().isBlank())
@@ -258,11 +268,12 @@ public class LibreriaView implements Initializable {
             }
         }
 
-        // Gestione libreria vuota: messaggio informativo
         if (songListView.getItems().isEmpty()) {
-            detailsLabel.setText("La libreria è vuota");
+            detailsLabel.setText(currentPlaylist != null ? "La playlist è vuota" : "La libreria è vuota");
         } else {
-            detailsLabel.setText("Seleziona un brano per i dettagli.");
+            detailsLabel.setText(currentPlaylist != null ? 
+                "Playlist '" + currentPlaylist.getNome() + "' (" + braniDaMostrare.size() + " brani)" : 
+                "Libreria generale (" + braniDaMostrare.size() + " brani). Seleziona un brano per i dettagli.");
         }
     }
 
@@ -458,6 +469,30 @@ public class LibreriaView implements Initializable {
         });
     }
 
+    private void handleEliminaPlaylist() {
+        String sel = playlistListView.getSelectionModel().getSelectedItem();
+        if (sel == null) return;
+
+        String name = extractPlaylistName(sel);
+        Playlist p = findPlaylistByName(name);
+        if (p == null) return;
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Elimina Playlist");
+        alert.setHeaderText("Conferma eliminazione");
+        alert.setContentText("Sei sicuro di voler eliminare la playlist '" + p.getNome() + "'?");
+
+        ButtonType btnElimina = new ButtonType("Elimina", ButtonBar.ButtonData.OK_DONE);
+        ButtonType btnAnnulla = new ButtonType("Annulla", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(btnElimina, btnAnnulla);
+
+        alert.showAndWait().ifPresent(type -> {
+            if (type == btnElimina) {
+                libreriaController.eliminaPlaylist(p);
+            }
+        });
+    }
+
     // =========================================================================
     // Gestione errori
     // =========================================================================
@@ -500,6 +535,7 @@ public class LibreriaView implements Initializable {
         if (currentGenreField    != null) currentGenreField.setStyle(s);
     }
 
+    @Override
     public void onPlaylistAggiornata() {
         javafx.application.Platform.runLater(() -> {
             mostraPlaylist(libreriaController.getPlaylist());
@@ -511,12 +547,18 @@ public class LibreriaView implements Initializable {
     public void mostraPlaylist(List<Playlist> playlists) {
         Playlist toSelect = currentPlaylist;
         playlistListView.getItems().clear();
+        boolean found = false;
         for (Playlist p : playlists) {
             String display = p.getNome() + " (" + p.getBrani().size() + " brani)";
             playlistListView.getItems().add(display);
             if (toSelect != null && p == toSelect) {
+                found = true;
                 javafx.application.Platform.runLater(() -> playlistListView.getSelectionModel().select(display));
             }
+        }
+        if (!found && toSelect != null) {
+            currentPlaylist = null;
+            javafx.application.Platform.runLater(this::refreshList);
         }
         updatePlaylistHeader();
     }

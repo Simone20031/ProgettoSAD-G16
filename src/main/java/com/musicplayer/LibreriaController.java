@@ -189,9 +189,6 @@ public class LibreriaController {
     public void creaPlaylist(String nome) {
         try {
             libreria.creaPlaylist(nome);
-            if (view != null) {
-                view.onPlaylistAggiornata();
-            }
         } catch (ValidazioneException e) {
             if (view != null) {
                 view.mostraErrore(e);
@@ -204,14 +201,16 @@ public class LibreriaController {
         if (p == null) return;
         try {
             libreria.rinominaPlaylist(p, nuovoNome);
-            if (view != null) {
-                view.onPlaylistAggiornata();
-            }
         } catch (ValidazioneException e) {
             if (view != null) {
                 view.mostraErrore(e);
             }
         }
+    }
+
+    public void eliminaPlaylist(Playlist p) {
+        if (p == null) return;
+        libreria.eliminaPlaylist(p);
     }
 
     /** Placeholder playlist (da implementare). */
