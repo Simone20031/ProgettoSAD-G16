@@ -14,10 +14,8 @@ public class Libreria {
 
     private static Libreria instance;
 
-    private final List<IBrano>    catalogo  = new ArrayList<>();
-    
-    // Playlist non implementata in questo momento
-    // private final List<Playlist>  playlist  = new ArrayList<>();
+    private final List<IBrano>   catalogo = new ArrayList<>();
+    private final List<Playlist> playlist = new ArrayList<>();
 
     private Libreria() {}
     
@@ -60,23 +58,54 @@ public class Libreria {
     }
 
     // ── Gestione playlist ─────────────────────────────────────────────────────
-    /* 
-    public Playlist creaPlaylist(String nome) {
-        // Playlist non implementata in questo momento
+
+    /**
+     * Crea una nuova Playlist e la registra nella libreria.
+     *
+     * Regole di validazione (task 7.1):
+     * - Il nome non deve essere vuoto → ValidazioneException (CAMPO_MANCANTE, "nome")
+     * - Non deve esistere già una playlist con lo stesso nome (case-insensitive)
+     *   → ValidazioneException (GENERICO, "nome")
+     *
+     * @param nome il nome della nuova playlist
+     * @return la Playlist appena creata e registrata
+     * @throws ValidazioneException se il nome è vuoto o già in uso
+     */
+    public Playlist creaPlaylist(String nome) throws ValidazioneException {
+        // Validazione 1: nome obbligatorio
+        if (nome == null || nome.isBlank()) {
+            throw new ValidazioneException(
+                    "Il nome della playlist è obbligatorio!",
+                    ValidazioneException.TipoErrore.CAMPO_MANCANTE,
+                    "nome");
+        }
+
+        // Validazione 2: unicità case-insensitive
+        String nomeTrim = nome.trim();
+        boolean duplicato = playlist.stream()
+                .anyMatch(p -> p.getNome().equalsIgnoreCase(nomeTrim));
+        if (duplicato) {
+            throw new ValidazioneException(
+                    "Esiste già una playlist con il nome '" + nomeTrim + "'!",
+                    ValidazioneException.TipoErrore.GENERICO,
+                    "nome");
+        }
+
+        Playlist nuova = new Playlist(nomeTrim);
+        playlist.add(nuova);
         // observer disabilitato in questo momento
-        return null;
+        return nuova;
     }
-    
+
     public void eliminaPlaylist(Playlist p) {
         // Playlist non implementata in questo momento
         // observer disabilitato in questo momento
     }
-    */
     // ── Stato interno ─────────────────────────────────────────────────────────
 
     public List<IBrano> getBrani() { return List.copyOf(catalogo); }
     
-    // public List<Playlist> getPlaylist() { return List.copyOf(playlist); }
+    public List<Playlist> getPlaylist() { return List.copyOf(playlist); }
     
     // ── Ricerca e ordinamento ─────────────────────────────────────────────────
     /* Ricerca e ordinamento non implementati in questo momento.
