@@ -123,7 +123,6 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 private final HBox container    = new HBox();
                 private final Label labelTesto  = new Label();
                 private final Button btnOpzioni = new Button("⋮");
-                private final ContextMenu menu  = new ContextMenu();
 
                 {
                     btnOpzioni.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-padding: 0 4 0 4;");
