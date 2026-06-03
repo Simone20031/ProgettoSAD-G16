@@ -1,8 +1,5 @@
 package com.musicplayer;
 
-import com.musicplayer.persistence.MetadataService;
-import com.musicplayer.persistence.SongMetadata;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,6 +8,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.musicplayer.persistence.MetadataService;
+import com.musicplayer.persistence.SongMetadata;
 
 /**
  * LibreriaController: coordinatore MVC tra la View e il modello (Libreria).
@@ -36,6 +36,11 @@ public class LibreriaController {
 
     private final Libreria     libreria = Libreria.getInstance();
     private final BranoFactory factory  = new BranoFactory();
+    private LibreriaView view;
+
+    public void setView(LibreriaView view) {
+        this.view = view;
+    }
 
     private static final String LIB_DIR = "Libreria";
 
@@ -179,6 +184,19 @@ public class LibreriaController {
     public void aggiungiAPlaylist(Brano brano, String playlistName) {
         if (brano == null || playlistName == null) return;
         System.out.println("Aggiungi '" + brano.getTitolo() + "' a playlist '" + playlistName + "'");
+    }
+
+    public void creaPlaylist(String nome) {
+        try {
+            libreria.creaPlaylist(nome);
+            if (view != null) {
+                view.onPlaylistAggiornata();
+            }
+        } catch (ValidazioneException e) {
+            if (view != null) {
+                view.mostraErrore(e);
+            }
+        }
     }
 
     /** Placeholder playlist (da implementare). */

@@ -1,19 +1,5 @@
 package com.musicplayer;
 
-import com.musicplayer.persistence.MetadataService;
-import com.musicplayer.persistence.SongMetadata;
-
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import javafx.util.Duration;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -22,6 +8,31 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
+
+import com.musicplayer.persistence.MetadataService;
+import com.musicplayer.persistence.SongMetadata;
+
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class LibreriaView implements Initializable {
 
@@ -58,6 +69,7 @@ public class LibreriaView implements Initializable {
             Files.createDirectories(Path.of(System.getProperty("user.dir"), "Libreria"));
         } catch (IOException ignored) {}
 
+        libreriaController.setView(this);
         libreriaController.caricaDaCSV();
         MetadataService.caricaMappaDalCSV(metadataMap);
         refreshList();
@@ -405,6 +417,12 @@ public class LibreriaView implements Initializable {
         if (currentYearField     != null) currentYearField.setStyle(s);
         if (currentDurationField != null) currentDurationField.setStyle(s);
         if (currentGenreField    != null) currentGenreField.setStyle(s);
+    }
+
+    public void onPlaylistAggiornata() {
+        javafx.application.Platform.runLater(() -> {
+            showAlert("Playlist aggiornata con successo", Alert.AlertType.INFORMATION);
+        });
     }
 
     // =========================================================================
