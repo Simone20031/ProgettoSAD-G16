@@ -188,6 +188,13 @@ public class LibreriaView implements Initializable {
                 songListView.getItems().add(display);
             }
         }
+
+        // Gestione libreria vuota: messaggio informativo
+        if (songListView.getItems().isEmpty()) {
+            detailsLabel.setText("La libreria è vuota");
+        } else {
+            detailsLabel.setText("Seleziona un brano per i dettagli.");
+        }
     }
 
     private void showDetails(String display) {
@@ -307,7 +314,6 @@ public class LibreriaView implements Initializable {
                 if (mediaPlayer != null) stopPlayback();
                 libreriaController.eliminaBranoPerFilename(fn);
                 syncAndRefresh();
-                detailsLabel.setText("Seleziona un brano per i dettagli.");
             } catch (Exception ex) {
                 mostraErrore(new ValidazioneException("Errore eliminazione: " + ex.getMessage()));
             }
