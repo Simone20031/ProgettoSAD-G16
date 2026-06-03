@@ -47,6 +47,10 @@ public class LibreriaView implements Initializable {
     @FXML private Button stopBtn;
     @FXML private Slider progressSlider;
 
+    @FXML private ListView<String> playlistListView;
+    @FXML private TextField playlistNameField;
+    @FXML private Button createPlaylistBtn;
+
     private Media media;
     private MediaPlayer mediaPlayer;
 
@@ -80,6 +84,13 @@ public class LibreriaView implements Initializable {
         playBtn.setOnAction(e -> playSelected());
         pauseBtn.setOnAction(e -> { if (mediaPlayer != null) mediaPlayer.pause(); });
         stopBtn.setOnAction(e -> stopPlayback());
+
+        createPlaylistBtn.setOnAction(e -> {
+            String nome = playlistNameField.getText();
+            libreriaController.creaPlaylist(nome);
+        });
+        
+        mostraPlaylist();
 
         setPlaybackControlsDisabled(true);
 
@@ -421,8 +432,17 @@ public class LibreriaView implements Initializable {
 
     public void onPlaylistAggiornata() {
         javafx.application.Platform.runLater(() -> {
+            mostraPlaylist();
+            playlistNameField.clear();
             showAlert("Playlist aggiornata con successo", Alert.AlertType.INFORMATION);
         });
+    }
+
+    public void mostraPlaylist() {
+        playlistListView.getItems().clear();
+        for (Playlist p : libreriaController.getPlaylist()) {
+            playlistListView.getItems().add(p.getNome());
+        }
     }
 
     // =========================================================================

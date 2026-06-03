@@ -27,6 +27,15 @@
             </HBox>
             
             <Slider fx:id="progressSlider" prefWidth="200" />
+            
+            <Separator />
+            
+            <Label text="Playlists" style="-fx-font-weight: bold;" />
+            <ListView fx:id="playlistListView" prefWidth="200" prefHeight="100" />
+            <HBox spacing="8">
+                <TextField fx:id="playlistNameField" promptText="Nome playlist" prefWidth="130" />
+                <Button fx:id="createPlaylistBtn" text="Crea" />
+            </HBox>
         </VBox>
     </HBox>
     

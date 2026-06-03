@@ -211,6 +211,8 @@ public class LibreriaController {
 
     public List<IBrano> getBrani() { return libreria.getBrani(); }
 
+    public List<Playlist> getPlaylist() { return libreria.getPlaylist(); }
+
     /**
      * Carica i brani dal CSV nella Libreria in-memory (bootstrap applicazione).
      * Da chiamare una volta sola all'avvio.
