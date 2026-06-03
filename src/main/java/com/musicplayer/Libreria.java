@@ -50,11 +50,14 @@ public class Libreria {
         // Rimuove l'oggetto dalla lista 'catalogo'
         if (catalogo.remove(b)) {
             
-            //  playlist non implementata in questo momento
             // Rimuove il brano da tutte le playlist che lo contengono
+            for (Playlist p : playlist) {
+                p.rimuoviBrano(b);
+            }
             
-            // pattern Observer per aggiornare la View in automatico da implementare in futuro:
-            System.out.println("Brano rimosso con successo dal catalogo in RAM.");
+            // pattern Observer per aggiornare la View in automatico
+            System.out.println("Brano rimosso con successo dal catalogo in RAM e da tutte le playlist.");
+            notificaObserver();
         }
     }
 
