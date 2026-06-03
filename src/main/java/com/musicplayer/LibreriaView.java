@@ -58,6 +58,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private MediaPlayer mediaPlayer;
 
     private final Map<String, SongMetadata> metadataMap = new HashMap<>();
+    private boolean isUpdatingPlaylists = false;
     private final LibreriaController libreriaController = new LibreriaController();
     private Stage primaryStage;
     
@@ -106,6 +107,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         });
 
         playlistListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (isUpdatingPlaylists) return;
             if (newVal != null) {
                 currentPlaylist = findPlaylistByName(extractPlaylistName(newVal));
             } else {
@@ -130,15 +132,18 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     btnOpzioni.setFocusTraversable(false);
                     container.getChildren().addAll(labelTesto, btnOpzioni);
 
-                    for (String label : new StatoLibreria().getOpzioniSingolo()) {
-                        MenuItem mi = new MenuItem(label);
-                        mi.setOnAction(e -> handleMenuAzione(label));
-                        menu.getItems().add(mi);
-                    }
-
                     btnOpzioni.setOnAction(e -> {
                         songListView.getSelectionModel().select(getIndex());
-                        menu.show(btnOpzioni, javafx.geometry.Side.BOTTOM, 0, 0);
+                        
+                        Stato stato = (currentPlaylist == null) ? new StatoLibreria() : new StatoPlaylist(currentPlaylist);
+                        MenuContestuale menuC = new MenuContestuale(stato);
+                        
+                        // Chiama il metodo per generare le voci dinamicamente e aprirlo sul btnOpzioni
+                        menuC.apriMenuSingolo(
+                            findBranoByFilename(extractFilename(getItem())), 
+                            btnOpzioni, 
+                            LibreriaView.this::handleMenuAzione
+                        );
                     });
                 }
 
@@ -415,6 +420,11 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             case "Modifica"          -> editSelected();
             case "Elimina brano"     -> deleteSelected();
             case "Aggiungi a playlist" -> new StatoLibreria().eseguiOpzione(opzione, selezionato, libreriaController);
+            case "Rimuovi da questa playlist" -> {
+                if (currentPlaylist != null) {
+                    new StatoPlaylist(currentPlaylist).eseguiOpzione(opzione, selezionato, libreriaController);
+                }
+            }
 
             case "Aggiungi tag" -> {
                 // Mostra i tag già presenti come suggerimento
@@ -620,6 +630,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     }
 
     public void mostraPlaylist(List<Playlist> playlists) {
+        isUpdatingPlaylists = true;
         Playlist toSelect = currentPlaylist;
         playlistListView.getItems().clear();
         boolean found = false;
@@ -628,11 +639,17 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             playlistListView.getItems().add(display);
             if (toSelect != null && p == toSelect) {
                 found = true;
-                javafx.application.Platform.runLater(() -> playlistListView.getSelectionModel().select(display));
+                playlistListView.getSelectionModel().select(display);
             }
         }
+        isUpdatingPlaylists = false;
+
         if (!found && toSelect != null) {
             currentPlaylist = null;
+            javafx.application.Platform.runLater(this::refreshList);
+        } else if (found) {
+            // Selezionato di nuovo la playlist corrente: forziamo l'aggiornamento
+            // della tabella brani senza essere passati da null (che caricherebbe tutto)
             javafx.application.Platform.runLater(this::refreshList);
         }
         updatePlaylistHeader();

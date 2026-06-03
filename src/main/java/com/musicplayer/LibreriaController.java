@@ -213,10 +213,21 @@ public class LibreriaController {
         libreria.eliminaPlaylist(p);
     }
 
-    /** Placeholder playlist (da implementare). */
-    public void rimuoviDaPlaylist(Brano brano, String playlistName) {
-        if (brano == null || playlistName == null) return;
-        System.out.println("Rimuovi '" + brano.getTitolo() + "' da playlist '" + playlistName + "'");
+    public void rimuoviDaPlaylist(Playlist p, IBrano brano) {
+        if (p == null || brano == null) return;
+        try {
+            Comando cmd = new RimuoviDaPlaylistCmd(p, brano);
+            cmd.esegui();
+            
+            // Notifichiamo la View per l'aggiornamento
+            if (view != null) {
+                view.onPlaylistAggiornata();
+            }
+        } catch (ValidazioneException e) {
+            if (view != null) {
+                view.mostraErrore(e);
+            }
+        }
     }
 
     public void aggiungiBranoAPlaylist(Playlist p, IBrano brano) throws ValidazioneException {
