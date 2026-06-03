@@ -199,6 +199,23 @@ public class LibreriaController {
         }
     }
 
+<<<<<<< HEAD
+=======
+    public void rinominaPlaylist(Playlist p, String nuovoNome) {
+        if (p == null) return;
+        try {
+            libreria.rinominaPlaylist(p, nuovoNome);
+            if (view != null) {
+                view.onPlaylistAggiornata();
+            }
+        } catch (ValidazioneException e) {
+            if (view != null) {
+                view.mostraErrore(e);
+            }
+        }
+    }
+
+>>>>>>> Alessio
     /** Placeholder playlist (da implementare). */
     public void rimuoviDaPlaylist(Brano brano, String playlistName) {
         if (brano == null || playlistName == null) return;

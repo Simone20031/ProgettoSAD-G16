@@ -42,6 +42,7 @@ public class LibreriaView implements Initializable {
     @FXML private Button editBtn;
     @FXML private Button deleteBtn;
     @FXML private Label detailsLabel;
+    @FXML private Label mainTitleLabel;
 
     @FXML private Button playBtn;
     @FXML private Button pauseBtn;
@@ -58,6 +59,8 @@ public class LibreriaView implements Initializable {
     private final Map<String, SongMetadata> metadataMap = new HashMap<>();
     private final LibreriaController libreriaController = new LibreriaController();
     private Stage primaryStage;
+    
+    private Playlist currentPlaylist;
 
     // Riferimenti ai TextField attivi nel Dialog corrente (per evidenziazione errori)
     private TextField currentTitleField;
@@ -100,6 +103,13 @@ public class LibreriaView implements Initializable {
             setPlaybackControlsDisabled(n == null);
         });
 
+        playlistListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                currentPlaylist = findPlaylistByName(extractPlaylistName(newVal));
+                updatePlaylistHeader();
+            }
+        });
+
         // CellFactory: inserisce il pulsante "⋮" in ogni riga
         songListView.setCellFactory(lv -> {
             ListCell<String> cell = new ListCell<>() {
@@ -123,6 +133,41 @@ public class LibreriaView implements Initializable {
 
                     btnOpzioni.setOnAction(e -> {
                         songListView.getSelectionModel().select(getIndex());
+                        menu.show(btnOpzioni, javafx.geometry.Side.BOTTOM, 0, 0);
+                    });
+                }
+
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) { setGraphic(null); }
+                    else { labelTesto.setText(item); setGraphic(container); }
+                }
+            };
+            return cell;
+        });
+
+        // CellFactory: inserisce il pulsante "⋮" anche nelle playlist
+        playlistListView.setCellFactory(lv -> {
+            ListCell<String> cell = new ListCell<>() {
+                private final HBox container    = new HBox();
+                private final Label labelTesto  = new Label();
+                private final Button btnOpzioni = new Button("⋮");
+                private final ContextMenu menu  = new ContextMenu();
+
+                {
+                    btnOpzioni.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-padding: 0 4 0 4;");
+                    HBox.setHgrow(labelTesto, Priority.ALWAYS);
+                    container.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    btnOpzioni.setFocusTraversable(false);
+                    container.getChildren().addAll(labelTesto, btnOpzioni);
+
+                    MenuItem miRinomina = new MenuItem("Rinomina");
+                    miRinomina.setOnAction(e -> handleRinominaPlaylist());
+                    menu.getItems().add(miRinomina);
+
+                    btnOpzioni.setOnAction(e -> {
+                        playlistListView.getSelectionModel().select(getIndex());
                         menu.show(btnOpzioni, javafx.geometry.Side.BOTTOM, 0, 0);
                     });
                 }
@@ -390,6 +435,30 @@ public class LibreriaView implements Initializable {
     }
 
     // =========================================================================
+    // Azioni Playlist
+    // =========================================================================
+
+    private void handleRinominaPlaylist() {
+        String sel = playlistListView.getSelectionModel().getSelectedItem();
+        if (sel == null) return;
+
+        String name = extractPlaylistName(sel);
+        Playlist p = findPlaylistByName(name);
+        if (p == null) return;
+
+        TextInputDialog dialog = new TextInputDialog(p.getNome());
+        dialog.setTitle("Rinomina Playlist");
+        dialog.setHeaderText("Modifica il nome della playlist");
+        dialog.setContentText("Nome:");
+        
+        // Il pulsante OK c'è di default in TextInputDialog, ed equivale a Conferma
+        // Il pulsante Annulla c'è di default e chiude il dialog
+        dialog.showAndWait().ifPresent(nuovoNome -> {
+            libreriaController.rinominaPlaylist(p, nuovoNome);
+        });
+    }
+
+    // =========================================================================
     // Gestione errori
     // =========================================================================
 
@@ -440,10 +509,25 @@ public class LibreriaView implements Initializable {
     }
 
     public void mostraPlaylist(List<Playlist> playlists) {
+        Playlist toSelect = currentPlaylist;
         playlistListView.getItems().clear();
         for (Playlist p : playlists) {
             String display = p.getNome() + " (" + p.getBrani().size() + " brani)";
             playlistListView.getItems().add(display);
+            if (toSelect != null && p == toSelect) {
+                javafx.application.Platform.runLater(() -> playlistListView.getSelectionModel().select(display));
+            }
+        }
+        updatePlaylistHeader();
+    }
+
+    private void updatePlaylistHeader() {
+        if (mainTitleLabel != null) {
+            if (currentPlaylist != null) {
+                mainTitleLabel.setText("Playlist: " + currentPlaylist.getNome());
+            } else {
+                mainTitleLabel.setText("SonicWave — Gestione brani");
+            }
         }
     }
 
@@ -472,6 +556,22 @@ public class LibreriaView implements Initializable {
         String sel = songListView.getSelectionModel().getSelectedItem();
         if (sel == null) return null;
         return findBranoByFilename(extractFilename(sel));
+    }
+
+    private String extractPlaylistName(String display) {
+        if (display == null) return "";
+        int idx = display.lastIndexOf(" (");
+        if (idx != -1) {
+            return display.substring(0, idx);
+        }
+        return display;
+    }
+    
+    private Playlist findPlaylistByName(String name) {
+        for (Playlist p : libreriaController.getPlaylist()) {
+            if (p.getNome().equals(name)) return p;
+        }
+        return null;
     }
 
     /** Ricarica metadataMap dal CSV e aggiorna la lista. */

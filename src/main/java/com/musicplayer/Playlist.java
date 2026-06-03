@@ -23,12 +23,21 @@ public class Playlist {
         return brani;
     }
 
+    public void rinomina(String nuovoNome) throws ValidazioneException {
+        if (nuovoNome == null || nuovoNome.isBlank()) {
+            throw new ValidazioneException(
+                    "Il nome della playlist non può essere vuoto",
+                    ValidazioneException.TipoErrore.CAMPO_MANCANTE,
+                    "nome");
+        }
+        this.nome = nuovoNome.trim();
+    }
+
     public void aggiungiBrano(IBrano brano) {
         if (!brani.contains(brano)) {
             brani.add(brano);
         }
     }
-
     public void rimuoviBrano(IBrano brano) {
         brani.remove(brano);
     }
