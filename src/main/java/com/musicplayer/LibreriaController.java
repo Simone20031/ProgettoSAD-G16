@@ -199,8 +199,7 @@ public class LibreriaController {
         }
     }
 
-<<<<<<< HEAD
-=======
+
     public void rinominaPlaylist(Playlist p, String nuovoNome) {
         if (p == null) return;
         try {
@@ -215,7 +214,6 @@ public class LibreriaController {
         }
     }
 
->>>>>>> Alessio
     /** Placeholder playlist (da implementare). */
     public void rimuoviDaPlaylist(Brano brano, String playlistName) {
         if (brano == null || playlistName == null) return;
