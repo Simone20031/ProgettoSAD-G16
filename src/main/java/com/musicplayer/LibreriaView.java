@@ -6,6 +6,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -90,7 +91,7 @@ public class LibreriaView implements Initializable {
             libreriaController.creaPlaylist(nome);
         });
         
-        mostraPlaylist();
+        mostraPlaylist(libreriaController.getPlaylist());
 
         setPlaybackControlsDisabled(true);
 
@@ -432,16 +433,17 @@ public class LibreriaView implements Initializable {
 
     public void onPlaylistAggiornata() {
         javafx.application.Platform.runLater(() -> {
-            mostraPlaylist();
+            mostraPlaylist(libreriaController.getPlaylist());
             playlistNameField.clear();
             showAlert("Playlist aggiornata con successo", Alert.AlertType.INFORMATION);
         });
     }
 
-    public void mostraPlaylist() {
+    public void mostraPlaylist(List<Playlist> playlists) {
         playlistListView.getItems().clear();
-        for (Playlist p : libreriaController.getPlaylist()) {
-            playlistListView.getItems().add(p.getNome());
+        for (Playlist p : playlists) {
+            String display = p.getNome() + " (" + p.getBrani().size() + " brani)";
+            playlistListView.getItems().add(display);
         }
     }
 
