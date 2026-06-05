@@ -9,7 +9,7 @@ public class RimuoviDaPlaylistTest {
 
     @Test
     public void testRimozioneBranoPresente() throws Exception {
-        Playlist p = new Playlist("Rock Classico");
+        Playlist p = new Playlist("id1", "Rock Classico");
         Brano b = new Brano("Bohemian Rhapsody", "path1", "Queen", "Rock", 354, "1975", 1, null);
         
         // Setup: aggiungo il brano
@@ -27,7 +27,7 @@ public class RimuoviDaPlaylistTest {
 
     @Test
     public void testRimozioneBranoAssenteDaPlaylist() throws Exception {
-        Playlist p = new Playlist("Pop");
+        Playlist p = new Playlist("id2", "Pop");
         Brano inPlaylist = new Brano("Billie Jean", "path1", "Michael Jackson", "Pop", 294, "1982", 1, null);
         Brano fuoriPlaylist = new Brano("Thriller", "path2", "Michael Jackson", "Pop", 357, "1982", 1, null);
         

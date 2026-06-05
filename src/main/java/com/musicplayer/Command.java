@@ -1,6 +1,6 @@
 package com.musicplayer;
 
-public interface Comando {
+public interface Command {
     void esegui() throws ValidazioneException;
-    void annulla();
+    void annulla() throws ValidazioneException;
 }

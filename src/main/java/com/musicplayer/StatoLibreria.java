@@ -1,17 +1,17 @@
 package com.musicplayer;
 
 import java.util.List;
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * StatoLibreria: stato del contesto "Libreria" del pattern State.
- * Implementazione minimale per fornire le opzioni contestuali per un singolo brano.
+ * Implementazione minimale per fornire le opzioni contestuali per un singolo
+ * brano.
  */
-public class StatoLibreria implements Stato {
+public class StatoLibreria implements StatoUI {
 
     /**
      * Restituisce le opzioni contestuali disponibili per una singola traccia.
+     * 
      * @return lista di etichette delle opzioni
      */
     @Override
@@ -24,21 +24,32 @@ public class StatoLibreria implements Stato {
      * Nota: alcune azioni potrebbero richiedere interazione con la View;
      * qui si delega al controller per la logica di backend possibile.
      */
-    public void eseguiOpzione(String op, Brano brano, LibreriaController controller) {
-        if (op == null || controller == null) return;
-        try {
-            switch (op) {
-                case "Aggiungi tag" -> {
-                    // Qui potremmo aprire una UI ma per ora log/placeholder
-                    System.out.println("Richiesta aggiunta tag per: " + (brano == null ? "<null>" : brano.getTitolo()));
-                }
-                case "Modifica" -> controller.modificaBrano(brano, Map.of());
-                case "Elimina brano" -> controller.eliminaBrano(brano);
-                case "Aggiungi a playlist" -> controller.aggiungiAPlaylist(brano, "default");
-                default -> System.out.println("Opzione non gestita: " + op);
+    @Override
+    public void eseguiOpzione(String op, Brano brano, LibreriaController controller, LibreriaView view) {
+        if (op == null || controller == null)
+            return;
+        switch (op) {
+            case "Aggiungi tag" -> {
+                // Placeholder
             }
-        } catch (IOException | ValidazioneException ex) {
-            throw new RuntimeException("Errore esecuzione opzione: " + ex.getMessage(), ex);
+            case "Modifica" -> {
+                if (view != null) {
+                    view.editBrano(brano);
+                }
+            }
+            case "Elimina brano" -> {
+                if (view != null) {
+                    view.deleteBrano(brano);
+                }
+            }
+            // Dentro StatoLibreria.java, nel case "Aggiungi a playlist"
+            case "Aggiungi a playlist" -> {
+                if (view != null) {
+                    view.apriSelezionePlaylist(brano); // Chiamata al nuovo metodo creato sopra
+                }
+            }
+            default -> {
+            }
         }
     }
 }

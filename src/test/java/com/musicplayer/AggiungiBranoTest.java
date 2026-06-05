@@ -10,7 +10,7 @@ public class AggiungiBranoTest {
 
     @Test
     public void testAggiungiBranoNonPresente() throws Exception {
-        Playlist p = new Playlist("Rock");
+        Playlist p = new Playlist("id1", "Rock");
         Brano b = new Brano("Test", "path", "author", "genre", 180, "2023", 1, null);
         
         // Aggiungo il brano tramite il metodo
@@ -23,7 +23,7 @@ public class AggiungiBranoTest {
 
     @Test
     public void testAggiungiBranoGiaPresente_LanciaEccezioneELasciaInvariato() throws Exception {
-        Playlist p = new Playlist("Pop");
+        Playlist p = new Playlist("id2", "Pop");
         Brano b = new Brano("Duplicato", "path2", "author2", "genre2", 200, "2023", 1, null);
         
         // Aggiunta iniziale
@@ -31,12 +31,12 @@ public class AggiungiBranoTest {
         assertEquals(1, p.getBrani().size());
         
         // Tentativo di aggiunta duplicato
-        ValidazioneException ex = assertThrows(ValidazioneException.class, () -> {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
             p.aggiungiBrano(b);
         });
         
         // Verifico tipo di errore
-        assertEquals(ValidazioneException.TipoErrore.DUPLICATO, ex.getTipo());
+        assertEquals("Il brano è già presente in questa playlist.", ex.getMessage());
         
         // La lista deve rimanere invariata
         assertEquals(1, p.getBrani().size());

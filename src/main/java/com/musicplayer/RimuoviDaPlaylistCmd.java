@@ -1,6 +1,6 @@
 package com.musicplayer;
 
-public class RimuoviDaPlaylistCmd implements Comando {
+public class RimuoviDaPlaylistCmd implements Command {
     private final Playlist playlist;
     private final IBrano brano;
 
@@ -18,12 +18,7 @@ public class RimuoviDaPlaylistCmd implements Comando {
 
     @Override
     public void annulla() {
-        try {
-            // Il rollback della rimozione è reinserire il brano.
-            playlist.aggiungiBrano(brano);
-        } catch (ValidazioneException e) {
-            // Ignoriamo l'errore di duplicato in caso di rollback, 
-            // teoricamente non dovrebbe mai accadere.
-        }
+        // Il rollback della rimozione è reinserire il brano.
+        playlist.aggiungiBrano(brano);
     }
 }

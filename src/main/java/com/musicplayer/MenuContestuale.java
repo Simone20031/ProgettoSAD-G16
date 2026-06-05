@@ -9,9 +9,9 @@ import javafx.scene.control.MenuItem;
  */
 public class MenuContestuale {
 
-    private Stato statoCorrente;
+    private StatoUI statoCorrente;
 
-    public MenuContestuale(Stato statoCorrente) {
+    public MenuContestuale(StatoUI statoCorrente) {
         this.statoCorrente = statoCorrente;
     }
 
@@ -19,7 +19,7 @@ public class MenuContestuale {
      * Aggiorna lo stato corrente usato per costruire le opzioni del menu.
      * @param nuovoStato nuovo stato da utilizzare
      */
-    public void setStato(Stato nuovoStato) {
+    public void setStato(StatoUI nuovoStato) {
         this.statoCorrente = nuovoStato;
     }
 
@@ -36,9 +36,8 @@ public class MenuContestuale {
         for (String label : statoCorrente.getOpzioniSingolo()) {
             MenuItem mi = new MenuItem(label);
             
-            // Quando clicchi, esegui il log e notifica la View 
+            // Quando clicchi, notifica la View 
             mi.setOnAction(e -> {
-                System.out.println("Opzione selezionata: " + label + (brano == null ? "" : (" su: " + brano)));
                 if (runnableAzione != null) {
                     runnableAzione.accept(label);
                 }

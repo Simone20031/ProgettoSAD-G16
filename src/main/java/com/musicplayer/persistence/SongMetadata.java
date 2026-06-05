@@ -48,25 +48,22 @@ public class SongMetadata {
             return;
         }
 
-        // Recuperiamo la mappa dei dettagli fornita dall'interfaccia
         java.util.Map<String, String> dettagli = brano.getDettagli();
         String percorsoFile = dettagli.getOrDefault("percorsoFile", "");
         String id = dettagli.getOrDefault("id", "");
 
-        // Calcoliamo il nome del file (filename) partendo dal percorso
+        // Salva il percorso ASSOLUTO completo (non solo il filename)
+        // Questo permette di ritrovare il file originale al riavvio dell'applicazione
         if (percorsoFile.isBlank()) {
             this.filename = id;
         } else {
-            this.filename = com.musicplayer.PathUtils.filenameFromPath(percorsoFile);
+            this.filename = percorsoFile; // percorso assoluto originale
         }
 
         this.title = brano.getTitolo() == null ? "" : brano.getTitolo();
         this.author = dettagli.getOrDefault("author", dettagli.getOrDefault("autore", ""));
-        
-        // Gestione dell'anno: se è "0" o vuoto, salviamo stringa vuota nel CSV
         String annoStr = dettagli.getOrDefault("anno", "");
         this.year = "0".equals(annoStr) ? "" : annoStr;
-        
         this.duration = String.valueOf(brano.getDurata());
         this.genre = dettagli.getOrDefault("genere", "");
         this.tag = dettagli.getOrDefault("tag", "NESSUNO");

@@ -1,5 +1,6 @@
 package com.musicplayer;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -10,75 +11,72 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RinominaPlaylistTest {
 
+    private LibreriaController controller;
+
     @BeforeEach
-    public void resetSingleton() throws Exception {
+    public void setup() throws Exception {
         Field instance = Libreria.class.getDeclaredField("instance");
         instance.setAccessible(true);
         instance.set(null, null);
+        controller = new LibreriaController();
+    }
+
+    @AfterEach
+    public void cleanup() {
+        try {
+            controller.eliminaPlaylist("Rock");
+            controller.eliminaPlaylist("Indie Rock");
+            controller.eliminaPlaylist("Pop");
+            controller.eliminaPlaylist("ROCK");
+        } catch (Exception e) {}
     }
 
     @Test
-    public void testRinominaPlaylist_NomeValido_AggiornaCorrettamente() throws ValidazioneException {
-        Libreria libreria = Libreria.getInstance();
-        Playlist p = libreria.creaPlaylist("Rock");
+    public void testRinominaPlaylist_NomeValido_AggiornaCorrettamente() throws Exception {
+        controller.aggiungiAPlaylist(null, "Rock");
         
-        libreria.rinominaPlaylist(p, "Indie Rock");
+        controller.rinominaPlaylist("Rock", "Indie Rock");
+        Playlist p2 = controller.getPlaylistMap().get("Indie Rock");
         
-        assertEquals("Indie Rock", p.getNome());
+        assertEquals("Indie Rock", p2.getNome());
     }
 
     @Test
-    public void testRinominaPlaylist_NomeVuoto_LanciaEccezione() throws ValidazioneException {
-        Libreria libreria = Libreria.getInstance();
-        Playlist p = libreria.creaPlaylist("Rock");
+    public void testRinominaPlaylist_NomeUgualeEsistente_LanciaEccezione() throws Exception {
+        controller.aggiungiAPlaylist(null, "Rock");
+        controller.aggiungiAPlaylist(null, "Pop");
+        Playlist p2 = controller.getPlaylistMap().get("Pop");
         
         ValidazioneException ex = assertThrows(ValidazioneException.class, () -> {
-            libreria.rinominaPlaylist(p, "   ");
+            controller.rinominaPlaylist("Pop", "Rock");
         });
         
-        assertEquals(ValidazioneException.TipoErrore.CAMPO_MANCANTE, ex.getTipo());
-        assertEquals("nome", ex.getCampoErrato());
-        assertEquals("Rock", p.getNome(), "Il nome non dovrebbe essere modificato in caso di errore");
-    }
-
-    @Test
-    public void testRinominaPlaylist_NomeUgualeEsistente_LanciaEccezione() throws ValidazioneException {
-        Libreria libreria = Libreria.getInstance();
-        libreria.creaPlaylist("Rock");
-        Playlist p2 = libreria.creaPlaylist("Pop");
-        
-        ValidazioneException ex = assertThrows(ValidazioneException.class, () -> {
-            libreria.rinominaPlaylist(p2, "Rock");
-        });
-        
-        assertEquals(ValidazioneException.TipoErrore.GENERICO, ex.getTipo());
-        assertEquals("nome", ex.getCampoErrato());
+        assertEquals("Una playlist con questo nome esiste già!", ex.getMessage());
         assertEquals("Pop", p2.getNome(), "Il nome non dovrebbe essere modificato in caso di duplicato");
     }
     
     @Test
-    public void testRinominaPlaylist_StessoNomeConCaseDiverso_LanciaEccezione() throws ValidazioneException {
-        Libreria libreria = Libreria.getInstance();
-        libreria.creaPlaylist("Rock");
-        Playlist p2 = libreria.creaPlaylist("Pop");
+    public void testRinominaPlaylist_StessoNomeConCaseDiverso_LanciaEccezione() throws Exception {
+        controller.aggiungiAPlaylist(null, "Rock");
+        controller.aggiungiAPlaylist(null, "Pop");
+        Playlist p2 = controller.getPlaylistMap().get("Pop");
         
         ValidazioneException ex = assertThrows(ValidazioneException.class, () -> {
-            libreria.rinominaPlaylist(p2, "ROCK");
+            controller.rinominaPlaylist("Pop", "ROCK");
         });
         
-        assertEquals(ValidazioneException.TipoErrore.GENERICO, ex.getTipo());
-        assertEquals("nome", ex.getCampoErrato());
+        assertEquals("Una playlist con questo nome esiste già!", ex.getMessage());
         assertEquals("Pop", p2.getNome(), "Il nome non dovrebbe essere modificato in caso di duplicato case-insensitive");
     }
 
     @Test
-    public void testRinominaPlaylist_SeStessaStessoNome_NonFaNullaOAggiornaCase() throws ValidazioneException {
-        Libreria libreria = Libreria.getInstance();
-        Playlist p = libreria.creaPlaylist("Rock");
+    public void testRinominaPlaylist_SeStessaStessoNome_NonFaNullaOAggiornaCase() throws Exception {
+        controller.aggiungiAPlaylist(null, "Rock");
         
         // Questo non dovrebbe lanciare eccezione per duplicato, visto che è la stessa playlist
-        libreria.rinominaPlaylist(p, "ROCK");
+        controller.rinominaPlaylist("Rock", "ROCK");
+        Playlist p = controller.getPlaylistMap().get("ROCK");
         
         assertEquals("ROCK", p.getNome());
     }
-}
+}

@@ -1,6 +1,6 @@
 package com.musicplayer;
 
-public class AggiungiAPlaylistCmd implements Comando {
+public class AggiungiAPlaylistCmd implements Command {
     private final Playlist playlist;
     private final IBrano brano;
 

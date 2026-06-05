@@ -1,5 +1,6 @@
 package com.musicplayer;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -7,14 +8,26 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EliminaPlaylistTest {
 
+    private LibreriaController controller;
+
     @BeforeEach
-    public void resetSingleton() throws Exception {
+    public void setup() throws Exception {
         Field instance = Libreria.class.getDeclaredField("instance");
         instance.setAccessible(true);
         instance.set(null, null);
+        controller = new LibreriaController();
+    }
+
+    @AfterEach
+    public void cleanup() {
+        try {
+            controller.eliminaPlaylist("Rock");
+            controller.eliminaPlaylist("Pop");
+        } catch (Exception e) {}
     }
 
     @Test
@@ -31,35 +44,36 @@ public class EliminaPlaylistTest {
         
         assertEquals(1, libreria.getBrani().size());
         
-        Playlist p = libreria.creaPlaylist("Rock");
+        controller.aggiungiAPlaylist(null, "Rock");
+        Playlist p = controller.getPlaylistMap().get("Rock");
         // Simulo l'aggiunta del brano alla playlist
-        p.getBrani().add(b);
+        p.aggiungiBrano(b);
         
-        assertEquals(1, libreria.getPlaylist().size());
+        assertEquals(1, controller.getPlaylist().size());
         
         // Simulo la conferma ed eliminazione
-        libreria.eliminaPlaylist(p);
+        controller.eliminaPlaylist("Rock");
         
         // Verifico che la playlist sia stata rimossa
-        assertEquals(0, libreria.getPlaylist().size());
+        assertEquals(0, controller.getPlaylist().size());
         
         // Verifico che il catalogo generale sia intatto
         assertEquals(1, libreria.getBrani().size());
     }
 
     @Test
-    public void testAnnullamento_LasciaPlaylistInvariata() throws ValidazioneException {
-        Libreria libreria = Libreria.getInstance();
-        Playlist p = libreria.creaPlaylist("Pop");
+    public void testAnnullamento_LasciaPlaylistInvariata() throws Exception {
+        controller.aggiungiAPlaylist(null, "Pop");
+        Playlist p = controller.getPlaylistMap().get("Pop");
         
-        assertEquals(1, libreria.getPlaylist().size());
+        assertEquals(1, controller.getPlaylist().size());
         
-        // Simulo l'annullamento: il controller non viene chiamato, o viene chiamato con null
-        libreria.eliminaPlaylist(null);
+        // Simulo l'annullamento: il controller non viene chiamato, o viene chiamato con nome inesistente
+        controller.eliminaPlaylist("NonEsistente");
         
         // La playlist deve rimanere invariata
-        assertEquals(1, libreria.getPlaylist().size());
+        assertEquals(1, controller.getPlaylist().size());
         assertEquals("Pop", p.getNome());
-        assertEquals(p, libreria.getPlaylist().get(0));
+        assertTrue(controller.getPlaylistMap().containsKey("Pop"));
     }
-}
+}
