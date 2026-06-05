@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.SplitPane?>
@@ -54,6 +55,19 @@
           <HBox alignment="TOP_CENTER" spacing="10" style="-fx-padding: 0 24 16 24;">
             <Button fx:id="addBtn" alignment="TOP_CENTER" contentDisplay="CENTER" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand; -fx-border-color: transparent;" text="Importa MP3"/>
           </HBox>
+          
+          <VBox spacing="10" style="-fx-padding: 0 24 16 24;">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <TextField fx:id="searchTitoloField" promptText="Titolo..." prefWidth="140" style="-fx-background-color: #333333; -fx-text-fill: #ffffff;" />
+                <TextField fx:id="searchAutoreField" promptText="Autore..." prefWidth="140" style="-fx-background-color: #333333; -fx-text-fill: #ffffff;" />
+                <ComboBox fx:id="searchAnnoCombo" promptText="Anno" prefWidth="90" style="-fx-base: #333333;" />
+                <ComboBox fx:id="searchGenereCombo" promptText="Genere" prefWidth="110" style="-fx-base: #333333;" />
+                <ComboBox fx:id="searchTagCombo" promptText="Tag" prefWidth="120" style="-fx-base: #333333;" />
+                <Pane HBox.hgrow="ALWAYS" />
+                <Button fx:id="resetSearchBtn" text="Azzera" prefWidth="80" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-border-color: #555555; -fx-border-radius: 4;" />
+            </HBox>
+          </VBox>
+
           <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 8 32 8 32; -fx-border-color: transparent transparent #282828 transparent; -fx-border-width: 0 0 1 0;">
             <Label prefWidth="40" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="#"/>
             <Label prefWidth="280" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>

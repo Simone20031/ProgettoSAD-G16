@@ -82,11 +82,12 @@ public class Libreria {
     // public List<Playlist> getPlaylist() { return List.copyOf(playlist); }
 
     // ── Ricerca e ordinamento ─────────────────────────────────────────────────
-    /*
-     * Ricerca e ordinamento non implementati in questo momento.
-     * cercaBrani
-     * ordinaBrani
-     */
+
+    public List<IBrano> cercaBrani(FiltroRicerca filtro) {
+        if (filtro == null)
+            return getBrani();
+        return filtro.applica(getBrani());
+    }
 
     public boolean isEmpty() {
         return catalogo.isEmpty();

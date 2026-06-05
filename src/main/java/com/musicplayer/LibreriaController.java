@@ -276,6 +276,10 @@ public class LibreriaController {
         return libreria.getBrani();
     }
 
+    public List<IBrano> cercaBrani(FiltroRicerca filtro) {
+        return libreria.cercaBrani(filtro);
+    }
+
     /**
      * Carica i brani dal CSV nella Libreria in-memory (bootstrap applicazione).
      * Da chiamare una volta sola all'avvio.

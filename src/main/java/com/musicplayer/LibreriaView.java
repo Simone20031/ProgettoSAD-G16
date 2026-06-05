@@ -20,6 +20,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.List;
+import java.util.ArrayList;
 
 public class LibreriaView implements Initializable, LibreriaObserver {
 
@@ -68,6 +70,22 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private Button createPlaylistBtn;
     @FXML
     private Button btnAnnullaCreazione;
+
+    // -- Campi Ricerca --
+    @FXML
+    private TextField searchTitoloField;
+    @FXML
+    private TextField searchAutoreField;
+    @FXML
+    private ComboBox<String> searchAnnoCombo;
+    @FXML
+    private ComboBox<String> searchGenereCombo;
+    @FXML
+    private ComboBox<String> searchTagCombo;
+    @FXML
+    private Button resetSearchBtn;
+
+    private final FiltroRicerca filtroAttivo = new FiltroRicerca();
 
     // -- Campi view aggiunta brano --
     @FXML
@@ -144,6 +162,18 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 playlistNameField, createPlaylistBtn, btnAnnullaCreazione, btnApriCreazione,
                 libreriaController, this);
         this.playlistView.initialize();
+
+        popolaComboAnno();
+        popolaComboGenere();
+        popolaComboTag();
+
+        searchTitoloField.textProperty().addListener((obs, oldV, newV) -> applicaFiltro());
+        searchAutoreField.textProperty().addListener((obs, oldV, newV) -> applicaFiltro());
+        searchAnnoCombo.valueProperty().addListener((obs, oldV, newV) -> applicaFiltro());
+        searchGenereCombo.valueProperty().addListener((obs, oldV, newV) -> applicaFiltro());
+        searchTagCombo.valueProperty().addListener((obs, oldV, newV) -> applicaFiltro());
+
+        resetSearchBtn.setOnAction(e -> azzeraFiltro());
 
         refreshList();
         refreshPlaylistList();
@@ -489,18 +519,11 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     public void refreshList() {
         songListView.getItems().clear();
 
+        List<IBrano> braniDaMostrare;
         if (playlistSelezionata == null) {
             mainTitleLabel.setText("SonicWave — Gestione brani");
             songListView.setCellFactory(creaCellFactoryTrePuntini(new StatoLibreria()));
-
-            for (IBrano ib : libreriaController.getBrani()) {
-                if (ib instanceof Brano b) {
-                    String fn = PathUtils.filenameFromPath(b.getPercorsoFile());
-                    String display = (b.getTitolo() != null && !b.getTitolo().isBlank()) ? b.getTitolo() + " — " + fn
-                            : fn;
-                    songListView.getItems().add(display);
-                }
-            }
+            braniDaMostrare = libreriaController.cercaBrani(filtroAttivo);
         } else {
             mainTitleLabel.setText("Playlist: " + playlistSelezionata);
             songListView.setCellFactory(creaCellFactoryTrePuntini(new StatoPlaylist(playlistSelezionata)));
@@ -514,15 +537,45 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             }
 
             if (playlistCorrente != null) {
-                int tracciaId = 1;
-                for (IBrano ib : playlistCorrente.getBrani()) {
-                    if (ib instanceof Brano b) {
-                        String fn = PathUtils.filenameFromPath(b.getPercorsoFile());
-                        String display = "[Traccia " + tracciaId + "] " + b.getTitolo() + " — " + fn;
-                        songListView.getItems().add(display);
-                        tracciaId++;
-                    }
-                }
+                braniDaMostrare = filtroAttivo.applica(playlistCorrente.getBrani());
+            } else {
+                braniDaMostrare = new ArrayList<>();
+            }
+        }
+
+        int tracciaId = 1;
+        for (IBrano ib : braniDaMostrare) {
+            if (ib instanceof Brano b) {
+                String fn = PathUtils.filenameFromPath(b.getPercorsoFile());
+                String prefix = playlistSelezionata != null ? "[Traccia " + tracciaId + "] " : "";
+                String display = (b.getTitolo() != null && !b.getTitolo().isBlank())
+                        ? prefix + b.getTitolo() + " — " + fn
+                        : prefix + fn;
+                songListView.getItems().add(display);
+                tracciaId++;
+            }
+        }
+
+        if (songListView.getItems().isEmpty()) {
+            if (playlistSelezionata != null) {
+                detailsLabel.setText(!filtroAttivo.isVuoto()
+                        ? "Nessun brano nella playlist corrisponde ai criteri di ricerca."
+                        : "La playlist è vuota");
+            } else if (!filtroAttivo.isVuoto()) {
+                detailsLabel.setText("Nessun brano corrisponde ai criteri di ricerca.");
+            } else {
+                detailsLabel.setText("La libreria è vuota");
+            }
+        } else {
+            int tot = braniDaMostrare.size();
+            if (playlistSelezionata != null) {
+                detailsLabel.setText(!filtroAttivo.isVuoto()
+                        ? "Playlist '" + playlistSelezionata + "' — Risultati: " + tot + " brano/i."
+                        : "Playlist '" + playlistSelezionata + "' (" + tot + " brani). Seleziona un brano.");
+            } else {
+                detailsLabel.setText(filtroAttivo.isVuoto()
+                        ? "Libreria generale (" + tot + " brani). Seleziona un brano per i dettagli."
+                        : "Risultati ricerca: " + tot + " brano/i trovato/i.");
             }
         }
     }
@@ -788,12 +841,112 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         // 1. Ricarica la mappa dei metadati dal CSV aggiornato
         MetadataService.caricaMappaDalCSV(metadataMap);
 
+        popolaComboAnno();
+        popolaComboGenere();
+
         // 2. Rinfresca la lista visualizzata (ListView)
         refreshList();
 
         // 3. SELEZIONA IL NIENTE per forzare il reset delle label dei dettagli
         songListView.getSelectionModel().clearSelection();
         detailsLabel.setText("Seleziona un brano per i dettagli.");
+    }
+
+    // =========================================================================
+    // Ricerca e Filtri
+    // =========================================================================
+
+    private void popolaComboAnno() {
+        if (searchAnnoCombo == null)
+            return;
+        String selected = searchAnnoCombo.getValue();
+        searchAnnoCombo.getItems().clear();
+        searchAnnoCombo.getItems().add(""); // voce "Tutti"
+        libreriaController.getBrani().stream()
+                .filter(ib -> ib instanceof Brano)
+                .map(ib -> ((Brano) ib).getAnno())
+                .filter(a -> a > 0)
+                .distinct()
+                .sorted()
+                .forEach(a -> searchAnnoCombo.getItems().add(String.valueOf(a)));
+        if (selected != null && searchAnnoCombo.getItems().contains(selected)) {
+            searchAnnoCombo.setValue(selected);
+        }
+    }
+
+    private void popolaComboGenere() {
+        if (searchGenereCombo == null)
+            return;
+        String selected = searchGenereCombo.getValue();
+        searchGenereCombo.getItems().clear();
+        searchGenereCombo.getItems().add(""); // voce "Tutti"
+        libreriaController.getBrani().stream()
+                .filter(ib -> ib instanceof Brano)
+                .map(ib -> ((Brano) ib).getGenere())
+                .filter(g -> g != null && !g.isBlank())
+                .distinct()
+                .sorted()
+                .forEach(g -> searchGenereCombo.getItems().add(g));
+        if (selected != null && searchGenereCombo.getItems().contains(selected)) {
+            searchGenereCombo.setValue(selected);
+        }
+    }
+
+    private void popolaComboTag() {
+        if (searchTagCombo == null)
+            return;
+        searchTagCombo.getItems().clear();
+        searchTagCombo.getItems().add(""); // voce "Tutti"
+        for (Tag t : Tag.values()) {
+            if (t != Tag.NESSUNO) {
+                searchTagCombo.getItems().add(t.getEtichetta());
+            }
+        }
+    }
+
+    private void applicaFiltro() {
+        filtroAttivo.setTitolo(searchTitoloField != null ? searchTitoloField.getText() : "");
+        filtroAttivo.setAutore(searchAutoreField != null ? searchAutoreField.getText() : "");
+
+        int annoSel = 0;
+        if (searchAnnoCombo != null) {
+            String annoStr = searchAnnoCombo.getValue();
+            if (annoStr != null && !annoStr.isBlank()) {
+                try {
+                    annoSel = Integer.parseInt(annoStr.trim());
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        filtroAttivo.setAnno(annoSel);
+
+        String genereSel = (searchGenereCombo != null && searchGenereCombo.getValue() != null)
+                ? searchGenereCombo.getValue()
+                : "";
+        filtroAttivo.setGenere(Genere.fromString(genereSel));
+
+        Tag tagSel = Tag.NESSUNO;
+        if (searchTagCombo != null && searchTagCombo.getValue() != null && !searchTagCombo.getValue().isBlank()) {
+            tagSel = Tag.fromString(searchTagCombo.getValue());
+        }
+        filtroAttivo.setTag(tagSel);
+
+        refreshList();
+    }
+
+    private void azzeraFiltro() {
+        filtroAttivo.reset();
+        if (searchTitoloField != null)
+            searchTitoloField.clear();
+        if (searchAutoreField != null)
+            searchAutoreField.clear();
+        if (searchAnnoCombo != null)
+            searchAnnoCombo.setValue("");
+        if (searchGenereCombo != null)
+            searchGenereCombo.setValue("");
+        if (searchTagCombo != null)
+            searchTagCombo.setValue("");
+        refreshList();
     }
 
     public void showAlert(String msg, Alert.AlertType type) {
