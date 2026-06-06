@@ -41,8 +41,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Button btnMostraLibreria;
 
-    @FXML private Button playBtn;
-    @FXML private Button stopBtn;
+    @FXML
+    private Button playBtn;
+    @FXML
+    private Button stopBtn;
     @FXML
     private Slider progressSlider;
     @FXML
@@ -350,11 +352,25 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             private final ContextMenu menu = new ContextMenu();
 
             {
+                lblId.setMinWidth(40);
                 lblId.setPrefWidth(40);
+                lblId.setMaxWidth(40);
+                
+                lblTitolo.setMinWidth(280);
                 lblTitolo.setPrefWidth(280);
+                lblTitolo.setMaxWidth(280);
+                
+                lblAutore.setMinWidth(180);
                 lblAutore.setPrefWidth(180);
+                lblAutore.setMaxWidth(180);
+                
+                lblGenere.setMinWidth(120);
                 lblGenere.setPrefWidth(120);
+                lblGenere.setMaxWidth(120);
+                
+                lblDurata.setMinWidth(60);
                 lblDurata.setPrefWidth(60);
+                lblDurata.setMaxWidth(60);
 
                 HBox.setHgrow(spacer, Priority.ALWAYS);
 

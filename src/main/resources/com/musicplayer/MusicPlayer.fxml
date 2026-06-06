@@ -70,13 +70,13 @@
           </VBox>
 
           <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 8 32 8 32; -fx-border-color: transparent transparent #282828 transparent; -fx-border-width: 0 0 1 0;">
-            <Label prefWidth="40" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="#"/>
-            <Label prefWidth="280" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
-            <Label prefWidth="180" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
-            <Label prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
+            <Label minWidth="40" prefWidth="40" maxWidth="40" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="#"/>
+            <Label minWidth="280" prefWidth="280" maxWidth="280" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
+            <Label minWidth="180" prefWidth="180" maxWidth="180" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
+            <Label minWidth="120" prefWidth="120" maxWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
             <Pane HBox.hgrow="ALWAYS"/>
-            <Label prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="🕒"/>
-            <Label prefWidth="20"/>
+            <Label minWidth="60" prefWidth="60" maxWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="🕒"/>
+            <Label minWidth="20" prefWidth="20" maxWidth="20"/>
           </HBox>
           <ListView fx:id="songListView" style="-fx-background-color: #121212; -fx-control-inner-background: #121212; -fx-border-color: transparent;" VBox.vgrow="ALWAYS"/>
         </VBox>
