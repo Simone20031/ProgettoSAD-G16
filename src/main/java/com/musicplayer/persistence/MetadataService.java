@@ -75,7 +75,8 @@ public class MetadataService {
                     mappa.put(m.filename, m);
                 }
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("Errore in caricaMappaDalCSV: " + e.getMessage());
         }
     }
 
@@ -88,7 +89,8 @@ public class MetadataService {
             out.add(toCSVLine(meta));
             Files.write(metaFile, out, StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("Errore in aggiornaMetadata: " + e.getMessage());
         }
     }
 
@@ -147,7 +149,8 @@ public class MetadataService {
         try {
             if (!Files.exists(libDir))
                 Files.createDirectories(libDir);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("Errore in resolveMetaFile: " + e.getMessage());
         }
         return libDir.resolve("metadata.csv");
     }
@@ -165,6 +168,9 @@ public class MetadataService {
     }
 
     private static String safe(String s) {
+        if (s != null && s.contains(";")) {
+            System.err.println("Warning: Il separatore ';' è stato trovato nel dato '" + s + "'. Sarà sostituito con uno spazio.");
+        }
         return s == null ? "" : s.replace(";", " ");
     }
 
@@ -184,7 +190,8 @@ public class MetadataService {
             } catch (NumberFormatException ignored) {
             }
             return new SongMetadata(filename, title, author, year, duration, genre, tag, playCount);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            System.err.println("Errore imprevisto parsing CSV line: " + e.getMessage());
             return null;
         }
     }
@@ -323,7 +330,8 @@ public class MetadataService {
                         .sorted(java.util.Comparator.reverseOrder())
                         .map(Path::toFile)
                         .forEach(java.io.File::delete);
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                System.err.println("Errore durante eliminazione fisica playlist: " + e.getMessage());
             }
         }
     }

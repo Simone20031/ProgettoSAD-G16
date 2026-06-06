@@ -158,7 +158,14 @@ public class FormBranoView {
 
     public void editBrano(Brano brano, com.musicplayer.persistence.SongMetadata m) {
         resetImportView();
-        pendingImportFile = new File(brano.getPercorsoFile());
+        
+        java.nio.file.Path libDir = java.nio.file.Path.of(System.getProperty("user.dir"), "Libreria");
+        java.nio.file.Path pathDaUsare = java.nio.file.Path.of(brano.getPercorsoFile());
+        if (!pathDaUsare.isAbsolute()) {
+            pathDaUsare = libDir.resolve(pathDaUsare.getFileName());
+        }
+        
+        pendingImportFile = pathDaUsare.toFile();
         pendingEditBrano = brano;
         pendingDuration = brano.getDurata();
 

@@ -96,7 +96,7 @@ public class FeaturesTest {
     @Test
     void testObserverGestoreRiproduzione() {
         // Test feature 10: GestoreRiproduzione e observer
-        GestoreRiproduzione gestore = new GestoreRiproduzione();
+        GestoreRiproduzione gestore = GestoreRiproduzione.getInstance();
 
         final boolean[] notificato = { false };
         RiproduzioneObserver observer = new RiproduzioneObserver() {

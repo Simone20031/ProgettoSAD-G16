@@ -9,9 +9,28 @@ import java.util.List;
 
 public class GestoreRiproduzione {
 
+    private static GestoreRiproduzione instance;
+
     private Media media;
     private MediaPlayer mediaPlayer;
     private final List<RiproduzioneObserver> observers = new ArrayList<>();
+    private PlayerState statoCorrente = new StoppedState();
+
+    private GestoreRiproduzione() {
+        // Costruttore privato
+    }
+
+    public static GestoreRiproduzione getInstance() {
+        if (instance == null) {
+            instance = new GestoreRiproduzione();
+        }
+        return instance;
+    }
+
+    // Aggiunto per permettere reset nei test isolati
+    public static void resetInstance() {
+        instance = null;
+    }
 
     public void addObserver(RiproduzioneObserver o) {
         if (!observers.contains(o)) {
@@ -21,6 +40,14 @@ public class GestoreRiproduzione {
 
     public void removeObserver(RiproduzioneObserver o) {
         observers.remove(o);
+    }
+
+    public PlayerState getStato() {
+        return this.statoCorrente;
+    }
+
+    public void setStato(PlayerState stato) {
+        this.statoCorrente = stato;
     }
 
     // [REFACTORING FUTURO]: Introdurre l'interfaccia Playable (Brano e Playlist la
@@ -43,6 +70,7 @@ public class GestoreRiproduzione {
                 Path currentPath = Path.of(java.net.URI.create(media.getSource()));
                 if (currentPath.toAbsolutePath().normalize().equals(file.toAbsolutePath().normalize())) {
                     mediaPlayer.play();
+                    statoCorrente = new PlayingState();
                     notificaPlay();
                     return;
                 }
@@ -73,9 +101,13 @@ public class GestoreRiproduzione {
                 notificaProgresso((int) newTime.toSeconds());
             });
 
-            mediaPlayer.setOnEndOfMedia(this::stop);
+            mediaPlayer.setOnEndOfMedia(() -> {
+                eseguiStop();
+                statoCorrente = new StoppedState();
+            });
 
             mediaPlayer.play();
+            statoCorrente = new PlayingState();
             notificaPlay();
 
         } catch (Exception e) {
@@ -83,14 +115,26 @@ public class GestoreRiproduzione {
         }
     }
 
+    public void play() {
+        statoCorrente.premiPlay(this);
+    }
+
     public void pausa() {
+        statoCorrente.premiPausa(this);
+    }
+
+    public void stop() {
+        statoCorrente.premiStop(this);
+    }
+
+    public void eseguiPausa() {
         if (mediaPlayer != null) {
             mediaPlayer.pause();
             notificaPausa();
         }
     }
 
-    public void stop() {
+    public void eseguiStop() {
         if (mediaPlayer != null) {
             mediaPlayer.stop();
             mediaPlayer.dispose();
@@ -125,7 +169,7 @@ public class GestoreRiproduzione {
         return mediaPlayer != null;
     }
 
-    public void resume() {
+    public void eseguiPlay() {
         if (mediaPlayer != null) {
             mediaPlayer.play();
             notificaPlay();

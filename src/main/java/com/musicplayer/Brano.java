@@ -159,10 +159,6 @@ public class Brano implements IBrano {
                     ValidazioneException.TipoErrore.FORMATO_NON_VALIDO, "anno");
         }
 
-        if (durata < 0) {
-            throw new ValidazioneException("La Durata del brano non può essere negativa!",
-                    ValidazioneException.TipoErrore.FORMATO_NON_VALIDO, "durata");
-        }
     }
 
     // ── Accessori ─────────────────────────────────────────────────────────────

@@ -41,12 +41,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Button btnMostraLibreria;
 
-    @FXML
-    private Button playBtn;
-    @FXML
-    private Button pauseBtn;
-    @FXML
-    private Button stopBtn;
+    @FXML private Button playBtn;
+    @FXML private Button stopBtn;
     @FXML
     private Slider progressSlider;
     @FXML
@@ -284,8 +280,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             }
         });
         // Inizializza GestoreRiproduzione e PlayerView
-        this.gestoreRiproduzione = new GestoreRiproduzione();
-        this.playerView = new PlayerView(playBtn, pauseBtn, stopBtn, currentTimeLabel, totalTimeLabel, progressSlider,
+        this.gestoreRiproduzione = GestoreRiproduzione.getInstance();
+        this.playerView = new PlayerView(playBtn, stopBtn, currentTimeLabel, totalTimeLabel, progressSlider,
                 gestoreRiproduzione, this);
 
         songListView.getSelectionModel().selectedItemProperty()
@@ -626,9 +622,14 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         String sel = songListView.getSelectionModel().getSelectedItem();
         if (sel == null) {
             if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
-                gestoreRiproduzione.resume();
+                gestoreRiproduzione.play();
+                return;
+            } else if (!songListView.getItems().isEmpty()) {
+                songListView.getSelectionModel().selectFirst();
+                sel = songListView.getSelectionModel().getSelectedItem();
+            } else {
+                return;
             }
-            return;
         }
 
         Brano brano = findBranoByFilename(extractFilename(sel));

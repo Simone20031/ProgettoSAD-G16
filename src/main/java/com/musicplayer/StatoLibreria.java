@@ -30,7 +30,22 @@ public class StatoLibreria implements StatoUI {
             return;
         switch (op) {
             case "Aggiungi tag" -> {
-                // Placeholder
+                if (view != null) {
+                    javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog();
+                    dialog.setTitle("Aggiungi Tag");
+                    dialog.setHeaderText("Aggiungi un nuovo tag a " + brano.getTitolo());
+                    dialog.setContentText("Nuovo Tag (es. Preferiti):");
+                    dialog.showAndWait().ifPresent(nuovoTag -> {
+                        try {
+                            String tagCorrente = brano.getTag() != null && brano.getTag() != Tag.NESSUNO ? brano.getTag().getEtichetta() : "";
+                            String tagAggiornato = tagCorrente.isEmpty() ? nuovoTag : tagCorrente + ", " + nuovoTag;
+                            controller.modificaTagBrano(brano, tagAggiornato);
+                            view.refreshList();
+                        } catch (ValidazioneException e) {
+                            view.mostraErrore(e);
+                        }
+                    });
+                }
             }
             case "Modifica" -> {
                 if (view != null) {

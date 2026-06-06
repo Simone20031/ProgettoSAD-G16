@@ -192,6 +192,7 @@ public class PlaylistView {
                 if (nomePlaylist.equals(libreriaView.getPlaylistSelezionata())) {
                     libreriaView.mostraLibreriaGenerale();
                 }
+                libreriaView.refreshPlaylistList();
             } catch (Exception ex) {
                 libreriaView.mostraErrore(new ValidazioneException("Errore eliminazione: " + ex.getMessage()));
             }

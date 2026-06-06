@@ -148,8 +148,6 @@ public class LibreriaController {
             return;
 
         // Aggiorna il campo enum sul Brano in RAM con il primo tag (compatibilità
-        // dominio)
-        brano.getClass(); // null-check implicito già fatto sopra
         // Usa setDettagli con solo il tag per aggiornare l'enum in RAM
         Map<String, String> soloTag = new HashMap<>();
         soloTag.put("titolo", brano.getTitolo());
@@ -203,6 +201,11 @@ public class LibreriaController {
 
         String filename = PathUtils.filenameFromPath(brano.getPercorsoFile());
         Path target = libDir().resolve(filename);
+
+        // 0. Se il brano è in riproduzione, fermiamolo per sbloccare il file lock
+        if (GestoreRiproduzione.getInstance().isCurrentFile(target)) {
+            GestoreRiproduzione.getInstance().stop();
+        }
 
         // 1. Rilascio del file (per evitare FileSystemException su Windows)
         System.gc();
@@ -295,13 +298,15 @@ public class LibreriaController {
             try {
                 if (meta.year != null && !meta.year.isBlank())
                     anno = Integer.parseInt(meta.year.trim());
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException e) {
+                System.err.println("Errore parsing anno in LibreriaController: " + e.getMessage());
             }
             int durata = 0;
             try {
                 if (meta.duration != null && !meta.duration.isBlank())
                     durata = Integer.parseInt(meta.duration.trim());
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException e) {
+                System.err.println("Errore parsing durata in LibreriaController: " + e.getMessage());
             }
             try {
                 Brano b = factory.creaBrano(
@@ -309,7 +314,8 @@ public class LibreriaController {
                         anno, meta.filename, durata,
                         Tag.fromString(meta.tag));
                 libreria.aggiungiBrano(b);
-            } catch (ValidazioneException ignored) {
+            } catch (ValidazioneException e) {
+                System.err.println("Errore validazione durante caricamento brano: " + e.getMessage());
             }
         }
 

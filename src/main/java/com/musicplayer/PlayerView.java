@@ -6,7 +6,6 @@ import javafx.scene.control.Slider;
 
 public class PlayerView implements RiproduzioneObserver {
     private final Button playBtn;
-    private final Button pauseBtn;
     private final Button stopBtn;
     private final Label currentTimeLabel;
     private final Label totalTimeLabel;
@@ -14,12 +13,12 @@ public class PlayerView implements RiproduzioneObserver {
 
     private final GestoreRiproduzione gestoreRiproduzione;
     private final LibreriaView libreriaView; // Per chiamare playSelected() della view
+    private boolean isPlaying = false;
 
-    public PlayerView(Button playBtn, Button pauseBtn, Button stopBtn,
+    public PlayerView(Button playBtn, Button stopBtn,
             Label currentTimeLabel, Label totalTimeLabel, Slider progressSlider,
             GestoreRiproduzione gestoreRiproduzione, LibreriaView libreriaView) {
         this.playBtn = playBtn;
-        this.pauseBtn = pauseBtn;
         this.stopBtn = stopBtn;
         this.currentTimeLabel = currentTimeLabel;
         this.totalTimeLabel = totalTimeLabel;
@@ -37,11 +36,17 @@ public class PlayerView implements RiproduzioneObserver {
     }
 
     private void initHandlers() {
-        playBtn.setOnAction(e -> libreriaView.playSelected());
-
-        pauseBtn.setOnAction(e -> {
-            if (gestoreRiproduzione != null) {
-                gestoreRiproduzione.pausa();
+        playBtn.setOnAction(e -> {
+            if (!isPlaying) {
+                if (gestoreRiproduzione != null && gestoreRiproduzione.getStato() instanceof PausedState) {
+                    gestoreRiproduzione.play();
+                } else {
+                    libreriaView.playSelected();
+                }
+            } else {
+                if (gestoreRiproduzione != null) {
+                    gestoreRiproduzione.pausa();
+                }
             }
         });
 
@@ -61,12 +66,22 @@ public class PlayerView implements RiproduzioneObserver {
     public void setPlaybackControlsDisabled(boolean disabled) {
         if (playBtn != null)
             playBtn.setDisable(disabled);
-        if (pauseBtn != null)
-            pauseBtn.setDisable(disabled);
         if (stopBtn != null)
             stopBtn.setDisable(disabled);
         if (progressSlider != null)
             progressSlider.setDisable(disabled);
+    }
+
+    public void mostraStatoPlay() {
+        isPlaying = false;
+        playBtn.setText("▶");
+        aggiornaStilePlayer(null); // Rimuove evidenziatore se necessario, o lo setta
+    }
+
+    public void mostraStatoPausa() {
+        isPlaying = true;
+        playBtn.setText("⏸");
+        aggiornaStilePlayer(playBtn);
     }
 
     private void aggiornaStilePlayer(Button attivo) {
@@ -74,8 +89,6 @@ public class PlayerView implements RiproduzioneObserver {
         String activeColor = "#1DB954";
 
         playBtn.setStyle(playBtn.getStyle().replaceAll("-fx-background-color: #[a-fA-F0-9]+;",
-                "-fx-background-color: " + baseColor + ";"));
-        pauseBtn.setStyle(pauseBtn.getStyle().replaceAll("-fx-background-color: #[a-fA-F0-9]+;",
                 "-fx-background-color: " + baseColor + ";"));
         stopBtn.setStyle(stopBtn.getStyle().replaceAll("-fx-background-color: #[a-fA-F0-9]+;",
                 "-fx-background-color: " + baseColor + ";"));
@@ -112,16 +125,17 @@ public class PlayerView implements RiproduzioneObserver {
 
     @Override
     public void onPlay() {
-        aggiornaStilePlayer(playBtn);
+        mostraStatoPausa(); // Mostro Pausa perché è in riproduzione
     }
 
     @Override
     public void onPausa() {
-        aggiornaStilePlayer(pauseBtn);
+        mostraStatoPlay(); // Mostro Play perché è in pausa
     }
 
     @Override
     public void onStop() {
+        mostraStatoPlay();
         aggiornaStilePlayer(stopBtn);
         progressSlider.setValue(0);
         currentTimeLabel.setText("00:00");

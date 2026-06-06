@@ -55,10 +55,6 @@ public class Playlist {
         brani.add(pos, b);
     }
 
-    // Dentro la classe Playlist.java
-    public boolean contieneBrano(Brano b) {
-        return this.getBrani().contains(b);
-    }
 
     public void rinomina(String nuovoNome) {
         if (nuovoNome == null || nuovoNome.trim().isEmpty()) {

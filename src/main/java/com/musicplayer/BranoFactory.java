@@ -6,7 +6,7 @@ package com.musicplayer;
  * si chiamano nello stesso modo ("creaBrano"), ma Java capisce quale usare in base 
  * al numero, all'ordine e al tipo dei parametri passati nella firma.
  */
-public class BranoFactory {
+public class BranoFactory extends BranoCreator {
 
     /**
      * METODO 1 (STATIC) ── SCENARIO: BOOTSTRAP / RIPRISTINO DAL FILE CSV
@@ -69,7 +69,8 @@ public class BranoFactory {
      * @return Un oggetto Brano completamente nuovo con un'identità digitale vergine.
      * @throws ValidazioneException Se i campi obbligatori del form (es. titolo) sono vuoti.
      */
-    public Brano creaBrano(String titolo, String autore, String genere, int anno, String percorsoFile, int durataSec, Tag tag) throws ValidazioneException {
+    @Override
+    protected Brano costruisciBrano(String titolo, String autore, String genere, int anno, String percorsoFile, int durataSec, Tag tag) {
         
         // Fallback difensivo: se l'utente non ha scelto nessun tag, assegna di default il valore NESSUNO
         Tag t = tag == null ? Tag.NESSUNO : tag;
@@ -79,11 +80,6 @@ public class BranoFactory {
         String idUnivoco = java.util.UUID.randomUUID().toString();
         
         // Istanzia il brano accoppiando l'ID appena generato con i parametri numerici già pronti
-        Brano b = new Brano(idUnivoco, titolo, autore, genere, anno, percorsoFile, durataSec, t);
-        
-        // Valida immediatamente i dati immessi dall'utente per intercettare subito errori di digitazione
-        b.validaDati();
-        
-        return b;
+        return new Brano(idUnivoco, titolo, autore, genere, anno, percorsoFile, durataSec, t);
     }
 }

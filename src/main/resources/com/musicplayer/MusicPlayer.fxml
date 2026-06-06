@@ -57,6 +57,7 @@
           </HBox>
           
           <VBox spacing="10" style="-fx-padding: 0 24 16 24;">
+
             <HBox spacing="8" alignment="CENTER_LEFT">
                 <TextField fx:id="searchTitoloField" promptText="Titolo..." prefWidth="140" style="-fx-background-color: #333333; -fx-text-fill: #ffffff;" />
                 <TextField fx:id="searchAutoreField" promptText="Autore..." prefWidth="140" style="-fx-background-color: #333333; -fx-text-fill: #ffffff;" />
@@ -184,11 +185,7 @@
               <Font size="19.0"/>
             </font>
           </Button>
-          <Button fx:id="pauseBtn" alignment="CENTER" style="-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-cursor: hand;" text="⏸" textAlignment="CENTER">
-            <font>
-              <Font size="16.0"/>
-            </font>
-          </Button>
+
           <Button fx:id="stopBtn" alignment="CENTER" style="-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-cursor: hand;" text="⏹" textAlignment="CENTER"/>
         </HBox>
         <HBox alignment="CENTER_RIGHT" minWidth="67.0" prefHeight="42.0" prefWidth="338.0">
