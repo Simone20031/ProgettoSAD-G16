@@ -180,6 +180,12 @@
           </opaqueInsets>
         </VBox>
         <HBox alignment="CENTER" prefHeight="42.0" prefWidth="714.0" spacing="16">
+          <Button fx:id="shuffleBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;" text="🔀" textAlignment="CENTER">
+            <font>
+              <Font size="18.0"/>
+            </font>
+          </Button>
+          
           <Button fx:id="playBtn" alignment="CENTER" style="-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-cursor: hand;" text="▶" textAlignment="CENTER">
             <font>
               <Font size="19.0"/>

@@ -120,6 +120,10 @@ public class FeaturesTest {
             @Override
             public void onProgressoAggiornato(int secondi) {
             }
+
+            @Override
+            public void onBranoCambiato(String nuovoPercorso) {
+            }
         };
 
         gestore.addObserver(observer);

@@ -7,6 +7,7 @@ import javafx.scene.control.Slider;
 public class PlayerView implements RiproduzioneObserver {
     private final Button playBtn;
     private final Button stopBtn;
+    private final Button shuffleBtn;
     private final Label currentTimeLabel;
     private final Label totalTimeLabel;
     private final Slider progressSlider;
@@ -14,12 +15,14 @@ public class PlayerView implements RiproduzioneObserver {
     private final GestoreRiproduzione gestoreRiproduzione;
     private final LibreriaView libreriaView; // Per chiamare playSelected() della view
     private boolean isPlaying = false;
+    private boolean shuffleEnabled = false;
 
-    public PlayerView(Button playBtn, Button stopBtn,
+    public PlayerView(Button playBtn, Button stopBtn, Button shuffleBtn,
             Label currentTimeLabel, Label totalTimeLabel, Slider progressSlider,
             GestoreRiproduzione gestoreRiproduzione, LibreriaView libreriaView) {
         this.playBtn = playBtn;
         this.stopBtn = stopBtn;
+        this.shuffleBtn = shuffleBtn;
         this.currentTimeLabel = currentTimeLabel;
         this.totalTimeLabel = totalTimeLabel;
         this.progressSlider = progressSlider;
@@ -61,6 +64,24 @@ public class PlayerView implements RiproduzioneObserver {
                 gestoreRiproduzione.seek((int) progressSlider.getValue());
             }
         });
+
+        if (shuffleBtn != null) {
+            shuffleBtn.setOnAction(e -> {
+                shuffleEnabled = !shuffleEnabled;
+                if (shuffleEnabled) {
+                    shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
+                } else {
+                    shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+                }
+                if (libreriaView != null) {
+                    libreriaView.onShuffleToggled(shuffleEnabled);
+                }
+            });
+        }
+    }
+
+    public boolean isShuffleEnabled() {
+        return shuffleEnabled;
     }
 
     public void setPlaybackControlsDisabled(boolean disabled) {
@@ -147,5 +168,10 @@ public class PlayerView implements RiproduzioneObserver {
             progressSlider.setValue(secondi);
         }
         currentTimeLabel.setText(formatTime(secondi));
+    }
+
+    @Override
+    public void onBranoCambiato(String nuovoPercorso) {
+        // Nessun aggiornamento necessario nel PlayerView, ci pensa LibreriaView
     }
 }

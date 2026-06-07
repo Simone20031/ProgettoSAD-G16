@@ -51,6 +51,12 @@ public class ShuffleIterator implements PlaylistIterator {
         riprodotti.clear();
     }
 
+    public void forzaRiproduzione(IBrano brano) {
+        if (!riprodotti.contains(brano)) {
+            riprodotti.add(brano);
+        }
+    }
+
     public List<IBrano> getRiprodotti() {
         return new ArrayList<>(riprodotti);
     }

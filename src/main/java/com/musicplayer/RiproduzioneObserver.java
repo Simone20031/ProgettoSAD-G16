@@ -6,4 +6,5 @@ public interface RiproduzioneObserver {
     void onPausa();
     void onStop();
     void onProgressoAggiornato(int secondi);
+    void onBranoCambiato(String nuovoPercorso);
 }

@@ -46,6 +46,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Button stopBtn;
     @FXML
+    private Button shuffleBtn;
+    @FXML
     private Slider progressSlider;
     @FXML
     private Label detailsLabel;
@@ -283,8 +285,30 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         });
         // Inizializza GestoreRiproduzione e PlayerView
         this.gestoreRiproduzione = GestoreRiproduzione.getInstance();
-        this.playerView = new PlayerView(playBtn, stopBtn, currentTimeLabel, totalTimeLabel, progressSlider,
+        this.playerView = new PlayerView(playBtn, stopBtn, shuffleBtn, currentTimeLabel, totalTimeLabel, progressSlider,
                 gestoreRiproduzione, this);
+
+        this.gestoreRiproduzione.addObserver(new RiproduzioneObserver() {
+            @Override public void onPlayerReady(int durataSecondi) {}
+            @Override public void onPlay() {}
+            @Override public void onPausa() {}
+            @Override public void onStop() {}
+            @Override public void onProgressoAggiornato(int secondi) {}
+            @Override public void onBranoCambiato(String nuovoPercorso) {
+                javafx.application.Platform.runLater(() -> {
+                    Path p = Path.of(nuovoPercorso);
+                    String fn = p.getFileName().toString();
+                    SongMetadata m = metadataMap.get(fn);
+                    if (m != null) {
+                        playingTitleLabel.setText(m.title != null && !m.title.isBlank() ? m.title : fn);
+                        playingAuthorLabel.setText(m.author != null && !m.author.isBlank() ? m.author : "Autore sconosciuto");
+                    } else {
+                        playingTitleLabel.setText(fn);
+                        playingAuthorLabel.setText("Autore sconosciuto");
+                    }
+                });
+            }
+        });
 
         songListView.getSelectionModel().selectedItemProperty()
                 .addListener((obs, oldVal, newVal) -> {
@@ -634,6 +658,33 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         });
     }
 
+    public void onShuffleToggled(boolean enabled) {
+        if (gestoreRiproduzione == null) return;
+        if (enabled) {
+            if (gestoreRiproduzione.hasActiveMedia()) {
+                java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
+                for (String item : songListView.getItems()) {
+                    IBrano br = findBranoByFilename(extractFilename(item));
+                    if (br != null) {
+                        listaBrani.add(br);
+                    }
+                }
+                ShuffleIterator iter = new ShuffleIterator(listaBrani);
+                String currentMedia = gestoreRiproduzione.getCurrentMediaSource();
+                try {
+                    String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName().toString();
+                    IBrano b = findBranoByFilename(currentFilename);
+                    if (b != null) {
+                        iter.forzaRiproduzione(b);
+                    }
+                } catch (Exception ignored) {}
+                gestoreRiproduzione.setIterator(iter);
+            }
+        } else {
+            gestoreRiproduzione.setIterator(null);
+        }
+    }
+
     public void playSelected() {
         String sel = songListView.getSelectionModel().getSelectedItem();
         if (sel == null) {
@@ -674,6 +725,22 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 playingTitleLabel.setText(fn);
                 playingAuthorLabel.setText("Autore sconosciuto");
             }
+
+            if (playerView.isShuffleEnabled()) {
+                java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
+                for (String item : songListView.getItems()) {
+                    IBrano br = findBranoByFilename(extractFilename(item));
+                    if (br != null) {
+                        listaBrani.add(br);
+                    }
+                }
+                ShuffleIterator iter = new ShuffleIterator(listaBrani);
+                iter.forzaRiproduzione(brano);
+                gestoreRiproduzione.setIterator(iter);
+            } else {
+                gestoreRiproduzione.setIterator(null);
+            }
+
             gestoreRiproduzione.playFile(pathDaUsare);
         } else {
             System.err.println("File non trovato in: " + pathDaUsare.toAbsolutePath());

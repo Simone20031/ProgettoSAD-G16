@@ -15,6 +15,7 @@ public class GestoreRiproduzione {
     private MediaPlayer mediaPlayer;
     private final List<RiproduzioneObserver> observers = new ArrayList<>();
     private PlayerState statoCorrente = new StoppedState();
+    private PlaylistIterator iteratorCorrente;
 
     private GestoreRiproduzione() {
         // Costruttore privato
@@ -102,16 +103,45 @@ public class GestoreRiproduzione {
             });
 
             mediaPlayer.setOnEndOfMedia(() -> {
-                eseguiStop();
-                statoCorrente = new StoppedState();
+                javafx.application.Platform.runLater(() -> {
+                    if (iteratorCorrente != null && iteratorCorrente.hasNext()) {
+                        playNext();
+                    } else {
+                        eseguiStop();
+                        statoCorrente = new StoppedState();
+                    }
+                });
             });
 
             mediaPlayer.play();
             statoCorrente = new PlayingState();
+            notificaBranoCambiato(file.toAbsolutePath().toString());
             notificaPlay();
 
         } catch (Exception e) {
             System.err.println("Errore caricamento media: " + e.getMessage());
+        }
+    }
+
+    public void setIterator(PlaylistIterator iterator) {
+        this.iteratorCorrente = iterator;
+    }
+
+    public void playNext() {
+        if (iteratorCorrente != null && iteratorCorrente.hasNext()) {
+            IBrano nextBrano = iteratorCorrente.next();
+            if (nextBrano instanceof Brano b) {
+                Path pathDaUsare = Path.of(b.getPercorsoFile());
+                if (!pathDaUsare.isAbsolute()) {
+                    pathDaUsare = Path.of(System.getProperty("user.dir"), "Libreria").resolve(pathDaUsare.getFileName());
+                }
+                playFile(pathDaUsare);
+            } else {
+                playNext(); // Salta se non è un Brano riproducibile
+            }
+        } else {
+            eseguiStop();
+            statoCorrente = new StoppedState();
         }
     }
 
@@ -199,5 +229,10 @@ public class GestoreRiproduzione {
     private void notificaProgresso(int sec) {
         for (RiproduzioneObserver o : observers)
             o.onProgressoAggiornato(sec);
+    }
+
+    private void notificaBranoCambiato(String path) {
+        for (RiproduzioneObserver o : observers)
+            o.onBranoCambiato(path);
     }
 }
