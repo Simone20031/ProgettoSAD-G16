@@ -13,7 +13,7 @@ public class StatoPlaylist implements StatoUI {
 
     @Override
     public List<String> getOpzioniSingolo() {
-        return Arrays.asList("Rimuovi da questa playlist");
+        return Arrays.asList("Aggiungi tag", "Modifica", "Elimina brano", "Aggiungi a playlist", "Rimuovi da questa playlist");
     }
 
     @Override
@@ -30,6 +30,9 @@ public class StatoPlaylist implements StatoUI {
             } catch (Exception e) {
                 view.mostraErrore(new ValidazioneException("Errore durante la rimozione: " + e.getMessage()));
             }
+        } else {
+            // Deleghiamo allo StatoLibreria per le operazioni standard
+            new StatoLibreria().eseguiOpzione(opzione, selezionato, controller, view);
         }
     }
 }

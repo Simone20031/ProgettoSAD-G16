@@ -563,9 +563,21 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             return;
         }
 
+        // Filtra la playlist corrente se siamo dentro a una playlist
+        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream().map(Playlist::getNome);
+        if (playlistSelezionata != null) {
+            stream = stream.filter(nome -> !nome.equals(playlistSelezionata));
+        }
+        
+        java.util.List<String> opzioni = stream.toList();
+        if (opzioni.isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Non ci sono altre playlist disponibili.");
+            alert.showAndWait();
+            return;
+        }
+
         // Carica le playlist nel ListView
-        playlistSelectionListView.getItems().setAll(
-                libreriaController.getPlaylist().stream().map(Playlist::getNome).toList());
+        playlistSelectionListView.getItems().setAll(opzioni);
 
         switchToView(viewSelezionePlaylist);
     }
