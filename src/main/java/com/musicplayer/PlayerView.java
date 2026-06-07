@@ -8,6 +8,7 @@ public class PlayerView implements RiproduzioneObserver {
     private final Button playBtn;
     private final Button stopBtn;
     private final Button shuffleBtn;
+    private final Button loopBtn;
     private final Label currentTimeLabel;
     private final Label totalTimeLabel;
     private final Slider progressSlider;
@@ -16,13 +17,15 @@ public class PlayerView implements RiproduzioneObserver {
     private final LibreriaView libreriaView; // Per chiamare playSelected() della view
     private boolean isPlaying = false;
     private boolean shuffleEnabled = false;
+    private boolean loopEnabled = false;
 
-    public PlayerView(Button playBtn, Button stopBtn, Button shuffleBtn,
+    public PlayerView(Button playBtn, Button stopBtn, Button shuffleBtn, Button loopBtn,
             Label currentTimeLabel, Label totalTimeLabel, Slider progressSlider,
             GestoreRiproduzione gestoreRiproduzione, LibreriaView libreriaView) {
         this.playBtn = playBtn;
         this.stopBtn = stopBtn;
         this.shuffleBtn = shuffleBtn;
+        this.loopBtn = loopBtn;
         this.currentTimeLabel = currentTimeLabel;
         this.totalTimeLabel = totalTimeLabel;
         this.progressSlider = progressSlider;
@@ -78,10 +81,28 @@ public class PlayerView implements RiproduzioneObserver {
                 }
             });
         }
+
+        if (loopBtn != null) {
+            loopBtn.setOnAction(e -> {
+                loopEnabled = !loopEnabled;
+                if (loopEnabled) {
+                    loopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
+                } else {
+                    loopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+                }
+                if (libreriaView != null) {
+                    libreriaView.onLoopToggled(loopEnabled);
+                }
+            });
+        }
     }
 
     public boolean isShuffleEnabled() {
         return shuffleEnabled;
+    }
+
+    public boolean isLoopEnabled() {
+        return loopEnabled;
     }
 
     public void setPlaybackControlsDisabled(boolean disabled) {

@@ -48,6 +48,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Button shuffleBtn;
     @FXML
+    private Button loopBtn;
+    @FXML
     private Slider progressSlider;
     @FXML
     private Label detailsLabel;
@@ -55,6 +57,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private Label playingTitleLabel;
     @FXML
     private Label playingAuthorLabel;
+
+    private boolean isProgrammaticSelection = false;
 
     @FXML
     private Button btnApriCreazione;
@@ -285,7 +289,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         });
         // Inizializza GestoreRiproduzione e PlayerView
         this.gestoreRiproduzione = GestoreRiproduzione.getInstance();
-        this.playerView = new PlayerView(playBtn, stopBtn, shuffleBtn, currentTimeLabel, totalTimeLabel, progressSlider,
+        this.playerView = new PlayerView(playBtn, stopBtn, shuffleBtn, loopBtn, currentTimeLabel, totalTimeLabel, progressSlider,
                 gestoreRiproduzione, this);
 
         this.gestoreRiproduzione.addObserver(new RiproduzioneObserver() {
@@ -306,6 +310,19 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         playingTitleLabel.setText(fn);
                         playingAuthorLabel.setText("Autore sconosciuto");
                     }
+                    
+                    String itemToSelect = null;
+                    for (String item : songListView.getItems()) {
+                        if (extractFilename(item).equals(fn)) {
+                            itemToSelect = item;
+                            break;
+                        }
+                    }
+                    if (itemToSelect != null) {
+                        isProgrammaticSelection = true;
+                        songListView.getSelectionModel().select(itemToSelect);
+                        isProgrammaticSelection = false;
+                    }
                 });
             }
         });
@@ -313,6 +330,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         songListView.getSelectionModel().selectedItemProperty()
                 .addListener((obs, oldVal, newVal) -> {
                     showDetails(newVal);
+                    if (isProgrammaticSelection) return;
                     if (newVal != null && !newVal.equals(oldVal)) {
                         if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
                             playSelected();
@@ -660,29 +678,44 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
     public void onShuffleToggled(boolean enabled) {
         if (gestoreRiproduzione == null) return;
-        if (enabled) {
-            if (gestoreRiproduzione.hasActiveMedia()) {
-                java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
-                for (String item : songListView.getItems()) {
-                    IBrano br = findBranoByFilename(extractFilename(item));
-                    if (br != null) {
-                        listaBrani.add(br);
-                    }
-                }
-                ShuffleIterator iter = new ShuffleIterator(listaBrani);
-                String currentMedia = gestoreRiproduzione.getCurrentMediaSource();
-                try {
-                    String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName().toString();
-                    IBrano b = findBranoByFilename(currentFilename);
-                    if (b != null) {
-                        iter.forzaRiproduzione(b);
-                    }
-                } catch (Exception ignored) {}
-                gestoreRiproduzione.setIterator(iter);
+        aggiornaIteratoreCorrente();
+    }
+
+    public void onLoopToggled(boolean enabled) {
+        if (gestoreRiproduzione == null) return;
+        aggiornaIteratoreCorrente();
+    }
+
+    private void aggiornaIteratoreCorrente() {
+        if (!gestoreRiproduzione.hasActiveMedia()) return;
+
+        java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
+        for (String item : songListView.getItems()) {
+            IBrano br = findBranoByFilename(extractFilename(item));
+            if (br != null) {
+                listaBrani.add(br);
             }
-        } else {
-            gestoreRiproduzione.setIterator(null);
         }
+
+        String currentMedia = gestoreRiproduzione.getCurrentMediaSource();
+        IBrano b = null;
+        try {
+            String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName().toString();
+            b = findBranoByFilename(currentFilename);
+        } catch (Exception ignored) {}
+
+        PlaylistIterator iter = null;
+        if (playerView.isShuffleEnabled()) {
+            ShuffleIterator sIter = new ShuffleIterator(listaBrani);
+            if (b != null) sIter.forzaRiproduzione(b);
+            iter = sIter;
+        } else if (playerView.isLoopEnabled()) {
+            LoopIterator lIter = new LoopIterator(listaBrani);
+            if (b != null) lIter.impostaBranoCorrente(b);
+            iter = lIter;
+        }
+
+        gestoreRiproduzione.setIterator(iter);
     }
 
     public void playSelected() {
@@ -726,6 +759,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 playingAuthorLabel.setText("Autore sconosciuto");
             }
 
+            PlaylistIterator iter = null;
             if (playerView.isShuffleEnabled()) {
                 java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
                 for (String item : songListView.getItems()) {
@@ -734,12 +768,22 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         listaBrani.add(br);
                     }
                 }
-                ShuffleIterator iter = new ShuffleIterator(listaBrani);
-                iter.forzaRiproduzione(brano);
-                gestoreRiproduzione.setIterator(iter);
-            } else {
-                gestoreRiproduzione.setIterator(null);
+                ShuffleIterator sIter = new ShuffleIterator(listaBrani);
+                sIter.forzaRiproduzione(brano);
+                iter = sIter;
+            } else if (playerView.isLoopEnabled()) {
+                java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
+                for (String item : songListView.getItems()) {
+                    IBrano br = findBranoByFilename(extractFilename(item));
+                    if (br != null) {
+                        listaBrani.add(br);
+                    }
+                }
+                LoopIterator lIter = new LoopIterator(listaBrani);
+                lIter.impostaBranoCorrente(brano);
+                iter = lIter;
             }
+            gestoreRiproduzione.setIterator(iter);
 
             gestoreRiproduzione.playFile(pathDaUsare);
         } else {
