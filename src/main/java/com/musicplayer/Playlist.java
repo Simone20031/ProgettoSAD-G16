@@ -72,11 +72,13 @@ public class Playlist {
      * public PlaylistIterator creaIterator() {
      * return new SequentialIterator(brani);
      * }
-     * 
-     * public PlaylistIterator creaIteratorShuffle() {
-     * return new ShuffleIterator(brani);
-     * }
-     * 
+     */
+
+    public PlaylistIterator creaIteratorShuffle() {
+        return new ShuffleIterator(brani);
+    }
+
+    /*
      * public PlaylistIterator creaIteratorLoop() {
      * return new LoopIterator(brani);
      * }
