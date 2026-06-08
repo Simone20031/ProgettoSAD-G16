@@ -16,29 +16,10 @@ public class GestoreRiproduzione {
     private final List<RiproduzioneObserver> observers = new ArrayList<>();
     private PlayerState statoCorrente = new StoppedState();
     private PlaylistIterator iteratorCorrente;
-    private Playable elementoCorrente;
     private PlaybackStrategy strategia = new SequentialStrategy();
-    private int progressoSecondi;
-    private String contestoRiproduzione;
 
     private GestoreRiproduzione() {
         // Costruttore privato
-    }
-
-    public String getContestoRiproduzione() {
-        return contestoRiproduzione;
-    }
-
-    public void setContestoRiproduzione(String contestoRiproduzione) {
-        this.contestoRiproduzione = contestoRiproduzione;
-    }
-
-    public Playable getElementoCorrente() {
-        return this.elementoCorrente;
-    }
-
-    public int getProgressoSecondi() {
-        return this.progressoSecondi;
     }
 
     public static GestoreRiproduzione getInstance() {
@@ -95,7 +76,7 @@ public class GestoreRiproduzione {
                     notificaPlay();
                     return;
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
                 // ignore and recreate
             }
         }
@@ -120,7 +101,6 @@ public class GestoreRiproduzione {
 
             mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
                 int sec = (int) newTime.toSeconds();
-                this.progressoSecondi = sec;
                 notificaProgresso(sec);
             });
 
@@ -163,7 +143,6 @@ public class GestoreRiproduzione {
     }
 
     public void play(Playable elemento) {
-        this.elementoCorrente = elemento;
         if (elemento instanceof Brano b) {
             Path pathDaUsare = Path.of(b.getPercorsoFile());
             if (!pathDaUsare.isAbsolute()) {
@@ -213,8 +192,10 @@ public class GestoreRiproduzione {
     }
 
     /**
-     * Task 22.1 - Aggiorna la coda di riproduzione con la lista di brani aggiornata.
-     * Usato quando un brano viene aggiunto, rimosso o spostato nella playlist durante
+     * Task 22.1 - Aggiorna la coda di riproduzione con la lista di brani
+     * aggiornata.
+     * Usato quando un brano viene aggiunto, rimosso o spostato nella playlist
+     * durante
      * la riproduzione: ricalcola l'iteratore corrente preservando la posizione del
      * brano in riproduzione senza interrompere l'audio.
      *
@@ -244,7 +225,8 @@ public class GestoreRiproduzione {
                         break;
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         PlaylistIterator nuovoIter;
@@ -268,7 +250,8 @@ public class GestoreRiproduzione {
             if (nextBrano instanceof Brano b) {
                 Path pathDaUsare = Path.of(b.getPercorsoFile());
                 if (!pathDaUsare.isAbsolute()) {
-                    pathDaUsare = Path.of(System.getProperty("user.dir"), "Libreria").resolve(pathDaUsare.getFileName());
+                    pathDaUsare = Path.of(System.getProperty("user.dir"), "Libreria")
+                            .resolve(pathDaUsare.getFileName());
                 }
                 playFile(pathDaUsare);
             } else {
@@ -301,10 +284,10 @@ public class GestoreRiproduzione {
 
     public void eseguiStop() {
         if (mediaPlayer != null) {
-            mediaPlayer.stop();
-            mediaPlayer.dispose();
-            mediaPlayer = null;
-            media = null;
+            mediaPlayer.pause();
+            mediaPlayer.seek(Duration.ZERO);
+            // In questo modo usiamo internamente la pausa ma lo stato visivo è Stop.
+            // Così se l'utente sposta lo slider e fa play, riprende dalla nuova posizione.
             notificaStop();
         }
     }
@@ -321,7 +304,7 @@ public class GestoreRiproduzione {
         try {
             Path currentPath = Path.of(java.net.URI.create(media.getSource()));
             return currentPath.toAbsolutePath().normalize().equals(file.toAbsolutePath().normalize());
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             return false;
         }
     }

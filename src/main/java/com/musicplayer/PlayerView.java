@@ -44,7 +44,7 @@ public class PlayerView implements RiproduzioneObserver {
     private void initHandlers() {
         playBtn.setOnAction(e -> {
             if (!isPlaying) {
-                if (gestoreRiproduzione != null && gestoreRiproduzione.getStato() instanceof PausedState) {
+                if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
                     gestoreRiproduzione.play();
                 } else {
                     libreriaView.playSelected();
@@ -130,12 +130,13 @@ public class PlayerView implements RiproduzioneObserver {
         String baseColor = "#ffffff";
         String activeColor = "#1DB954";
 
+        // Il playBtn non deve diventare verde, resta sempre bianco (o come lo stile base)
         playBtn.setStyle(playBtn.getStyle().replaceAll("-fx-background-color: #[a-fA-F0-9]+;",
                 "-fx-background-color: " + baseColor + ";"));
         stopBtn.setStyle(stopBtn.getStyle().replaceAll("-fx-background-color: #[a-fA-F0-9]+;",
                 "-fx-background-color: " + baseColor + ";"));
 
-        if (attivo != null) {
+        if (attivo != null && attivo != playBtn) {
             attivo.setStyle(attivo.getStyle().replaceAll("-fx-background-color: #[a-fA-F0-9]+;",
                     "-fx-background-color: " + activeColor + ";"));
         }
@@ -150,8 +151,10 @@ public class PlayerView implements RiproduzioneObserver {
     public void setTotalTimeLabel(int durataSecondi) {
         totalTimeLabel.setText(formatTime(durataSecondi));
         progressSlider.setMax(durataSecondi);
-        progressSlider.setValue(0);
-        currentTimeLabel.setText("00:00");
+        if (gestoreRiproduzione == null || !gestoreRiproduzione.hasActiveMedia()) {
+            progressSlider.setValue(0);
+            currentTimeLabel.setText("00:00");
+        }
     }
 
     // --- Metodi Observer ---

@@ -401,12 +401,9 @@ public class LibreriaController {
                 MetadataService.salvaPlaylistSpecificaSuCSV(pl);
                 // Task 22.1: Aggiorna la coda di riproduzione con la lista aggiornata
                 // senza interrompere l'audio in corso.
-                if (targetName.equals(GestoreRiproduzione.getInstance().getContestoRiproduzione())) {
-                    GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
-                }
+                GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
             } catch (IllegalArgumentException e) {
-                // Brano già presente: notifica la view con un messaggio di avviso
-                throw new ValidazioneException("Il brano è già presente nella playlist \"" + targetName + "\".");
+                // Brano già presente, ignoriamo
             }
         }
 
@@ -421,17 +418,14 @@ public class LibreriaController {
             // Task 22.2: Protezione rimozione — impedisci di rimuovere il brano attualmente
             // in riproduzione e mostra l'avviso richiesto dall'AC.
             Path branoPath = libDir().resolve(PathUtils.filenameFromPath(brano.getPercorsoFile()));
-            GestoreRiproduzione gr = GestoreRiproduzione.getInstance();
-            if (gr.isCurrentFile(branoPath) && playlistName.equals(gr.getContestoRiproduzione())) {
+            if (GestoreRiproduzione.getInstance().isCurrentFile(branoPath)) {
                 throw new ValidazioneException("Traccia in riproduzione, attendere la fine o saltarla.");
             }
             pl.rimuoviBrano(brano);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
             // Task 22.1: Aggiorna la coda di riproduzione con la lista aggiornata
             // senza interrompere l'audio in corso.
-            if (playlistName.equals(GestoreRiproduzione.getInstance().getContestoRiproduzione())) {
-                GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
-            }
+            GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
             for (LibreriaObserver obs : observers) {
                 obs.onPlaylistAggiornata(pl);
             }
@@ -445,9 +439,7 @@ public class LibreriaController {
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
             // Task 22.1: Aggiorna la coda di riproduzione dopo lo spostamento
             // senza interrompere l'audio in corso.
-            if (playlistName.equals(GestoreRiproduzione.getInstance().getContestoRiproduzione())) {
-                GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
-            }
+            GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
             for (LibreriaObserver obs : observers) {
                 obs.onPlaylistAggiornata(pl);
             }

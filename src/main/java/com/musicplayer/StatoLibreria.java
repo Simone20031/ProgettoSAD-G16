@@ -16,7 +16,7 @@ public class StatoLibreria implements StatoUI {
      */
     @Override
     public List<String> getOpzioniSingolo() {
-        return List.of("Aggiungi tag", "Modifica", "Elimina brano", "Aggiungi a playlist");
+        return List.of("Aggiungi ai preferiti", "Modifica", "Elimina brano", "Aggiungi a playlist");
     }
 
     /**
@@ -29,22 +29,33 @@ public class StatoLibreria implements StatoUI {
         if (op == null || controller == null)
             return;
         switch (op) {
-            case "Aggiungi tag" -> {
+            case "Aggiungi ai preferiti", "Togli dai preferiti" -> {
                 if (view != null) {
-                    javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog();
-                    dialog.setTitle("Aggiungi Tag");
-                    dialog.setHeaderText("Aggiungi un nuovo tag a " + brano.getTitolo());
-                    dialog.setContentText("Nuovo Tag (es. Preferiti):");
-                    dialog.showAndWait().ifPresent(nuovoTag -> {
-                        try {
-                            String tagCorrente = brano.getTag() != null && brano.getTag() != Tag.NESSUNO ? brano.getTag().getEtichetta() : "";
-                            String tagAggiornato = tagCorrente.isEmpty() ? nuovoTag : tagCorrente + ", " + nuovoTag;
-                            controller.modificaTagBrano(brano, tagAggiornato);
-                            view.refreshList();
-                        } catch (ValidazioneException e) {
-                            view.mostraErrore(e);
+                    try {
+                        String fn = com.musicplayer.PathUtils.filenameFromPath(brano.getPercorsoFile());
+                        com.musicplayer.persistence.SongMetadata m = view.getMetadataMap().get(fn);
+                        String tagCorrente = (m != null && m.tag != null) ? m.tag : (brano.getTag() != null && brano.getTag() != Tag.NESSUNO ? brano.getTag().getEtichetta() : "");
+                        
+                        String tagAggiornato;
+                        if (tagCorrente.contains("Preferiti")) {
+                            tagAggiornato = java.util.Arrays.stream(tagCorrente.split(","))
+                                    .map(String::trim)
+                                    .filter(t -> !t.equals("Preferiti"))
+                                    .collect(java.util.stream.Collectors.joining(", "));
+                            if (tagAggiornato.isEmpty()) tagAggiornato = "NESSUNO";
+                        } else {
+                            tagAggiornato = tagCorrente.isEmpty() || tagCorrente.equals("NESSUNO") ? "Preferiti" : tagCorrente + ", Preferiti";
                         }
-                    });
+                        controller.modificaTagBrano(brano, tagAggiornato);
+                        
+                        // Per aggiornare il file CSV con il nuovo tag, simuliamo il reload della mappa
+                        com.musicplayer.persistence.MetadataService.caricaMappaDalCSV(view.getMetadataMap());
+                        
+                        view.refreshList();
+                        view.aggiornaCuorePreferiti();
+                    } catch (ValidazioneException e) {
+                        view.mostraErrore(e);
+                    }
                 }
             }
             case "Modifica" -> {
