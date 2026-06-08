@@ -24,6 +24,14 @@ public class GestoreRiproduzione {
         // Costruttore privato
     }
 
+    public Playable getElementoCorrente() {
+        return this.elementoCorrente;
+    }
+
+    public int getProgressoSecondi() {
+        return this.progressoSecondi;
+    }
+
     public static GestoreRiproduzione getInstance() {
         if (instance == null) {
             instance = new GestoreRiproduzione();
