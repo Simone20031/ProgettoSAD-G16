@@ -274,6 +274,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     refreshList();
                     refreshPlaylistList();
 
+                    // Messaggio di successo (solo se non ci sono eccezioni)
                     Alert alert = new Alert(Alert.AlertType.INFORMATION, "Brano aggiunto con successo!");
                     alert.show();
 
@@ -1221,6 +1222,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             refreshPlaylistList();
             refreshList();
             aggiornaIteratoreCorrente();
+            aggiornaVisualizzazioneCoda();
         });
     }
 }

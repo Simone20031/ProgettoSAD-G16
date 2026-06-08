@@ -405,7 +405,8 @@ public class LibreriaController {
                     GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
                 }
             } catch (IllegalArgumentException e) {
-                // Brano già presente, ignoriamo
+                // Brano già presente: notifica la view con un messaggio di avviso
+                throw new ValidazioneException("Il brano è già presente nella playlist \"" + targetName + "\".");
             }
         }
 
