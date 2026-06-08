@@ -434,7 +434,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 for (String label : statoAttuale.getOpzioniSingolo()) {
                     MenuItem mi = new MenuItem(label);
                     mi.setOnAction(e -> {
-                        String sel = lv.getSelectionModel().getSelectedItem();
+                        String sel = getItem();
                         if (sel == null)
                             return;
                         Brano selezionato = findBranoByFilename(extractFilename(sel));
@@ -450,7 +450,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
 
                 btnOpzioni.setOnAction(e -> {
-                    lv.getSelectionModel().select(getIndex());
+                    e.consume();
                     menu.show(btnOpzioni, javafx.geometry.Side.BOTTOM, 0, 0);
                 });
 

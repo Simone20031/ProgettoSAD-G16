@@ -81,7 +81,7 @@ public class PlaylistView {
                 menu.getItems().addAll(aggiungiBraniItem, rinominaItem, eliminaItem);
 
                 btnOpzioni.setOnAction(e -> {
-                    playlistListView.getSelectionModel().select(getIndex());
+                    e.consume();
                     menu.show(btnOpzioni, javafx.geometry.Side.BOTTOM, 0, 0);
                 });
 

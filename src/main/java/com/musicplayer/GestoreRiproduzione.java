@@ -192,17 +192,36 @@ public class GestoreRiproduzione {
             return;
         }
         List<IBrano> brani = iteratorCorrente.getBrani();
+        aggiornaCoda(brani);
+    }
+
+    /**
+     * Task 22.1 - Aggiorna la coda di riproduzione con la lista di brani aggiornata.
+     * Usato quando un brano viene aggiunto, rimosso o spostato nella playlist durante
+     * la riproduzione: ricalcola l'iteratore corrente preservando la posizione del
+     * brano in riproduzione senza interrompere l'audio.
+     *
+     * @param nuoviBrani lista aggiornata dei brani della playlist
+     */
+    public void aggiornaCoda(List<IBrano> nuoviBrani) {
+        if (iteratorCorrente == null || nuoviBrani == null) {
+            return;
+        }
+        if (nuoviBrani.isEmpty()) {
+            // Nessun brano rimasto: azzera l'iteratore
+            iteratorCorrente = null;
+            return;
+        }
+
+        // Individua il brano attualmente in riproduzione nella nuova lista
         IBrano currentBrano = null;
         if (media != null) {
             try {
                 String currentFilename = Path.of(java.net.URI.create(media.getSource())).getFileName().toString();
-                for (IBrano b : brani) {
-                    String path = null;
-                    if (b instanceof Brano br) {
-                        path = br.getPercorsoFile();
-                    } else {
-                        path = b.getDettagli().get("percorsoFile");
-                    }
+                for (IBrano b : nuoviBrani) {
+                    String path = (b instanceof Brano br)
+                            ? br.getPercorsoFile()
+                            : b.getDettagli().get("percorsoFile");
                     if (path != null && path.endsWith(currentFilename)) {
                         currentBrano = b;
                         break;
@@ -210,16 +229,16 @@ public class GestoreRiproduzione {
                 }
             } catch (Exception ignored) {}
         }
-        
+
         PlaylistIterator nuovoIter;
         if (strategia instanceof ShuffleStrategy) {
-            nuovoIter = new ShuffleIterator(brani);
+            nuovoIter = new ShuffleIterator(nuoviBrani);
         } else if (strategia instanceof LoopStrategy) {
-            nuovoIter = new LoopIterator(brani);
+            nuovoIter = new LoopIterator(nuoviBrani);
         } else {
-            nuovoIter = new SequentialIterator(brani);
+            nuovoIter = new SequentialIterator(nuoviBrani);
         }
-        
+
         if (currentBrano != null) {
             nuovoIter.impostaBranoCorrente(currentBrano);
         }
