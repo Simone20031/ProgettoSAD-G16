@@ -19,9 +19,18 @@ public class GestoreRiproduzione {
     private Playable elementoCorrente;
     private PlaybackStrategy strategia = new SequentialStrategy();
     private int progressoSecondi;
+    private String contestoRiproduzione;
 
     private GestoreRiproduzione() {
         // Costruttore privato
+    }
+
+    public String getContestoRiproduzione() {
+        return contestoRiproduzione;
+    }
+
+    public void setContestoRiproduzione(String contestoRiproduzione) {
+        this.contestoRiproduzione = contestoRiproduzione;
     }
 
     public Playable getElementoCorrente() {

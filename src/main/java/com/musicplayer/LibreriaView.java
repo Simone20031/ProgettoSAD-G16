@@ -707,6 +707,15 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private void aggiornaIteratoreCorrente() {
         if (!gestoreRiproduzione.hasActiveMedia()) return;
 
+        // Impedisci l'aggiornamento della coda usando la UI se la playlist visualizzata
+        // non corrisponde a quella attualmente in esecuzione.
+        String contestoAttuale = gestoreRiproduzione.getContestoRiproduzione();
+        if (contestoAttuale == null) {
+            if (playlistSelezionata != null) return;
+        } else {
+            if (!contestoAttuale.equals(playlistSelezionata)) return;
+        }
+
         java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
         for (String item : songListView.getItems()) {
             IBrano br = findBranoByFilename(extractFilename(item));
@@ -864,6 +873,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 iter = seqIter;
             }
             gestoreRiproduzione.setIterator(iter);
+            gestoreRiproduzione.setContestoRiproduzione(playlistSelezionata);
 
             gestoreRiproduzione.playFile(pathDaUsare);
             aggiornaVisualizzazioneCoda();
