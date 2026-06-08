@@ -305,6 +305,11 @@ public class FiltroRicercaTest {
             }
 
             @Override
+            public int getDurataTotale() {
+                return getDurata();
+            }
+
+            @Override
             public java.util.Map<String, String> getDettagli() {
                 return new java.util.HashMap<>();
             }

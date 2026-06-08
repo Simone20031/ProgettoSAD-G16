@@ -3,12 +3,12 @@ package com.musicplayer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Random;
 
 public class ShuffleIterator implements PlaylistIterator {
     private final List<IBrano> brani;
-    private final List<IBrano> riprodotti = new ArrayList<>();
-    private final Random random = new Random();
+    private final List<IBrano> braniRiprodotti = new ArrayList<>();
+    private final ShuffleStrategy strategy = new ShuffleStrategy();
+    private int currentIdx = -1;
 
     public ShuffleIterator(List<IBrano> brani) {
         if (brani == null) {
@@ -17,47 +17,99 @@ public class ShuffleIterator implements PlaylistIterator {
         this.brani = brani;
     }
 
+    private List<Integer> getIndicesRiprodotti() {
+        List<Integer> list = new ArrayList<>();
+        for (IBrano b : braniRiprodotti) {
+            int idx = brani.indexOf(b);
+            if (idx != -1) {
+                list.add(idx);
+            }
+        }
+        return list;
+    }
+
     @Override
     public boolean hasNext() {
-        return !getNonRiprodotti().isEmpty();
+        if (brani.isEmpty()) {
+            return false;
+        }
+        List<Integer> riprodotti = getIndicesRiprodotti();
+        int next = strategy.prossimoIndice(currentIdx, brani.size(), riprodotti);
+        return next != -1;
     }
 
     @Override
     public IBrano next() {
-        List<IBrano> nonRiprodotti = getNonRiprodotti();
-        if (nonRiprodotti.isEmpty()) {
+        if (!hasNext()) {
             throw new NoSuchElementException("Tutti i brani della playlist sono stati riprodotti.");
         }
-        int index = random.nextInt(nonRiprodotti.size());
-        IBrano scelto = nonRiprodotti.get(index);
-        riprodotti.add(scelto);
+        List<Integer> riprodotti = getIndicesRiprodotti();
+        int next = strategy.prossimoIndice(currentIdx, brani.size(), riprodotti);
+        
+        IBrano scelto = brani.get(next);
+        braniRiprodotti.add(scelto);
+        currentIdx = next;
         return scelto;
     }
 
-    private List<IBrano> getNonRiprodotti() {
-        // Mantiene in memoria solo i brani ancora presenti nella playlist
-        riprodotti.retainAll(brani);
-
-        List<IBrano> nonRiprodotti = new ArrayList<>();
-        for (IBrano b : brani) {
-            if (!riprodotti.contains(b)) {
-                nonRiprodotti.add(b);
-            }
-        }
-        return nonRiprodotti;
+    @Override
+    public void reset() {
+        braniRiprodotti.clear();
+        currentIdx = -1;
     }
 
-    public void reset() {
-        riprodotti.clear();
+    @Override
+    public void impostaBranoCorrente(IBrano brano) {
+        int idx = brani.indexOf(brano);
+        if (idx != -1) {
+            if (!braniRiprodotti.contains(brano)) {
+                braniRiprodotti.add(brano);
+            }
+            currentIdx = idx;
+        }
+    }
+
+    @Override
+    public IBrano peekNext() {
+        if (brani.isEmpty()) {
+            return null;
+        }
+        List<Integer> riprodotti = getIndicesRiprodotti();
+        int next = strategy.prossimoIndice(currentIdx, brani.size(), riprodotti);
+        if (next != -1 && next >= 0 && next < brani.size()) {
+            return brani.get(next);
+        }
+        return null;
+    }
+
+    @Override
+    public List<IBrano> getCodaBrani(int maxElements) {
+        List<IBrano> coda = new ArrayList<>();
+        if (brani.isEmpty()) {
+            return coda;
+        }
+        List<Integer> riprodotti = getIndicesRiprodotti();
+        for (int i = 0; i < brani.size(); i++) {
+            if (!riprodotti.contains(i) && i != currentIdx) {
+                coda.add(brani.get(i));
+                if (coda.size() >= maxElements) {
+                    break;
+                }
+            }
+        }
+        return coda;
+    }
+
+    @Override
+    public List<IBrano> getBrani() {
+        return brani;
     }
 
     public void forzaRiproduzione(IBrano brano) {
-        if (!riprodotti.contains(brano)) {
-            riprodotti.add(brano);
-        }
+        impostaBranoCorrente(brano);
     }
 
     public List<IBrano> getRiprodotti() {
-        return new ArrayList<>(riprodotti);
+        return new ArrayList<>(braniRiprodotti);
     }
 }

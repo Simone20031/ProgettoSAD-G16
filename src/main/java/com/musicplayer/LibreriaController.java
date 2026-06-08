@@ -420,6 +420,17 @@ public class LibreriaController {
         }
     }
 
+    public void spostaBranoInPlaylist(Brano brano, String playlistName, int nuovaPosizione) throws ValidazioneException {
+        Playlist pl = playlistMap.get(playlistName);
+        if (pl != null && brano != null) {
+            pl.spostaBrano(brano, nuovaPosizione);
+            MetadataService.salvaPlaylistSpecificaSuCSV(pl);
+            for (LibreriaObserver obs : observers) {
+                obs.onPlaylistAggiornata(pl);
+            }
+        }
+    }
+
     public void eliminaPlaylist(String nome) throws IOException {
         if (playlistMap.remove(nome) != null) {
             MetadataService.eliminaPlaylistFisica(nome);

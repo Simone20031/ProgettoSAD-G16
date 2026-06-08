@@ -4,27 +4,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-public class LoopIterator implements PlaylistIterator {
+public class SequentialIterator implements PlaylistIterator {
     private final List<IBrano> brani;
     private int indice = -1;
-    private final LoopStrategy strategy = new LoopStrategy();
+    private final SequentialStrategy strategy = new SequentialStrategy();
 
-    public LoopIterator(List<IBrano> brani) {
-        if (brani == null || brani.isEmpty()) {
-            throw new IllegalArgumentException("La lista dei brani non può essere vuota.");
+    public SequentialIterator(List<IBrano> brani) {
+        if (brani == null) {
+            throw new IllegalArgumentException("La lista dei brani non può essere nulla.");
         }
         this.brani = brani;
     }
 
     @Override
     public boolean hasNext() {
-        return !brani.isEmpty();
+        if (brani.isEmpty()) {
+            return false;
+        }
+        int next = strategy.prossimoIndice(indice, brani.size(), null);
+        return next != -1;
     }
 
     @Override
     public IBrano next() {
         if (!hasNext()) {
-            throw new NoSuchElementException("La playlist è vuota.");
+            throw new NoSuchElementException("Nessun brano successivo.");
         }
         indice = strategy.prossimoIndice(indice, brani.size(), null);
         return brani.get(indice);

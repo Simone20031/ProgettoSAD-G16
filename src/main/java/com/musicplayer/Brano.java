@@ -71,6 +71,11 @@ public class Brano implements IBrano {
         return durata;
     }
 
+    @Override
+    public int getDurataTotale() {
+        return getDurata();
+    }
+
     // ── Dettagli (usati da view e CSV) ────────────────────────────────────────
 
     @Override

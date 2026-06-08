@@ -29,6 +29,11 @@ public class ShuffleIteratorTest {
         }
 
         @Override
+        public int getDurataTotale() {
+            return getDurata();
+        }
+
+        @Override
         public String getTitolo() {
             return titolo;
         }

@@ -16,6 +16,9 @@ public class GestoreRiproduzione {
     private final List<RiproduzioneObserver> observers = new ArrayList<>();
     private PlayerState statoCorrente = new StoppedState();
     private PlaylistIterator iteratorCorrente;
+    private Playable elementoCorrente;
+    private PlaybackStrategy strategia = new SequentialStrategy();
+    private int progressoSecondi;
 
     private GestoreRiproduzione() {
         // Costruttore privato
@@ -99,7 +102,9 @@ public class GestoreRiproduzione {
             });
 
             mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
-                notificaProgresso((int) newTime.toSeconds());
+                int sec = (int) newTime.toSeconds();
+                this.progressoSecondi = sec;
+                notificaProgresso(sec);
             });
 
             mediaPlayer.setOnEndOfMedia(() -> {
@@ -125,6 +130,100 @@ public class GestoreRiproduzione {
 
     public void setIterator(PlaylistIterator iterator) {
         this.iteratorCorrente = iterator;
+    }
+
+    public PlaylistIterator getIterator() {
+        return this.iteratorCorrente;
+    }
+
+    public PlaybackStrategy getStrategia() {
+        return this.strategia;
+    }
+
+    public void setStrategia(PlaybackStrategy s) {
+        this.strategia = s;
+        aggiornaCoda();
+    }
+
+    public void play(Playable elemento) {
+        this.elementoCorrente = elemento;
+        if (elemento instanceof Brano b) {
+            Path pathDaUsare = Path.of(b.getPercorsoFile());
+            if (!pathDaUsare.isAbsolute()) {
+                pathDaUsare = Path.of(System.getProperty("user.dir"), "Libreria").resolve(pathDaUsare.getFileName());
+            }
+            playFile(pathDaUsare);
+        } else if (elemento instanceof Playlist p) {
+            PlaylistIterator iter;
+            if (strategia instanceof ShuffleStrategy) {
+                iter = new ShuffleIterator(p.getBrani());
+            } else if (strategia instanceof LoopStrategy) {
+                iter = new LoopIterator(p.getBrani());
+            } else {
+                iter = new SequentialIterator(p.getBrani());
+            }
+            this.iteratorCorrente = iter;
+            playNext();
+        }
+    }
+
+    public void next() {
+        playNext();
+    }
+
+    public void setProgressoManuale(int sec) {
+        seek(sec);
+    }
+
+    public float getProgressoPercentuale() {
+        if (mediaPlayer == null || media == null) {
+            return 0.0f;
+        }
+        double current = mediaPlayer.getCurrentTime().toSeconds();
+        double total = media.getDuration().toSeconds();
+        if (total <= 0) {
+            return 0.0f;
+        }
+        return (float) (current / total * 100.0);
+    }
+
+    public void aggiornaCoda() {
+        if (iteratorCorrente == null) {
+            return;
+        }
+        List<IBrano> brani = iteratorCorrente.getBrani();
+        IBrano currentBrano = null;
+        if (media != null) {
+            try {
+                String currentFilename = Path.of(java.net.URI.create(media.getSource())).getFileName().toString();
+                for (IBrano b : brani) {
+                    String path = null;
+                    if (b instanceof Brano br) {
+                        path = br.getPercorsoFile();
+                    } else {
+                        path = b.getDettagli().get("percorsoFile");
+                    }
+                    if (path != null && path.endsWith(currentFilename)) {
+                        currentBrano = b;
+                        break;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        PlaylistIterator nuovoIter;
+        if (strategia instanceof ShuffleStrategy) {
+            nuovoIter = new ShuffleIterator(brani);
+        } else if (strategia instanceof LoopStrategy) {
+            nuovoIter = new LoopIterator(brani);
+        } else {
+            nuovoIter = new SequentialIterator(brani);
+        }
+        
+        if (currentBrano != null) {
+            nuovoIter.impostaBranoCorrente(currentBrano);
+        }
+        this.iteratorCorrente = nuovoIter;
     }
 
     public void playNext() {

@@ -57,6 +57,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private Label playingTitleLabel;
     @FXML
     private Label playingAuthorLabel;
+    @FXML
+    private Label nextSongLabel;
 
     private boolean isProgrammaticSelection = false;
 
@@ -294,9 +296,13 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         this.gestoreRiproduzione.addObserver(new RiproduzioneObserver() {
             @Override public void onPlayerReady(int durataSecondi) {}
-            @Override public void onPlay() {}
+            @Override public void onPlay() {
+                aggiornaVisualizzazioneCoda();
+            }
             @Override public void onPausa() {}
-            @Override public void onStop() {}
+            @Override public void onStop() {
+                aggiornaVisualizzazioneCoda();
+            }
             @Override public void onProgressoAggiornato(int secondi) {}
             @Override public void onBranoCambiato(String nuovoPercorso) {
                 javafx.application.Platform.runLater(() -> {
@@ -323,6 +329,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         songListView.getSelectionModel().select(itemToSelect);
                         isProgrammaticSelection = false;
                     }
+                    aggiornaVisualizzazioneCoda();
                 });
             }
         });
@@ -718,16 +725,74 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         PlaylistIterator iter = null;
         if (playerView.isShuffleEnabled()) {
+            ShuffleStrategy strategy = new ShuffleStrategy();
+            gestoreRiproduzione.setStrategia(strategy);
             ShuffleIterator sIter = new ShuffleIterator(listaBrani);
-            if (b != null) sIter.forzaRiproduzione(b);
+            if (b != null) sIter.impostaBranoCorrente(b);
             iter = sIter;
         } else if (playerView.isLoopEnabled()) {
+            LoopStrategy strategy = new LoopStrategy();
+            gestoreRiproduzione.setStrategia(strategy);
             LoopIterator lIter = new LoopIterator(listaBrani);
             if (b != null) lIter.impostaBranoCorrente(b);
             iter = lIter;
+        } else {
+            SequentialStrategy strategy = new SequentialStrategy();
+            gestoreRiproduzione.setStrategia(strategy);
+            SequentialIterator seqIter = new SequentialIterator(listaBrani);
+            if (b != null) seqIter.impostaBranoCorrente(b);
+            iter = seqIter;
         }
 
         gestoreRiproduzione.setIterator(iter);
+        aggiornaVisualizzazioneCoda();
+    }
+
+    private void aggiornaVisualizzazioneCoda() {
+        javafx.application.Platform.runLater(() -> {
+            if (gestoreRiproduzione == null || nextSongLabel == null) return;
+            PlaylistIterator iter = gestoreRiproduzione.getIterator();
+            if (iter != null && gestoreRiproduzione.hasActiveMedia()) {
+                IBrano prossimo = iter.peekNext();
+                if (prossimo != null) {
+                    nextSongLabel.setText("Prossimo: " + prossimo.getTitolo());
+                } else {
+                    nextSongLabel.setText("Prossimo: Fine Coda");
+                }
+
+                // Se non c'è una selezione corrente nella ListView, mostra la coda nel pannello dei dettagli
+                if (songListView.getSelectionModel().getSelectedItem() == null) {
+                    StringBuilder sb = new StringBuilder("--- CODA DI RIPRODUZIONE ---\n\n");
+                    // Brano corrente
+                    String currentMedia = gestoreRiproduzione.getCurrentMediaSource();
+                    try {
+                        String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName().toString();
+                        IBrano b = findBranoByFilename(currentFilename);
+                        if (b != null) {
+                            sb.append("▶ Ora in riproduzione:\n   ").append(b.getTitolo()).append("\n\n");
+                        }
+                    } catch (Exception ignored) {}
+
+                    List<IBrano> coda = iter.getCodaBrani(5);
+                    if (!coda.isEmpty()) {
+                        sb.append("⏭ Brani successivi:\n");
+                        int idx = 1;
+                        for (IBrano cb : coda) {
+                            sb.append(" ").append(idx).append(". ").append(cb.getTitolo()).append("\n");
+                            idx++;
+                        }
+                    } else {
+                        sb.append("Nessun altro brano in coda.");
+                    }
+                    detailsLabel.setText(sb.toString());
+                }
+            } else {
+                nextSongLabel.setText("");
+                if (songListView.getSelectionModel().getSelectedItem() == null) {
+                    detailsLabel.setText("Seleziona un brano per i dettagli.");
+                }
+            }
+        });
     }
 
     public void playSelected() {
@@ -771,33 +836,38 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 playingAuthorLabel.setText("Autore sconosciuto");
             }
 
+            java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
+            for (String item : songListView.getItems()) {
+                IBrano br = findBranoByFilename(extractFilename(item));
+                if (br != null) {
+                    listaBrani.add(br);
+                }
+            }
+
             PlaylistIterator iter = null;
             if (playerView.isShuffleEnabled()) {
-                java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
-                for (String item : songListView.getItems()) {
-                    IBrano br = findBranoByFilename(extractFilename(item));
-                    if (br != null) {
-                        listaBrani.add(br);
-                    }
-                }
+                ShuffleStrategy strategy = new ShuffleStrategy();
+                gestoreRiproduzione.setStrategia(strategy);
                 ShuffleIterator sIter = new ShuffleIterator(listaBrani);
-                sIter.forzaRiproduzione(brano);
+                sIter.impostaBranoCorrente(brano);
                 iter = sIter;
             } else if (playerView.isLoopEnabled()) {
-                java.util.List<IBrano> listaBrani = new java.util.ArrayList<>();
-                for (String item : songListView.getItems()) {
-                    IBrano br = findBranoByFilename(extractFilename(item));
-                    if (br != null) {
-                        listaBrani.add(br);
-                    }
-                }
+                LoopStrategy strategy = new LoopStrategy();
+                gestoreRiproduzione.setStrategia(strategy);
                 LoopIterator lIter = new LoopIterator(listaBrani);
                 lIter.impostaBranoCorrente(brano);
                 iter = lIter;
+            } else {
+                SequentialStrategy strategy = new SequentialStrategy();
+                gestoreRiproduzione.setStrategia(strategy);
+                SequentialIterator seqIter = new SequentialIterator(listaBrani);
+                seqIter.impostaBranoCorrente(brano);
+                iter = seqIter;
             }
             gestoreRiproduzione.setIterator(iter);
 
             gestoreRiproduzione.playFile(pathDaUsare);
+            aggiornaVisualizzazioneCoda();
         } else {
             System.err.println("File non trovato in: " + pathDaUsare.toAbsolutePath());
             showAlert("File non trovato: " + brano.getPercorsoFile(), Alert.AlertType.ERROR);
@@ -806,7 +876,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
     public void showDetails(String display) {
         if (display == null) {
-            detailsLabel.setText("Seleziona un brano per i dettagli.");
+            aggiornaVisualizzazioneCoda();
             if (gestoreRiproduzione == null || !gestoreRiproduzione.hasActiveMedia()) {
                 playingTitleLabel.setText("Nessun brano in riproduzione");
                 playingAuthorLabel.setText("");
@@ -987,6 +1057,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         // 2. Rinfresca la lista visualizzata (ListView)
         refreshList();
 
+        // Aggiorna l'iteratore corrente del player
+        aggiornaIteratoreCorrente();
+
         // 3. SELEZIONA IL NIENTE per forzare il reset delle label dei dettagli
         songListView.getSelectionModel().clearSelection();
         detailsLabel.setText("Seleziona un brano per i dettagli.");
@@ -1138,6 +1211,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         javafx.application.Platform.runLater(() -> {
             refreshPlaylistList();
             refreshList();
+            aggiornaIteratoreCorrente();
         });
     }
 }

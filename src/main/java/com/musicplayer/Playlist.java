@@ -7,7 +7,7 @@ import java.util.List;
  * Playlist: collezione ordinata di IBrano con supporto a iteratori.
  * Implementa Playable (durata totale = somma durate brani).
  */
-public class Playlist {
+public class Playlist implements Playable {
 
     private String id;
     private String nome;
@@ -68,29 +68,23 @@ public class Playlist {
     }
 
     // ── Iteratori (Factory Method) ────────────────────────────────────────────
-    /*
-     * public PlaylistIterator creaIterator() {
-     * return new SequentialIterator(brani);
-     * }
-     */
+    public PlaylistIterator creaIterator() {
+        return new SequentialIterator(brani);
+    }
 
     public PlaylistIterator creaIteratorShuffle() {
         return new ShuffleIterator(brani);
     }
 
-    /*
-     * public PlaylistIterator creaIteratorLoop() {
-     * return new LoopIterator(brani);
-     * }
-     */
+    public PlaylistIterator creaIteratorLoop() {
+        return new LoopIterator(brani);
+    }
+
     // ── Playable ──────────────────────────────────────────────────────────────
-    /*
-     * @Override
-     * public int getDurataTotale() {
-     * // CORREZIONE: usiamo getDurata del singolo Brano per calcolare il totale
-     * return brani.stream().mapToInt(IBrano::getDurata).sum();
-     * }
-     */
+    @Override
+    public int getDurataTotale() {
+        return brani.stream().mapToInt(IBrano::getDurata).sum();
+    }
     // ── Accessori ─────────────────────────────────────────────────────────────
 
     public String getId() {

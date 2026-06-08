@@ -183,12 +183,23 @@ public class PlayerView implements RiproduzioneObserver {
         currentTimeLabel.setText("00:00");
     }
 
+    public void aggiornaBarra(float percentuale) {
+        if (!progressSlider.isValueChanging()) {
+            double max = progressSlider.getMax();
+            progressSlider.setValue(percentuale * max / 100.0);
+        }
+    }
+
+    public void aggiornaTimer(int secondi) {
+        currentTimeLabel.setText(formatTime(secondi));
+    }
+
     @Override
     public void onProgressoAggiornato(int secondi) {
-        if (!progressSlider.isValueChanging()) {
-            progressSlider.setValue(secondi);
-        }
-        currentTimeLabel.setText(formatTime(secondi));
+        double max = progressSlider.getMax();
+        float percentuale = max > 0 ? (float) (secondi * 100.0 / max) : 0.0f;
+        aggiornaBarra(percentuale);
+        aggiornaTimer(secondi);
     }
 
     @Override
