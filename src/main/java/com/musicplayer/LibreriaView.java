@@ -262,6 +262,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
             // Verifica che abbiamo sia la playlist che il brano
             if (nomePlaylistSelezionato != null && branoInAttesaDiPlaylist != null) {
+                // Salva il contesto di provenienza prima del reset
+                String contestoProvenienza = playlistSelezionata;
                 try {
                     // Usa il nome corretto del metodo che hai nel Controller: aggiungiAPlaylist
                     // Firma corretta: aggiungiAPlaylist(Brano, String)
@@ -279,7 +281,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     alert.show();
 
                     switchToView(viewLista);
-                    mostraLibreriaGenerale();
+                    // Torna alla playlist di provenienza, oppure alla libreria generale
+                    if (contestoProvenienza != null) {
+                        impostaPlaylist(contestoProvenienza);
+                    } else {
+                        mostraLibreriaGenerale();
+                    }
 
                 } catch (ValidazioneException ve) {
                     mostraErrore(ve);
