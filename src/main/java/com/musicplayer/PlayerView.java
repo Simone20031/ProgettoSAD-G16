@@ -7,6 +7,7 @@ import javafx.scene.control.Slider;
 public class PlayerView implements RiproduzioneObserver {
     private final Button playBtn;
     private final Button stopBtn;
+    private final Button skipBackBtn;
     private final Button skipBtn;
     private final Button shuffleBtn;
     private final Button loopBtn;
@@ -20,11 +21,12 @@ public class PlayerView implements RiproduzioneObserver {
     private boolean shuffleEnabled = false;
     private boolean loopEnabled = false;
 
-    public PlayerView(Button playBtn, Button stopBtn, Button skipBtn, Button shuffleBtn, Button loopBtn,
+    public PlayerView(Button playBtn, Button stopBtn, Button skipBackBtn, Button skipBtn, Button shuffleBtn, Button loopBtn,
             Label currentTimeLabel, Label totalTimeLabel, Slider progressSlider,
             GestoreRiproduzione gestoreRiproduzione, LibreriaView libreriaView) {
         this.playBtn = playBtn;
         this.stopBtn = stopBtn;
+        this.skipBackBtn = skipBackBtn;
         this.skipBtn = skipBtn;
         this.shuffleBtn = shuffleBtn;
         this.loopBtn = loopBtn;
@@ -45,6 +47,7 @@ public class PlayerView implements RiproduzioneObserver {
 
     private void initHandlers() {
         playBtn.setOnAction(e -> {
+            animateButtonClick(playBtn);
             if (!isPlaying) {
                 if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
                     gestoreRiproduzione.play();
@@ -58,14 +61,27 @@ public class PlayerView implements RiproduzioneObserver {
             }
         });
 
-        stopBtn.setOnAction(e -> {
-            if (gestoreRiproduzione != null) {
-                gestoreRiproduzione.stop();
-            }
-        });
+        if (stopBtn != null) {
+            stopBtn.setOnAction(e -> {
+                animateButtonClick(stopBtn);
+                if (gestoreRiproduzione != null) {
+                    gestoreRiproduzione.stop();
+                }
+            });
+        }
+
+        if (skipBackBtn != null) {
+            skipBackBtn.setOnAction(e -> {
+                animateButtonClick(skipBackBtn);
+                if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
+                    gestoreRiproduzione.previous();
+                }
+            });
+        }
 
         if (skipBtn != null) {
             skipBtn.setOnAction(e -> {
+                animateButtonClick(skipBtn);
                 if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
                     gestoreRiproduzione.next();
                 }
@@ -134,6 +150,8 @@ public class PlayerView implements RiproduzioneObserver {
             playBtn.setDisable(disabled);
         if (stopBtn != null)
             stopBtn.setDisable(disabled);
+        if (skipBackBtn != null)
+            skipBackBtn.setDisable(disabled);
         if (skipBtn != null)
             skipBtn.setDisable(disabled);
         if (progressSlider != null)
@@ -153,19 +171,64 @@ public class PlayerView implements RiproduzioneObserver {
     }
 
     private void aggiornaStilePlayer(Button attivo) {
-        String baseColor = "#ffffff";
-        String activeColor = "#1DB954";
-
-        // Il playBtn non deve diventare verde, resta sempre bianco (o come lo stile base)
-        playBtn.setStyle(playBtn.getStyle().replaceAll("-fx-background-color: #[a-fA-F0-9]+;",
-                "-fx-background-color: " + baseColor + ";"));
-        stopBtn.setStyle(stopBtn.getStyle().replaceAll("-fx-background-color: #[a-fA-F0-9]+;",
-                "-fx-background-color: " + baseColor + ";"));
-
-        if (attivo != null && attivo != playBtn) {
-            attivo.setStyle(attivo.getStyle().replaceAll("-fx-background-color: #[a-fA-F0-9]+;",
-                    "-fx-background-color: " + activeColor + ";"));
+        if (playBtn != null && !playBtn.getProperties().containsKey("isAnimating")) {
+            playBtn.setStyle("-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;");
         }
+        if (stopBtn != null && !stopBtn.getProperties().containsKey("isAnimating")) {
+            stopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;");
+        }
+
+        if (attivo != null && attivo != playBtn && !attivo.getProperties().containsKey("isAnimating")) {
+            attivo.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-font-size: 24px; -fx-cursor: hand;");
+        }
+    }
+
+    private void animateButtonClick(Button btn) {
+        if (btn == null) return;
+        
+        if (btn.getProperties().containsKey("isAnimating")) {
+            return;
+        }
+        btn.getProperties().put("isAnimating", true);
+
+        String originalStyle;
+        String greenStyle;
+        
+        if (btn == playBtn) {
+            originalStyle = "-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;";
+            greenStyle = "-fx-background-color: #1DB954; -fx-text-fill: #ffffff; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;";
+        } else {
+            originalStyle = "-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;";
+            greenStyle = "-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-font-size: 24px; -fx-cursor: hand;";
+        }
+        
+        btn.setStyle(greenStyle);
+
+        javafx.animation.ScaleTransition scaleDown = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(100), btn);
+        scaleDown.setToX(0.85);
+        scaleDown.setToY(0.85);
+        scaleDown.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+        
+        javafx.animation.ScaleTransition scaleUp = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(100), btn);
+        scaleUp.setToX(1.0);
+        scaleUp.setToY(1.0);
+        scaleUp.setInterpolator(javafx.animation.Interpolator.EASE_IN);
+        
+        scaleDown.setOnFinished(e -> scaleUp.play());
+        
+        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(150));
+        pause.setOnFinished(e -> {
+            btn.setStyle(originalStyle);
+            btn.getProperties().remove("isAnimating");
+            
+            // Ripristina il colore verde perenne se il bottone Stop è quello attivo
+            if (gestoreRiproduzione != null && gestoreRiproduzione.getStato() instanceof StoppedState) {
+                aggiornaStilePlayer(stopBtn);
+            }
+        });
+        
+        scaleDown.play();
+        pause.play();
     }
 
     private String formatTime(int totalSeconds) {

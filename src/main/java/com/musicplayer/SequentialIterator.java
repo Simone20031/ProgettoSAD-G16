@@ -35,6 +35,20 @@ public class SequentialIterator implements PlaylistIterator {
     }
 
     @Override
+    public boolean hasPrevious() {
+        return !brani.isEmpty() && indice > 0;
+    }
+
+    @Override
+    public IBrano previous() {
+        if (!hasPrevious()) {
+            throw new NoSuchElementException("Nessun brano precedente.");
+        }
+        indice--;
+        return brani.get(indice);
+    }
+
+    @Override
     public void reset() {
         this.indice = -1;
     }

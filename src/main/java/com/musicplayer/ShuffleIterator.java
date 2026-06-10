@@ -68,6 +68,31 @@ public class ShuffleIterator implements PlaylistIterator {
     }
 
     @Override
+    public boolean hasPrevious() {
+        return braniRiprodotti.size() > 1;
+    }
+
+    @Override
+    public IBrano previous() {
+        if (!hasPrevious()) {
+            throw new NoSuchElementException("Nessun brano precedente nella cronologia.");
+        }
+        // Il brano attualmente in riproduzione è l'ultimo in braniRiprodotti.
+        // Lo rimuoviamo e lo mettiamo all'inizio della coda futura (cachedQueue)
+        IBrano current = braniRiprodotti.remove(braniRiprodotti.size() - 1);
+        int currentSongIdx = brani.indexOf(current);
+        if (currentSongIdx != -1) {
+            cachedQueue.add(0, currentSongIdx);
+        }
+
+        // Il nuovo brano corrente è ora l'ultimo in braniRiprodotti (cioè quello precedente)
+        IBrano prev = braniRiprodotti.get(braniRiprodotti.size() - 1);
+        currentIdx = brani.indexOf(prev);
+        
+        return prev;
+    }
+
+    @Override
     public void reset() {
         braniRiprodotti.clear();
         cachedQueue.clear();

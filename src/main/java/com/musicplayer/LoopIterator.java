@@ -31,6 +31,24 @@ public class LoopIterator implements PlaylistIterator {
     }
 
     @Override
+    public boolean hasPrevious() {
+        return !brani.isEmpty();
+    }
+
+    @Override
+    public IBrano previous() {
+        if (!hasPrevious()) {
+            throw new NoSuchElementException("La playlist è vuota.");
+        }
+        if (indice <= 0) {
+            indice = brani.size() - 1;
+        } else {
+            indice--;
+        }
+        return brani.get(indice);
+    }
+
+    @Override
     public void reset() {
         this.indice = -1;
     }

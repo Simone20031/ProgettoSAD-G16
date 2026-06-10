@@ -167,6 +167,10 @@ public class GestoreRiproduzione {
         playNext();
     }
 
+    public void previous() {
+        playPrevious();
+    }
+
     public void setProgressoManuale(int sec) {
         seek(sec);
     }
@@ -260,6 +264,27 @@ public class GestoreRiproduzione {
         } else {
             eseguiStop();
             statoCorrente = new StoppedState();
+        }
+    }
+
+    public void playPrevious() {
+        if (iteratorCorrente != null && iteratorCorrente.hasPrevious()) {
+            IBrano prevBrano = iteratorCorrente.previous();
+            if (prevBrano instanceof Brano b) {
+                Path pathDaUsare = Path.of(b.getPercorsoFile());
+                if (!pathDaUsare.isAbsolute()) {
+                    pathDaUsare = Path.of(System.getProperty("user.dir"), "Libreria")
+                            .resolve(pathDaUsare.getFileName());
+                }
+                playFile(pathDaUsare);
+            } else {
+                playPrevious(); // Salta se non è un Brano riproducibile
+            }
+        } else {
+            // Se non c'è un brano precedente, magari ricominciamo quello attuale da 0
+            if (mediaPlayer != null) {
+                seek(0);
+            }
         }
     }
 

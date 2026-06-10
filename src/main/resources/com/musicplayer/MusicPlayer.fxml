@@ -187,16 +187,21 @@
               <Font size="18.0"/>
             </font>
           </Button>
+          <Button fx:id="skipBackBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;" text="⏮" textAlignment="CENTER" />
           <Button fx:id="playBtn" alignment="CENTER" ellipsisString="" style="-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;" text="▶" textAlignment="CENTER">
             <font>
               <Font size="18.0"/>
             </font>
           </Button>
-          <Button fx:id="stopBtn" alignment="CENTER" style="-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;" text="⏹" textAlignment="CENTER"/>
-          <Button fx:id="skipBtn" alignment="CENTER" style="-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;" text="⏭" textAlignment="CENTER">
-            <font>
-              <Font size="18.0"/>
-            </font>
+          <Button fx:id="stopBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;" text="⏹" textAlignment="CENTER">
+             <HBox.margin>
+                <Insets left="-5.0" />
+             </HBox.margin>
+          </Button>
+          <Button fx:id="skipBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;" text="⏭" textAlignment="CENTER">
+             <HBox.margin>
+                <Insets left="-12.0" />
+             </HBox.margin>
           </Button>
           <Button fx:id="loopBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;" text="🔁" textAlignment="CENTER">
             <font>

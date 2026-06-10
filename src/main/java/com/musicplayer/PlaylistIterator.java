@@ -9,4 +9,6 @@ public interface PlaylistIterator extends Iterator<IBrano> {
     IBrano peekNext();
     List<IBrano> getCodaBrani(int maxElements);
     List<IBrano> getBrani();
+    boolean hasPrevious();
+    IBrano previous();
 }
