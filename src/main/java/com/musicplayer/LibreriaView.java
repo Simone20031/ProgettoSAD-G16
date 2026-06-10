@@ -46,6 +46,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Button stopBtn;
     @FXML
+    private Button skipBtn;
+    @FXML
     private Button shuffleBtn;
     @FXML
     private Button loopBtn;
@@ -351,7 +353,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         });
         // Inizializza GestoreRiproduzione e PlayerView
         this.gestoreRiproduzione = GestoreRiproduzione.getInstance();
-        this.playerView = new PlayerView(playBtn, stopBtn, shuffleBtn, loopBtn, currentTimeLabel, totalTimeLabel,
+        this.playerView = new PlayerView(playBtn, stopBtn, skipBtn, shuffleBtn, loopBtn, currentTimeLabel, totalTimeLabel,
                 progressSlider,
                 gestoreRiproduzione, this);
 

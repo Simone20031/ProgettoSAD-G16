@@ -7,6 +7,7 @@ import javafx.scene.control.Slider;
 public class PlayerView implements RiproduzioneObserver {
     private final Button playBtn;
     private final Button stopBtn;
+    private final Button skipBtn;
     private final Button shuffleBtn;
     private final Button loopBtn;
     private final Label currentTimeLabel;
@@ -19,11 +20,12 @@ public class PlayerView implements RiproduzioneObserver {
     private boolean shuffleEnabled = false;
     private boolean loopEnabled = false;
 
-    public PlayerView(Button playBtn, Button stopBtn, Button shuffleBtn, Button loopBtn,
+    public PlayerView(Button playBtn, Button stopBtn, Button skipBtn, Button shuffleBtn, Button loopBtn,
             Label currentTimeLabel, Label totalTimeLabel, Slider progressSlider,
             GestoreRiproduzione gestoreRiproduzione, LibreriaView libreriaView) {
         this.playBtn = playBtn;
         this.stopBtn = stopBtn;
+        this.skipBtn = skipBtn;
         this.shuffleBtn = shuffleBtn;
         this.loopBtn = loopBtn;
         this.currentTimeLabel = currentTimeLabel;
@@ -62,6 +64,14 @@ public class PlayerView implements RiproduzioneObserver {
             }
         });
 
+        if (skipBtn != null) {
+            skipBtn.setOnAction(e -> {
+                if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
+                    gestoreRiproduzione.next();
+                }
+            });
+        }
+
         progressSlider.setOnMouseReleased(e -> {
             if (gestoreRiproduzione != null) {
                 gestoreRiproduzione.seek((int) progressSlider.getValue());
@@ -73,6 +83,13 @@ public class PlayerView implements RiproduzioneObserver {
                 shuffleEnabled = !shuffleEnabled;
                 if (shuffleEnabled) {
                     shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
+                    // Disattiva il loop se attivo
+                    if (loopEnabled) {
+                        loopEnabled = false;
+                        if (loopBtn != null) {
+                            loopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+                        }
+                    }
                 } else {
                     shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
                 }
@@ -87,6 +104,13 @@ public class PlayerView implements RiproduzioneObserver {
                 loopEnabled = !loopEnabled;
                 if (loopEnabled) {
                     loopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
+                    // Disattiva lo shuffle se attivo
+                    if (shuffleEnabled) {
+                        shuffleEnabled = false;
+                        if (shuffleBtn != null) {
+                            shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+                        }
+                    }
                 } else {
                     loopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
                 }
@@ -110,6 +134,8 @@ public class PlayerView implements RiproduzioneObserver {
             playBtn.setDisable(disabled);
         if (stopBtn != null)
             stopBtn.setDisable(disabled);
+        if (skipBtn != null)
+            skipBtn.setDisable(disabled);
         if (progressSlider != null)
             progressSlider.setDisable(disabled);
     }
