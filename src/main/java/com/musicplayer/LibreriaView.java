@@ -751,16 +751,13 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             }
         }
 
-        int tracciaId = 1;
         for (IBrano ib : braniDaMostrare) {
             if (ib instanceof Brano b) {
                 String fn = PathUtils.filenameFromPath(b.getPercorsoFile());
-                String prefix = playlistSelezionata != null ? "[Traccia " + tracciaId + "] " : "";
                 String display = (b.getTitolo() != null && !b.getTitolo().isBlank())
-                        ? prefix + b.getTitolo() + " — " + fn
-                        : prefix + fn;
+                        ? b.getTitolo() + " — " + fn
+                        : fn;
                 songListView.getItems().add(display);
-                tracciaId++;
             }
         }
 
