@@ -20,7 +20,7 @@
 <?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="760.0" prefWidth="1200.0" style="-fx-background-color: #000000;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicplayer.LibreriaView">
+<BorderPane prefHeight="760.0" prefWidth="1200.0" style="-fx-background-color: #000000;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicplayer.view.LibreriaView">
   <center>
     <SplitPane dividerPositions="0.22, 0.75" style="-fx-background-color: #000000; -fx-box-border: transparent; -fx-padding: 0;">
       <VBox maxWidth="300.0" minWidth="220.0" spacing="0" style="-fx-background-color: #000000; -fx-padding: 10 0 10 0;">

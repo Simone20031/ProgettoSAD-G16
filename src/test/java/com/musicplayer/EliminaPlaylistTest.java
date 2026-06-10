@@ -1,5 +1,9 @@
 package com.musicplayer;
 
+import com.musicplayer.model.*;
+import com.musicplayer.controller.*;
+
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,4 +80,4 @@ public class EliminaPlaylistTest {
         assertEquals("Pop", p.getNome());
         assertTrue(controller.getPlaylistMap().containsKey("Pop"));
     }
-}
+}

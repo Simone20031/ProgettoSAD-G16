@@ -1,5 +1,10 @@
 package com.musicplayer;
 
+import com.musicplayer.model.*;
+import com.musicplayer.controller.*;
+import com.musicplayer.strategy.*;
+
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

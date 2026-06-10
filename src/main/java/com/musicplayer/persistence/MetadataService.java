@@ -1,5 +1,8 @@
 package com.musicplayer.persistence;
 
+
+
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -95,7 +98,7 @@ public class MetadataService {
     }
 
     // Usato per la modifica di un brano
-    public static void aggiornaMetadata(String filename, com.musicplayer.Brano brano) {
+    public static void aggiornaMetadata(String filename, com.musicplayer.model.Brano brano) {
         if (brano == null)
             throw new IllegalArgumentException("Brano nullo");
         aggiornaMetadata(filename, new SongMetadata(brano));
@@ -111,7 +114,7 @@ public class MetadataService {
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
-    public static com.musicplayer.Brano toBrano(SongMetadata m) {
+    public static com.musicplayer.model.Brano toBrano(SongMetadata m) {
         int anno = 0;
         try {
             if (m.year != null && !m.year.isBlank())
@@ -126,7 +129,7 @@ public class MetadataService {
         } catch (NumberFormatException ignored) {
         }
 
-        return new com.musicplayer.Brano(
+        return new com.musicplayer.model.Brano(
                 m.filename,
                 m.title,
                 m.author,
@@ -134,7 +137,7 @@ public class MetadataService {
                 anno,
                 m.filename,
                 durata,
-                com.musicplayer.Tag.fromString(m.tag));
+                com.musicplayer.model.Tag.fromString(m.tag));
     }
 
     public static String stripExtension(String name) {
@@ -221,12 +224,12 @@ public class MetadataService {
         return libDir().resolve("Playlist - " + nomePlaylist);
     }
 
-    public static void salvaIndicePlaylistSuCSV(java.util.Collection<com.musicplayer.Playlist> playlists) {
+    public static void salvaIndicePlaylistSuCSV(java.util.Collection<com.musicplayer.model.Playlist> playlists) {
         Path csvPath = libDir().resolve("lista_playlist.csv");
         try (java.io.PrintWriter pw = new java.io.PrintWriter(Files.newBufferedWriter(csvPath))) {
             pw.println("# INDICE GENERALE PLAYLIST");
             pw.println("# Formato: ID_Playlist,Nome_Playlist");
-            for (com.musicplayer.Playlist pl : playlists) {
+            for (com.musicplayer.model.Playlist pl : playlists) {
                 pw.println(pl.getId() + "," + pl.getNome());
             }
             pw.flush();
@@ -235,7 +238,7 @@ public class MetadataService {
         }
     }
 
-    public static void salvaPlaylistSpecificaSuCSV(com.musicplayer.Playlist pl) {
+    public static void salvaPlaylistSpecificaSuCSV(com.musicplayer.model.Playlist pl) {
         if (pl == null)
             return;
         Path cartella = playlistDir(pl.getNome());
@@ -248,8 +251,8 @@ public class MetadataService {
             try (java.io.PrintWriter pw = new java.io.PrintWriter(Files.newBufferedWriter(csvPath))) {
                 pw.println("# Playlist: " + pl.getNome());
                 pw.println("# Formato: ID_Playlist,PercorsoAssoluto_MP3");
-                for (com.musicplayer.IBrano ib : pl.getBrani()) {
-                    if (ib instanceof com.musicplayer.Brano b) {
+                for (com.musicplayer.model.IBrano ib : pl.getBrani()) {
+                    if (ib instanceof com.musicplayer.model.Brano b) {
                         pw.println(pl.getId() + "," + b.getPercorsoFile());
                     }
                 }
@@ -260,8 +263,8 @@ public class MetadataService {
         }
     }
 
-    public static void caricaPlaylistDaCSV(java.util.Map<String, com.musicplayer.Playlist> playlistMap,
-            java.util.function.Function<String, com.musicplayer.Brano> findBrano) {
+    public static void caricaPlaylistDaCSV(java.util.Map<String, com.musicplayer.model.Playlist> playlistMap,
+            java.util.function.Function<String, com.musicplayer.model.Brano> findBrano) {
         Path lib = libDir();
         if (!Files.exists(lib)) return;
 
@@ -289,9 +292,9 @@ public class MetadataService {
 
                         if (realName == null) realName = folderName.replace("Playlist - ", "");
 
-                        com.musicplayer.Playlist pl = playlistMap.get(realName);
+                        com.musicplayer.model.Playlist pl = playlistMap.get(realName);
                         if (pl == null) {
-                            pl = new com.musicplayer.Playlist(id, realName);
+                            pl = new com.musicplayer.model.Playlist(id, realName);
                             playlistMap.put(realName, pl);
                         }
 
@@ -304,7 +307,7 @@ public class MetadataService {
                                 if (parti.length >= 2 && !parti[1].trim().isEmpty()) {
                                     String percorsoAssoluto = parti[1].trim();
                                     String filename = com.musicplayer.PathUtils.filenameFromPath(percorsoAssoluto);
-                                    com.musicplayer.Brano b = findBrano.apply(filename);
+                                    com.musicplayer.model.Brano b = findBrano.apply(filename);
                                     if (b != null) {
                                         try { pl.aggiungiBrano(b); } catch (IllegalArgumentException ignored) {}
                                     }

@@ -1,6 +1,8 @@
 package com.musicplayer.persistence;
 
-import com.musicplayer.Brano;
+
+
+import com.musicplayer.model.Brano;
 
 public class SongMetadata {
     public String filename;
@@ -27,21 +29,21 @@ public class SongMetadata {
         this.playCount = Math.max(0, playCount);
     }
 
-    public void validaDati() throws com.musicplayer.ValidazioneException {
-        if (title == null || title.isBlank()) throw new com.musicplayer.ValidazioneException("Titolo obbligatorio");
-        if (author == null || author.isBlank()) throw new com.musicplayer.ValidazioneException("Autore obbligatorio");
-        if (genre == null || genre.isBlank()) throw new com.musicplayer.ValidazioneException("Genere obbligatorio");
+    public void validaDati() throws com.musicplayer.model.ValidazioneException {
+        if (title == null || title.isBlank()) throw new com.musicplayer.model.ValidazioneException("Titolo obbligatorio");
+        if (author == null || author.isBlank()) throw new com.musicplayer.model.ValidazioneException("Autore obbligatorio");
+        if (genre == null || genre.isBlank()) throw new com.musicplayer.model.ValidazioneException("Genere obbligatorio");
         if (year != null && !year.isBlank()) {
             try {
                 int y = Integer.parseInt(year.trim());
-                if (y < 1800 || y > 2100) throw new com.musicplayer.ValidazioneException("Anno fuori range (1800-2100)");
+                if (y < 1800 || y > 2100) throw new com.musicplayer.model.ValidazioneException("Anno fuori range (1800-2100)");
             } catch (NumberFormatException e) {
-                throw new com.musicplayer.ValidazioneException("Anno non numerico");
+                throw new com.musicplayer.model.ValidazioneException("Anno non numerico");
             }
         }
     }
 
-    public SongMetadata(com.musicplayer.IBrano brano) {
+    public SongMetadata(com.musicplayer.model.IBrano brano) {
         if (brano == null) {
             this.filename = ""; this.title = ""; this.author = ""; this.year = "";
             this.duration = ""; this.genre = ""; this.tag = ""; this.playCount = 0;

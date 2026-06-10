@@ -1,5 +1,9 @@
 package com.musicplayer;
 
+import com.musicplayer.model.*;
+import com.musicplayer.controller.*;
+
+
 import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

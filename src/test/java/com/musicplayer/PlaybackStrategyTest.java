@@ -1,5 +1,11 @@
 package com.musicplayer;
 
+import com.musicplayer.model.*;
+import com.musicplayer.controller.*;
+import com.musicplayer.strategy.*;
+import com.musicplayer.state.*;
+
+
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Collections;
