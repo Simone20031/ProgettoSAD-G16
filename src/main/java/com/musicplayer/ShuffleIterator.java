@@ -9,6 +9,7 @@ public class ShuffleIterator implements PlaylistIterator {
     private final List<IBrano> braniRiprodotti = new ArrayList<>();
     private final ShuffleStrategy strategy = new ShuffleStrategy();
     private int currentIdx = -1;
+    private final List<Integer> cachedQueue = new ArrayList<>();
 
     public ShuffleIterator(List<IBrano> brani) {
         if (brani == null) {
@@ -27,15 +28,31 @@ public class ShuffleIterator implements PlaylistIterator {
         }
         return list;
     }
+    
+    private void fillCache(int minElements) {
+        List<Integer> simulatiRiprodotti = getIndicesRiprodotti();
+        simulatiRiprodotti.addAll(cachedQueue);
+        
+        int tempCurrentIdx = cachedQueue.isEmpty() ? currentIdx : cachedQueue.get(cachedQueue.size() - 1);
+        
+        while (cachedQueue.size() < minElements) {
+            int next = strategy.prossimoIndice(tempCurrentIdx, brani.size(), simulatiRiprodotti);
+            if (next == -1) {
+                break;
+            }
+            cachedQueue.add(next);
+            simulatiRiprodotti.add(next);
+            tempCurrentIdx = next;
+        }
+    }
 
     @Override
     public boolean hasNext() {
         if (brani.isEmpty()) {
             return false;
         }
-        List<Integer> riprodotti = getIndicesRiprodotti();
-        int next = strategy.prossimoIndice(currentIdx, brani.size(), riprodotti);
-        return next != -1;
+        fillCache(1);
+        return !cachedQueue.isEmpty();
     }
 
     @Override
@@ -43,18 +60,17 @@ public class ShuffleIterator implements PlaylistIterator {
         if (!hasNext()) {
             throw new NoSuchElementException("Tutti i brani della playlist sono stati riprodotti.");
         }
-        List<Integer> riprodotti = getIndicesRiprodotti();
-        int next = strategy.prossimoIndice(currentIdx, brani.size(), riprodotti);
-        
-        IBrano scelto = brani.get(next);
+        int nextIdx = cachedQueue.remove(0);
+        IBrano scelto = brani.get(nextIdx);
         braniRiprodotti.add(scelto);
-        currentIdx = next;
+        currentIdx = nextIdx;
         return scelto;
     }
 
     @Override
     public void reset() {
         braniRiprodotti.clear();
+        cachedQueue.clear();
         currentIdx = -1;
     }
 
@@ -66,36 +82,27 @@ public class ShuffleIterator implements PlaylistIterator {
                 braniRiprodotti.add(brano);
             }
             currentIdx = idx;
+            cachedQueue.clear();
         }
     }
 
     @Override
     public IBrano peekNext() {
-        if (brani.isEmpty()) {
+        if (!hasNext()) {
             return null;
         }
-        List<Integer> riprodotti = getIndicesRiprodotti();
-        int next = strategy.prossimoIndice(currentIdx, brani.size(), riprodotti);
-        if (next != -1 && next >= 0 && next < brani.size()) {
-            return brani.get(next);
-        }
-        return null;
+        return brani.get(cachedQueue.get(0));
     }
 
     @Override
     public List<IBrano> getCodaBrani(int maxElements) {
         List<IBrano> coda = new ArrayList<>();
-        if (brani.isEmpty()) {
+        if (brani.isEmpty() || maxElements <= 0) {
             return coda;
         }
-        List<Integer> riprodotti = getIndicesRiprodotti();
-        for (int i = 0; i < brani.size(); i++) {
-            if (!riprodotti.contains(i) && i != currentIdx) {
-                coda.add(brani.get(i));
-                if (coda.size() >= maxElements) {
-                    break;
-                }
-            }
+        fillCache(maxElements);
+        for (int i = 0; i < Math.min(maxElements, cachedQueue.size()); i++) {
+            coda.add(brani.get(cachedQueue.get(i)));
         }
         return coda;
     }
