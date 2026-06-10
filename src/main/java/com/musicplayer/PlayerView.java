@@ -48,43 +48,63 @@ public class PlayerView implements RiproduzioneObserver {
     private void initHandlers() {
         playBtn.setOnAction(e -> {
             animateButtonClick(playBtn);
-            if (!isPlaying) {
-                if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
-                    gestoreRiproduzione.play();
+            
+            // Ritardiamo leggermente l'azione logica per permettere all'animazione
+            // di renderizzare il primo frame (il bottone verde) prima di eventuali
+            // blocchi del thread dovuti al caricamento del media.
+            javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(50));
+            delay.setOnFinished(ev -> {
+                if (!isPlaying) {
+                    if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
+                        gestoreRiproduzione.play();
+                    } else {
+                        libreriaView.playSelected();
+                    }
                 } else {
-                    libreriaView.playSelected();
+                    if (gestoreRiproduzione != null) {
+                        gestoreRiproduzione.pausa();
+                    }
                 }
-            } else {
-                if (gestoreRiproduzione != null) {
-                    gestoreRiproduzione.pausa();
-                }
-            }
+            });
+            delay.play();
         });
 
         if (stopBtn != null) {
             stopBtn.setOnAction(e -> {
                 animateButtonClick(stopBtn);
-                if (gestoreRiproduzione != null) {
-                    gestoreRiproduzione.stop();
-                }
+                javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(50));
+                delay.setOnFinished(ev -> {
+                    if (gestoreRiproduzione != null) {
+                        gestoreRiproduzione.stop();
+                    }
+                });
+                delay.play();
             });
         }
 
         if (skipBackBtn != null) {
             skipBackBtn.setOnAction(e -> {
                 animateButtonClick(skipBackBtn);
-                if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
-                    gestoreRiproduzione.previous();
-                }
+                javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(50));
+                delay.setOnFinished(ev -> {
+                    if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
+                        gestoreRiproduzione.previous();
+                    }
+                });
+                delay.play();
             });
         }
 
         if (skipBtn != null) {
             skipBtn.setOnAction(e -> {
                 animateButtonClick(skipBtn);
-                if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
-                    gestoreRiproduzione.next();
-                }
+                javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(50));
+                delay.setOnFinished(ev -> {
+                    if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
+                        gestoreRiproduzione.next();
+                    }
+                });
+                delay.play();
             });
         }
 
