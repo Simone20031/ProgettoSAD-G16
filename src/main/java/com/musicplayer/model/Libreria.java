@@ -40,6 +40,19 @@ public class Libreria {
         // observer disabilitato in questo momento
     }
 
+    public void aggiungiBrani(java.util.Collection<? extends Playable> brani) {
+        if (brani == null) return;
+        java.util.Set<IBrano> set = new java.util.HashSet<>(catalogo);
+        for (Playable p : brani) {
+            if (p instanceof IBrano b) {
+                if (b != null && !set.contains(b)) {
+                    catalogo.add(b);
+                    set.add(b);
+                }
+            }
+        }
+    }
+
     public void modificaBrano(IBrano b, Map<String, String> dati) throws ValidazioneException {
         if (b instanceof Brano brano) {
             brano.setDettagli(dati);
@@ -61,6 +74,17 @@ public class Libreria {
         // Non aggiungere altro qui, la logica di pulizia delle playlist
         // la stiamo gestendo direttamente nel LibreriaController
         // per mantenere il modello Libreria pulito e semplice.
+    }
+
+    public void eliminaBrani(java.util.Collection<? extends Playable> brani) {
+        if (brani == null) return;
+        java.util.Set<IBrano> toRemove = new java.util.HashSet<>();
+        for (Playable p : brani) {
+            if (p instanceof IBrano b) {
+                toRemove.add(b);
+            }
+        }
+        catalogo.removeAll(toRemove);
     }
 
     // ── Gestione playlist ─────────────────────────────────────────────────────

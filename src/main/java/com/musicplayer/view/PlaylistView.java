@@ -129,6 +129,7 @@ public class PlaylistView {
         });
 
         if (branoSelectionListView != null) {
+            branoSelectionListView.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
             branoSelectionListView.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
                 libreriaView.showDetails(n);
             });
@@ -396,24 +397,28 @@ public class PlaylistView {
 
     private void eseguiAggiuntaBrani() {
         if (playlistPerAggiuntaBrani == null) return;
-        String sel = branoSelectionListView.getSelectionModel().getSelectedItem();
-        if (sel == null) {
+        java.util.List<String> selections = new java.util.ArrayList<>(branoSelectionListView.getSelectionModel().getSelectedItems());
+        if (selections.isEmpty()) {
             libreriaView.showAlert("Nessun brano selezionato.", Alert.AlertType.WARNING);
             return;
         }
         
-        String fn = sel.substring(sel.lastIndexOf("—") + 1).trim();
-        Brano b = null;
-        for (IBrano ib : libreriaController.getBrani()) {
-            if (ib instanceof Brano && java.nio.file.Paths.get(((Brano)ib).getPercorsoFile()).getFileName().toString().equals(fn)) {
-                b = (Brano) ib;
-                break;
+        java.util.List<Brano> braniDaAggiungere = new java.util.ArrayList<>();
+        for (String sel : selections) {
+            if (sel != null && sel.contains("—")) {
+                String fn = sel.substring(sel.lastIndexOf("—") + 1).trim();
+                for (IBrano ib : libreriaController.getBrani()) {
+                    if (ib instanceof Brano && java.nio.file.Paths.get(((Brano)ib).getPercorsoFile()).getFileName().toString().equals(fn)) {
+                        braniDaAggiungere.add((Brano) ib);
+                        break;
+                    }
+                }
             }
         }
         
-        if (b != null) {
+        if (!braniDaAggiungere.isEmpty()) {
             try {
-                libreriaController.aggiungiAPlaylist(b, playlistPerAggiuntaBrani);
+                libreriaController.aggiungiBraniAPlaylist(braniDaAggiungere, playlistPerAggiuntaBrani);
                 libreriaView.impostaPlaylist(playlistPerAggiuntaBrani);
                 playlistPerAggiuntaBrani = null;
             } catch (Exception ex) {

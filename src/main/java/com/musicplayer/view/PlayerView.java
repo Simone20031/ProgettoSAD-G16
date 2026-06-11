@@ -137,6 +137,7 @@ public class PlayerView implements RiproduzioneObserver {
                 if (gestoreRiproduzione != null) {
                     gestoreRiproduzione.setSingleSongLoop(loopEnabled);
                 }
+                libreriaView.aggiornaVisualizzazioneCoda();
             });
         }
     }

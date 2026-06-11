@@ -476,6 +476,144 @@ public class LibreriaController {
         }
     }
 
+    public void aggiungiBraniAPlaylist(Collection<? extends Playable> braniCollection, String playlistName) throws ValidazioneException {
+        if (playlistName == null || playlistName.isBlank())
+            return;
+
+        String targetName = playlistName;
+        boolean exists = false;
+        for (String existingName : playlistMap.keySet()) {
+            if (existingName.equalsIgnoreCase(playlistName)) {
+                targetName = existingName;
+                exists = true;
+                break;
+            }
+        }
+
+        if (exists && (braniCollection == null || braniCollection.isEmpty())) {
+            throw new ValidazioneException("Una playlist con lo stesso nome esiste già!");
+        }
+
+        // Se la playlist non esiste, creala
+        if (!exists) {
+            String univoqueId = java.util.UUID.randomUUID().toString().substring(0, 8);
+            Playlist nuovaPlaylist = new Playlist(univoqueId, targetName);
+            playlistMap.put(targetName, nuovaPlaylist);
+            MetadataService.salvaIndicePlaylistSuCSV(playlistMap.values());
+            MetadataService.salvaPlaylistSpecificaSuCSV(nuovaPlaylist);
+        }
+
+        Playlist pl = playlistMap.get(targetName);
+        if (braniCollection != null && !braniCollection.isEmpty()) {
+            pl.aggiungiBrani(braniCollection);
+            MetadataService.salvaPlaylistSpecificaSuCSV(pl);
+            // Aggiorna la coda di riproduzione con la lista aggiornata senza interrompere l'audio
+            GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
+        }
+
+        for (LibreriaObserver obs : observers) {
+            obs.onPlaylistAggiornata(pl);
+        }
+    }
+
+    public void rimuoviDaPlaylist(Collection<? extends Playable> brani, String playlistName) throws ValidazioneException {
+        Playlist pl = playlistMap.get(playlistName);
+        if (pl != null && brani != null && !brani.isEmpty()) {
+            // Controlla se almeno uno dei brani è in riproduzione
+            for (Playable p : brani) {
+                if (p instanceof Brano brano) {
+                    Path branoPath = libDir().resolve(PathUtils.filenameFromPath(brano.getPercorsoFile()));
+                    if (GestoreRiproduzione.getInstance().isCurrentFile(branoPath)) {
+                        throw new ValidazioneException("Traccia in riproduzione, attendere la fine o saltarla.");
+                    }
+                }
+            }
+            pl.rimuoviBrani(brani);
+            MetadataService.salvaPlaylistSpecificaSuCSV(pl);
+            GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
+            for (LibreriaObserver obs : observers) {
+                obs.onPlaylistAggiornata(pl);
+            }
+        }
+    }
+
+    public void eliminaBrani(Collection<? extends Playable> collection) throws IOException {
+        if (collection == null || collection.isEmpty())
+            return;
+
+        List<Brano> daEliminare = new ArrayList<>();
+        for (Playable p : collection) {
+            if (p instanceof Brano b) {
+                daEliminare.add(b);
+            }
+        }
+
+        if (daEliminare.isEmpty())
+            return;
+
+        // 0. Controlla se uno dei brani è in riproduzione, fermiamo per sbloccare il file lock
+        boolean stopPlayback = false;
+        for (Brano b : daEliminare) {
+            String filename = PathUtils.filenameFromPath(b.getPercorsoFile());
+            Path target = libDir().resolve(filename);
+            if (GestoreRiproduzione.getInstance().isCurrentFile(target)) {
+                stopPlayback = true;
+                break;
+            }
+        }
+        if (stopPlayback) {
+            GestoreRiproduzione.getInstance().stop();
+        }
+
+        // 1. Rilascio del file
+        System.gc();
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+        }
+
+        // 2. Eliminazioni fisiche e aggiornamento CSV
+        for (Brano b : daEliminare) {
+            String filename = PathUtils.filenameFromPath(b.getPercorsoFile());
+            Path target = libDir().resolve(filename);
+            if (Files.exists(target)) {
+                try {
+                    Files.delete(target);
+                } catch (IOException e) {
+                    System.err.println("Errore cancellazione file: " + target + " " + e.getMessage());
+                }
+            }
+            MetadataService.removeMetadataRow(filename);
+        }
+
+        // 3. Rimozione collettiva nel modello principale
+        libreria.eliminaBrani(daEliminare);
+
+        // 4. RIMOZIONE SINCRONIZZATA DALLE PLAYLIST
+        for (Playlist p : playlistMap.values()) {
+            boolean modified = false;
+            java.util.Set<IBrano> setBrani = new java.util.HashSet<>(p.getBrani());
+            List<Playable> playablesToRemove = new ArrayList<>();
+            for (Brano b : daEliminare) {
+                if (setBrani.contains(b)) {
+                    playablesToRemove.add(b);
+                    modified = true;
+                }
+            }
+            if (modified) {
+                p.rimuoviBrani(playablesToRemove);
+                MetadataService.salvaPlaylistSpecificaSuCSV(p);
+            }
+        }
+
+        // 5. NOTIFICA PER LA VISTA
+        for (Brano b : daEliminare) {
+            for (LibreriaObserver obs : observers) {
+                obs.onBranoEliminato(b);
+            }
+        }
+    }
+
     public void spostaBranoInPlaylist(Brano brano, String playlistName, int nuovaPosizione) throws ValidazioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brano != null) {

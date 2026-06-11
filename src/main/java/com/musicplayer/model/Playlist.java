@@ -42,8 +42,36 @@ public class Playlist implements Playable {
         brani.add(b);
     }
 
+    public void aggiungiBrani(java.util.Collection<? extends Playable> col) {
+        if (col == null) return;
+        java.util.Set<IBrano> set = new java.util.HashSet<>(brani);
+        for (Playable p : col) {
+            if (p instanceof IBrano b) {
+                if (b == null) {
+                    throw new IllegalArgumentException("Impossibile aggiungere un brano nullo alla playlist.");
+                }
+                if (set.contains(b)) {
+                    throw new IllegalArgumentException("Il brano è già presente in questa playlist.");
+                }
+                brani.add(b);
+                set.add(b);
+            }
+        }
+    }
+
     public void rimuoviBrano(IBrano b) {
         brani.remove(b);
+    }
+
+    public void rimuoviBrani(java.util.Collection<? extends Playable> col) {
+        if (col == null) return;
+        java.util.Set<IBrano> toRemove = new java.util.HashSet<>();
+        for (Playable p : col) {
+            if (p instanceof IBrano b) {
+                toRemove.add(b);
+            }
+        }
+        brani.removeAll(toRemove);
     }
 
     public boolean contieneBrano(IBrano b) {

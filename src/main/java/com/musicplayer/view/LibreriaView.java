@@ -196,6 +196,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private Stage primaryStage;
     private String playlistSelezionata = null;
     private Brano branoInAttesaDiPlaylist = null;
+    private List<Brano> braniInAttesaDiPlaylistBulk = null;
     private TextField currentTitleField;
     private TextField currentAuthorField;
     private TextField currentGenreField;
@@ -398,6 +399,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             if (branoInAttesaDiPlaylist != null) {
                 branoInAttesaDiPlaylist = null;
             }
+            if (braniInAttesaDiPlaylistBulk != null) {
+                braniInAttesaDiPlaylistBulk = null;
+            }
             refreshList();
             switchToView(viewLista);
         });
@@ -405,40 +409,50 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         btnConfermaSelezione.setOnAction(e -> {
             String nomePlaylistSelezionato = playlistSelectionListView.getSelectionModel().getSelectedItem();
 
-            // Verifica che abbiamo sia la playlist che il brano
-            if (nomePlaylistSelezionato != null && branoInAttesaDiPlaylist != null) {
-                // Salva il contesto di provenienza prima del reset
-                String contestoProvenienza = playlistSelezionata;
+            if (nomePlaylistSelezionato == null) {
+                showAlert("Seleziona una playlist dalla lista!", Alert.AlertType.WARNING);
+                return;
+            }
+
+            String contestoProvenienza = playlistSelezionata;
+            if (branoInAttesaDiPlaylist != null) {
                 try {
-                    // Usa il nome corretto del metodo che hai nel Controller: aggiungiAPlaylist
-                    // Firma corretta: aggiungiAPlaylist(Brano, String)
                     libreriaController.aggiungiAPlaylist(branoInAttesaDiPlaylist, nomePlaylistSelezionato);
-
-                    // Reset stato
                     branoInAttesaDiPlaylist = null;
-
-                    // Aggiorna l'interfaccia
                     refreshList();
                     refreshPlaylistList();
-
                     Alert alert = new Alert(Alert.AlertType.INFORMATION, "Brano aggiunto con successo!");
                     alert.show();
-
                     switchToView(viewLista);
-                    // Torna alla playlist di provenienza, oppure alla libreria generale
                     if (contestoProvenienza != null) {
                         impostaPlaylist(contestoProvenienza);
                     } else {
                         mostraLibreriaGenerale();
                     }
-
                 } catch (ValidazioneException ve) {
                     mostraErrore(ve);
                 } catch (Exception ex) {
                     mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
                 }
-            } else if (nomePlaylistSelezionato == null) {
-                showAlert("Seleziona una playlist dalla lista!", Alert.AlertType.WARNING);
+            } else if (braniInAttesaDiPlaylistBulk != null && !braniInAttesaDiPlaylistBulk.isEmpty()) {
+                try {
+                    libreriaController.aggiungiBraniAPlaylist(braniInAttesaDiPlaylistBulk, nomePlaylistSelezionato);
+                    braniInAttesaDiPlaylistBulk = null;
+                    refreshList();
+                    refreshPlaylistList();
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Brani aggiunti con successo!");
+                    alert.show();
+                    switchToView(viewLista);
+                    if (contestoProvenienza != null) {
+                        impostaPlaylist(contestoProvenienza);
+                    } else {
+                        mostraLibreriaGenerale();
+                    }
+                } catch (ValidazioneException ve) {
+                    mostraErrore(ve);
+                } catch (Exception ex) {
+                    mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
+                }
             }
         });
         // Inizializza GestoreRiproduzione e PlayerView
@@ -580,6 +594,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             }
         });
 
+        songListView.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
         songListView.getSelectionModel().selectedItemProperty()
                 .addListener((obs, oldVal, newVal) -> {
                     showDetails(newVal);
@@ -661,11 +676,19 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             {
                 container.setOnMouseClicked(event -> {
                     if (event.getClickCount() == 1 && !isEmpty()) {
-                        songListView.getSelectionModel().select(getItem());
+                        if (event.isControlDown() || event.isShiftDown()) {
+                            // Let native JavaFX multiple selection handle it
+                            return;
+                        }
+                        songListView.getSelectionModel().clearAndSelect(getIndex());
                     }
                 });
                 lblId.setOnMouseClicked(event -> {
                     if (event.getClickCount() == 1 && !isEmpty()) {
+                        if (event.isControlDown() || event.isShiftDown()) {
+                            // Let native JavaFX multiple selection handle it
+                            return;
+                        }
                         songListView.getSelectionModel().select(getItem());
                         String fn = extractFilename(getItem());
                         String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
@@ -714,8 +737,29 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 btnOpzioni.setOnAction(e -> {
                     e.consume();
                     menu.getItems().clear();
-                    String sel = getItem();
-                    if (sel != null) {
+                    List<String> selectedItems = new ArrayList<>(songListView.getSelectionModel().getSelectedItems());
+                    String currentItem = getItem();
+                    if (currentItem != null && !selectedItems.contains(currentItem)) {
+                        selectedItems.clear();
+                        selectedItems.add(currentItem);
+                    }
+
+                    if (selectedItems.size() > 1) {
+                        MenuItem miElimina = new MenuItem("Elimina definitivamente dalla libreria");
+                        miElimina.setOnAction(ev -> eliminaBraniBulk(selectedItems));
+                        
+                        MenuItem miAggiungi = new MenuItem(playlistSelezionata == null ? "Aggiungi a playlist" : "Aggiungi a un'altra playlist");
+                        miAggiungi.setOnAction(ev -> aggiungiBraniAPlaylistBulk(selectedItems));
+                        
+                        menu.getItems().addAll(miElimina, miAggiungi);
+                        
+                        if (playlistSelezionata != null) {
+                            MenuItem miRimuovi = new MenuItem("Rimuovi dalla playlist corrente");
+                            miRimuovi.setOnAction(ev -> rimuoviBraniDaPlaylistBulk(selectedItems, playlistSelezionata));
+                            menu.getItems().add(miRimuovi);
+                        }
+                    } else if (!selectedItems.isEmpty()) {
+                        String sel = selectedItems.get(0);
                         Brano selezionato = findBranoByFilename(extractFilename(sel));
                         if (selezionato != null) {
                             for (String label : statoAttuale.getOpzioniSingolo()) {
@@ -784,7 +828,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #ffffff; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
                 } else if (selected) {
-                    container.setStyle("-fx-background-color: #333333; -fx-background-radius: 6;");
+                    container.setStyle("-fx-background-color: #3e3e3e; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 2; -fx-background-radius: 6;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
@@ -1254,13 +1298,27 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         aggiornaVisualizzazioneCoda();
     }
 
-    private void aggiornaVisualizzazioneCoda() {
+    void aggiornaVisualizzazioneCoda() {
         javafx.application.Platform.runLater(() -> {
             if (gestoreRiproduzione == null || nextSongLabel == null)
                 return;
             PlaylistIterator iter = gestoreRiproduzione.getIterator();
             if (iter != null && gestoreRiproduzione.hasActiveMedia()) {
-                IBrano prossimo = iter.peekNext();
+                IBrano branoCorrente = null;
+                String currentMedia = gestoreRiproduzione.getCurrentMediaSource();
+                try {
+                    String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName().toString();
+                    branoCorrente = findBranoByFilename(currentFilename);
+                } catch (Exception ignored) {
+                }
+
+                IBrano prossimo;
+                if (gestoreRiproduzione.isSingleSongLoop() && branoCorrente != null) {
+                    prossimo = branoCorrente;
+                } else {
+                    prossimo = iter.peekNext();
+                }
+
                 if (prossimo != null) {
                     nextSongLabel.setText("Prossimo: " + prossimo.getTitolo());
                 } else {
@@ -1271,28 +1329,27 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 // dei dettagli
                 if (songListView.getSelectionModel().getSelectedItem() == null) {
                     StringBuilder sb = new StringBuilder("--- CODA DI RIPRODUZIONE ---\n\n");
-                    // Brano corrente
-                    String currentMedia = gestoreRiproduzione.getCurrentMediaSource();
-                    try {
-                        String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName()
-                                .toString();
-                        IBrano b = findBranoByFilename(currentFilename);
-                        if (b != null) {
-                            sb.append("▶ Ora in riproduzione:\n   ").append(b.getTitolo()).append("\n\n");
-                        }
-                    } catch (Exception ignored) {
+                    if (branoCorrente != null) {
+                        sb.append("▶ Ora in riproduzione:\n   ").append(branoCorrente.getTitolo()).append("\n\n");
                     }
 
-                    List<IBrano> coda = iter.getCodaBrani(5);
-                    if (!coda.isEmpty()) {
+                    if (gestoreRiproduzione.isSingleSongLoop() && branoCorrente != null) {
                         sb.append("⏭ Brani successivi:\n");
-                        int idx = 1;
-                        for (IBrano cb : coda) {
-                            sb.append(" ").append(idx).append(". ").append(cb.getTitolo()).append("\n");
-                            idx++;
+                        for (int idx = 1; idx <= 5; idx++) {
+                            sb.append(" ").append(idx).append(". ").append(branoCorrente.getTitolo()).append("\n");
                         }
                     } else {
-                        sb.append("Nessun altro brano in coda.");
+                        List<IBrano> coda = iter.getCodaBrani(5);
+                        if (!coda.isEmpty()) {
+                            sb.append("⏭ Brani successivi:\n");
+                            int idx = 1;
+                            for (IBrano cb : coda) {
+                                sb.append(" ").append(idx).append(". ").append(cb.getTitolo()).append("\n");
+                                idx++;
+                            }
+                        } else {
+                            sb.append("Nessun altro brano in coda.");
+                        }
                     }
                     detailsLabel.setText(sb.toString());
                 }
@@ -2102,5 +2159,96 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         
         scaleDown.play();
         pause.play();
+    }
+
+    public void eliminaBraniBulk(List<String> items) {
+        if (items == null || items.isEmpty())
+            return;
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Eliminare i " + items.size() + " brani selezionati?", ButtonType.YES, ButtonType.NO);
+        if (confirm.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
+            try {
+                List<Brano> brani = new ArrayList<>();
+                for (String item : items) {
+                    Brano b = findBranoByFilename(extractFilename(item));
+                    if (b != null) {
+                        brani.add(b);
+                    }
+                }
+                libreriaController.eliminaBrani(brani);
+                metadataMap.clear();
+                MetadataService.caricaMappaDalCSV(metadataMap);
+                refreshList();
+                refreshPlaylistList();
+                aggiornaCuorePreferiti();
+            } catch (Exception ex) {
+                mostraErrore(new ValidazioneException("Errore durante l'eliminazione di massa: " + ex.getMessage()));
+            }
+        }
+    }
+
+    public void aggiungiBraniAPlaylistBulk(List<String> items) {
+        if (items == null || items.isEmpty())
+            return;
+        List<Brano> brani = new ArrayList<>();
+        for (String item : items) {
+            Brano b = findBranoByFilename(extractFilename(item));
+            if (b != null) {
+                brani.add(b);
+            }
+        }
+        if (!brani.isEmpty()) {
+            apriSelezionePlaylistBulk(brani);
+        }
+    }
+
+    public void rimuoviBraniDaPlaylistBulk(List<String> items, String playlistName) {
+        if (items == null || items.isEmpty() || playlistName == null)
+            return;
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Rimuovere i " + items.size() + " brani selezionati da questa playlist?", ButtonType.YES, ButtonType.NO);
+        if (confirm.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
+            try {
+                List<Brano> brani = new ArrayList<>();
+                for (String item : items) {
+                    Brano b = findBranoByFilename(extractFilename(item));
+                    if (b != null) {
+                        brani.add(b);
+                    }
+                }
+                libreriaController.rimuoviDaPlaylist(brani, playlistName);
+                refreshList();
+                refreshPlaylistList();
+            } catch (ValidazioneException ve) {
+                mostraErrore(ve);
+            } catch (Exception ex) {
+                mostraErrore(new ValidazioneException("Errore durante la rimozione di massa: " + ex.getMessage()));
+            }
+        }
+    }
+
+    public void apriSelezionePlaylistBulk(List<Brano> brani) {
+        this.braniInAttesaDiPlaylistBulk = brani;
+        this.branoInAttesaDiPlaylist = null;
+
+        if (libreriaController.getPlaylist().isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Nessuna playlist trovata. Creane una!");
+            alert.showAndWait();
+            switchToView(viewCreazione);
+            return;
+        }
+
+        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream().map(Playlist::getNome);
+        if (playlistSelezionata != null) {
+            stream = stream.filter(nome -> !nome.equals(playlistSelezionata));
+        }
+
+        java.util.List<String> opzioni = stream.toList();
+        if (opzioni.isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Non ci sono altre playlist disponibili.");
+            alert.showAndWait();
+            return;
+        }
+
+        playlistSelectionListView.getItems().setAll(opzioni);
+        switchToView(viewSelezionePlaylist);
     }
 }
