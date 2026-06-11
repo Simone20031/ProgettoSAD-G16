@@ -19,6 +19,7 @@ public class Brano implements IBrano {
     private String percorsoFile;
     private int durata; // in secondi
     private Tag tag;
+    private int playCount;
 
     public Brano(String id, String titolo, String autore, String genere, int anno, String percorsoFile, int durata,
             Tag tag) {
@@ -30,6 +31,7 @@ public class Brano implements IBrano {
         this.percorsoFile = percorsoFile == null ? "" : percorsoFile;
         this.durata = Math.max(0, durata);
         this.tag = tag == null ? Tag.NESSUNO : tag;
+        this.playCount = 0;
     }
 
     // Getter per i campi principali (usati da view e CSV)
@@ -76,6 +78,21 @@ public class Brano implements IBrano {
     @Override
     public int getDurataTotale() {
         return getDurata();
+    }
+
+    @Override
+    public int getPlayCount() {
+        return playCount;
+    }
+
+    @Override
+    public void incrementPlayCount() {
+        this.playCount++;
+    }
+
+    // Setter for loading from metadata
+    public void setPlayCount(int playCount) {
+        this.playCount = Math.max(0, playCount);
     }
 
     // ── Dettagli (usati da view e CSV) ────────────────────────────────────────

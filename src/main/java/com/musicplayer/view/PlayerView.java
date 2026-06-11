@@ -14,7 +14,6 @@ public class PlayerView implements RiproduzioneObserver {
     private final Button stopBtn;
     private final Button skipBackBtn;
     private final Button skipBtn;
-    private final Button shuffleBtn;
     private final Button loopBtn;
     private final Label currentTimeLabel;
     private final Label totalTimeLabel;
@@ -26,14 +25,13 @@ public class PlayerView implements RiproduzioneObserver {
     private boolean shuffleEnabled = false;
     private boolean loopEnabled = false;
 
-    public PlayerView(Button playBtn, Button stopBtn, Button skipBackBtn, Button skipBtn, Button shuffleBtn, Button loopBtn,
+    public PlayerView(Button playBtn, Button stopBtn, Button skipBackBtn, Button skipBtn, Button loopBtn,
             Label currentTimeLabel, Label totalTimeLabel, Slider progressSlider,
             GestoreRiproduzione gestoreRiproduzione, LibreriaView libreriaView) {
         this.playBtn = playBtn;
         this.stopBtn = stopBtn;
         this.skipBackBtn = skipBackBtn;
         this.skipBtn = skipBtn;
-        this.shuffleBtn = shuffleBtn;
         this.loopBtn = loopBtn;
         this.currentTimeLabel = currentTimeLabel;
         this.totalTimeLabel = totalTimeLabel;
@@ -79,8 +77,14 @@ public class PlayerView implements RiproduzioneObserver {
                 animateButtonClick(stopBtn);
                 javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(50));
                 delay.setOnFinished(ev -> {
-                    if (gestoreRiproduzione != null) {
-                        gestoreRiproduzione.stop();
+                    if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
+                        // Forza pausa + seek(0) indipendentemente dallo stato corrente
+                        gestoreRiproduzione.eseguiPausa();
+                        gestoreRiproduzione.seek(0);
+                        gestoreRiproduzione.setStato(new com.musicplayer.state.PausedState());
+                        // Aggiorna visivamente slider e tempo
+                        if (progressSlider != null) progressSlider.setValue(0);
+                        if (currentTimeLabel != null) currentTimeLabel.setText("00:00");
                     }
                 });
                 delay.play();
@@ -93,7 +97,7 @@ public class PlayerView implements RiproduzioneObserver {
                 javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(50));
                 delay.setOnFinished(ev -> {
                     if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
-                        gestoreRiproduzione.skipIndietro();
+                        gestoreRiproduzione.playPrevious();
                     }
                 });
                 delay.play();
@@ -106,7 +110,7 @@ public class PlayerView implements RiproduzioneObserver {
                 javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(50));
                 delay.setOnFinished(ev -> {
                     if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()) {
-                        gestoreRiproduzione.skipAvanti();
+                        gestoreRiproduzione.playNext();
                     }
                 });
                 delay.play();
@@ -119,44 +123,19 @@ public class PlayerView implements RiproduzioneObserver {
             }
         });
 
-        if (shuffleBtn != null) {
-            shuffleBtn.setOnAction(e -> {
-                shuffleEnabled = !shuffleEnabled;
-                if (shuffleEnabled) {
-                    shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
-                    // Disattiva il loop se attivo
-                    if (loopEnabled) {
-                        loopEnabled = false;
-                        if (loopBtn != null) {
-                            loopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
-                        }
-                    }
-                } else {
-                    shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
-                }
-                if (libreriaView != null) {
-                    libreriaView.onShuffleToggled(shuffleEnabled);
-                }
-            });
-        }
+
 
         if (loopBtn != null) {
             loopBtn.setOnAction(e -> {
                 loopEnabled = !loopEnabled;
                 if (loopEnabled) {
                     loopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
-                    // Disattiva lo shuffle se attivo
-                    if (shuffleEnabled) {
-                        shuffleEnabled = false;
-                        if (shuffleBtn != null) {
-                            shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
-                        }
-                    }
+                    // Loop non disattiva più lo shuffle del player, dato che lo shuffle è stato spostato alle playlist.
                 } else {
                     loopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
                 }
-                if (libreriaView != null) {
-                    libreriaView.onLoopToggled(loopEnabled);
+                if (gestoreRiproduzione != null) {
+                    gestoreRiproduzione.setSingleSongLoop(loopEnabled);
                 }
             });
         }
@@ -322,5 +301,10 @@ public class PlayerView implements RiproduzioneObserver {
     @Override
     public void onBranoCambiato(String nuovoPercorso) {
         // Nessun aggiornamento necessario nel PlayerView, ci pensa LibreriaView
+    }
+
+    @Override
+    public void onBranoRipetuto() {
+        // Il player view non fa nulla di speciale, la logica è in LibreriaView
     }
 }

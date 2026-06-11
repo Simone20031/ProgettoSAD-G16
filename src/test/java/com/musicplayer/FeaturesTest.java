@@ -128,6 +128,10 @@ public class FeaturesTest {
             @Override
             public void onBranoCambiato(String nuovoPercorso) {
             }
+
+            @Override
+            public void onBranoRipetuto() {
+            }
         };
 
         gestore.addObserver(observer);

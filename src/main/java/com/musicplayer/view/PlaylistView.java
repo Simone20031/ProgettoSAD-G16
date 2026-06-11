@@ -22,9 +22,31 @@ public class PlaylistView {
     private final LibreriaController libreriaController;
     private final LibreriaView libreriaView; // Per chiamare switchToView, refreshList, mostraErrore
 
+    private final Label lblGestionePlaylistTitle;
+    private final VBox viewSelezioneBrano;
+    private final ListView<String> branoSelectionListView;
+    private final Button btnAnnullaSelezioneBrano;
+    private final Button btnConfermaSelezioneBrano;
+    
+    private final TextField addSearchTitoloField;
+    private final TextField addSearchAutoreField;
+    private final ComboBox<String> addSearchAnnoCombo;
+    private final ComboBox<String> addSearchGenereCombo;
+    private final ComboBox<String> addSearchTagCombo;
+    private final Button addResetSearchBtn;
+
+    private String playlistDaRinominare = null;
+    private String playlistPerAggiuntaBrani = null;
+    private java.util.List<Brano> braniDisponibiliOriginali = new java.util.ArrayList<>();
+
     public PlaylistView(ListView<String> playlistListView, VBox viewLista, VBox viewCreazione,
             TextField playlistNameField, Button createPlaylistBtn, Button btnAnnullaCreazione,
-            Button btnApriCreazione, LibreriaController libreriaController, LibreriaView libreriaView) {
+            Button btnApriCreazione, Label lblGestionePlaylistTitle,
+            VBox viewSelezioneBrano, ListView<String> branoSelectionListView,
+            Button btnAnnullaSelezioneBrano, Button btnConfermaSelezioneBrano, 
+            TextField addSearchTitoloField, TextField addSearchAutoreField, ComboBox<String> addSearchAnnoCombo,
+            ComboBox<String> addSearchGenereCombo, ComboBox<String> addSearchTagCombo, Button addResetSearchBtn,
+            LibreriaController libreriaController, LibreriaView libreriaView) {
         this.playlistListView = playlistListView;
         this.viewLista = viewLista;
         this.viewCreazione = viewCreazione;
@@ -32,6 +54,20 @@ public class PlaylistView {
         this.createPlaylistBtn = createPlaylistBtn;
         this.btnAnnullaCreazione = btnAnnullaCreazione;
         this.btnApriCreazione = btnApriCreazione;
+        
+        this.lblGestionePlaylistTitle = lblGestionePlaylistTitle;
+        this.viewSelezioneBrano = viewSelezioneBrano;
+        this.branoSelectionListView = branoSelectionListView;
+        this.btnAnnullaSelezioneBrano = btnAnnullaSelezioneBrano;
+        this.btnConfermaSelezioneBrano = btnConfermaSelezioneBrano;
+        
+        this.addSearchTitoloField = addSearchTitoloField;
+        this.addSearchAutoreField = addSearchAutoreField;
+        this.addSearchAnnoCombo = addSearchAnnoCombo;
+        this.addSearchGenereCombo = addSearchGenereCombo;
+        this.addSearchTagCombo = addSearchTagCombo;
+        this.addResetSearchBtn = addResetSearchBtn;
+        
         this.libreriaController = libreriaController;
         this.libreriaView = libreriaView;
     }
@@ -41,12 +77,48 @@ public class PlaylistView {
             return;
 
         btnApriCreazione.setOnAction(e -> {
+            playlistDaRinominare = null;
+            if (lblGestionePlaylistTitle != null) {
+                lblGestionePlaylistTitle.setText("Nuova Playlist");
+            }
+            createPlaylistBtn.setText("CREA");
             playlistNameField.clear();
             libreriaView.switchToView(viewCreazione);
         });
 
-        btnAnnullaCreazione.setOnAction(e -> libreriaView.switchToView(viewLista));
-        createPlaylistBtn.setOnAction(e -> handleNuovaPlaylist());
+        btnAnnullaCreazione.setOnAction(e -> {
+            playlistDaRinominare = null;
+            libreriaView.switchToView(viewLista);
+        });
+        createPlaylistBtn.setOnAction(e -> handleSalvaPlaylist());
+
+        if (btnAnnullaSelezioneBrano != null) {
+            btnAnnullaSelezioneBrano.setOnAction(e -> {
+                playlistPerAggiuntaBrani = null;
+                libreriaView.switchToView(viewLista);
+            });
+        }
+
+        if (btnConfermaSelezioneBrano != null) {
+            btnConfermaSelezioneBrano.setOnAction(e -> eseguiAggiuntaBrani());
+        }
+        
+        if (addSearchTitoloField != null) {
+            addSearchTitoloField.textProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
+            addSearchAutoreField.textProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
+            addSearchAnnoCombo.valueProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
+            addSearchGenereCombo.valueProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
+            addSearchTagCombo.valueProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
+            
+            addResetSearchBtn.setOnAction(e -> {
+                addSearchTitoloField.clear();
+                addSearchAutoreField.clear();
+                addSearchAnnoCombo.setValue(null);
+                addSearchGenereCombo.setValue(null);
+                addSearchTagCombo.setValue(null);
+                applicaFiltroAggiuntaBrani();
+            });
+        }
 
         playlistListView.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
             if (n != null) {
@@ -55,6 +127,12 @@ public class PlaylistView {
                 libreriaView.refreshList();
             }
         });
+
+        if (branoSelectionListView != null) {
+            branoSelectionListView.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
+                libreriaView.showDetails(n);
+            });
+        }
 
         playlistListView.setCellFactory(lv -> new ListCell<>() {
             private final HBox container = new HBox();
@@ -142,47 +220,50 @@ public class PlaylistView {
         }
     }
 
-    private void handleNuovaPlaylist() {
+    private void handleSalvaPlaylist() {
         String nome = playlistNameField.getText();
         try {
             if (nome == null || nome.trim().isEmpty()) {
                 throw new ValidazioneException("Il nome della playlist non può essere vuoto.",
                         ValidazioneException.TipoErrore.CAMPO_MANCANTE, "Nome");
             }
-            libreriaController.aggiungiAPlaylist(null, nome);
+            
+            String cleanInput = nome.trim();
+            if (playlistDaRinominare != null) {
+                // Rinomina
+                libreriaController.rinominaPlaylist(playlistDaRinominare, cleanInput);
+                if (playlistDaRinominare.equals(libreriaView.getPlaylistSelezionata())) {
+                    libreriaView.impostaPlaylist(cleanInput);
+                }
+                libreriaView.refreshPlaylistList();
+                playlistDaRinominare = null;
+            } else {
+                // Creazione nuova
+                libreriaController.aggiungiAPlaylist(null, cleanInput);
+                libreriaView.impostaPlaylist(cleanInput);
+                libreriaView.refreshList();
+                libreriaView.refreshPlaylistList();
+            }
+            
             libreriaView.switchToView(viewLista);
-            libreriaView.impostaPlaylist(nome.trim());
-            libreriaView.refreshList();
         } catch (ValidazioneException ex) {
             libreriaView.mostraErrore(ex);
+        } catch (Exception ex) {
+            libreriaView.mostraErrore(new ValidazioneException("Errore gestione playlist: " + ex.getMessage()));
         }
     }
 
     private void handleRinominaPlaylist(String vecchioNome) {
         if (vecchioNome == null)
             return;
-        TextInputDialog dialog = new TextInputDialog(vecchioNome);
-        dialog.setTitle("Rinomina Playlist");
-        dialog.setHeaderText("Rinomina la playlist '" + vecchioNome + "'");
-        dialog.setContentText("Nuovo nome:");
-
-        dialog.showAndWait().ifPresent(inputNome -> {
-            try {
-                String cleanInput = inputNome.trim();
-                if (cleanInput.isEmpty()) {
-                    throw new ValidazioneException("Il nome della playlist non può essere vuoto.");
-                }
-                libreriaController.rinominaPlaylist(vecchioNome, cleanInput);
-                if (vecchioNome.equals(libreriaView.getPlaylistSelezionata())) {
-                    libreriaView.impostaPlaylist(cleanInput);
-                }
-                libreriaView.refreshPlaylistList();
-            } catch (ValidazioneException ve) {
-                libreriaView.mostraErrore(ve);
-            } catch (Exception ex) {
-                libreriaView.mostraErrore(new ValidazioneException("Errore rinomina: " + ex.getMessage()));
-            }
-        });
+        
+        playlistDaRinominare = vecchioNome;
+        if (lblGestionePlaylistTitle != null) {
+            lblGestionePlaylistTitle.setText("Rinomina Playlist");
+        }
+        createPlaylistBtn.setText("SALVA");
+        playlistNameField.setText(vecchioNome);
+        libreriaView.switchToView(viewCreazione);
     }
 
     private void handleEliminaPlaylist(String nomePlaylist) {
@@ -204,7 +285,7 @@ public class PlaylistView {
     }
 
     private void handleAggiungiBraniAPlaylist(String nomePlaylist) {
-        if (nomePlaylist == null)
+        if (nomePlaylist == null || viewSelezioneBrano == null)
             return;
         Playlist target = null;
         for (Playlist p : libreriaController.getPlaylist()) {
@@ -217,6 +298,10 @@ public class PlaylistView {
             return;
 
         java.util.List<Brano> braniDisponibili = new java.util.ArrayList<>();
+        java.util.Set<String> anni = new java.util.HashSet<>();
+        java.util.Set<String> generi = new java.util.HashSet<>();
+        java.util.Set<String> tags = new java.util.HashSet<>();
+
         for (IBrano ib : libreriaController.getBrani()) {
             if (ib instanceof Brano b) {
                 boolean giaPresente = false;
@@ -226,46 +311,114 @@ public class PlaylistView {
                         break;
                     }
                 }
-                if (!giaPresente)
+                if (!giaPresente) {
                     braniDisponibili.add(b);
+                    if (b.getAnno() > 0) anni.add(String.valueOf(b.getAnno()));
+                    if (b.getGenere() != null && !b.getGenere().isEmpty()) generi.add(b.getGenere());
+                    if (b.getTag() != null && b.getTag().getEtichetta() != null && !b.getTag().getEtichetta().isEmpty()) {
+                        for (String t : b.getTag().getEtichetta().split(",")) {
+                            tags.add(t.trim());
+                        }
+                    }
+                }
             }
         }
-
         if (braniDisponibili.isEmpty()) {
-            libreriaView.showAlert("Tutti i brani sono già presenti.", Alert.AlertType.INFORMATION);
+            libreriaView.showAlert("Tutti i brani sono già presenti in " + nomePlaylist, Alert.AlertType.INFORMATION);
             return;
         }
 
-        Dialog<Brano> dialog = new Dialog<>();
-        dialog.setTitle("Aggiungi brani a " + nomePlaylist);
-        dialog.setHeaderText("Seleziona il brano da aggiungere");
+        playlistPerAggiuntaBrani = nomePlaylist;
+        braniDisponibiliOriginali = braniDisponibili;
+        
+        if (addSearchAnnoCombo != null) {
+            java.util.List<String> listAnni = new java.util.ArrayList<>(anni);
+            java.util.Collections.sort(listAnni);
+            listAnni.add(0, "");
+            addSearchAnnoCombo.getItems().setAll(listAnni);
+            
+            java.util.List<String> listGeneri = new java.util.ArrayList<>(generi);
+            java.util.Collections.sort(listGeneri);
+            listGeneri.add(0, "");
+            addSearchGenereCombo.getItems().setAll(listGeneri);
+            
+            java.util.List<String> listTags = new java.util.ArrayList<>(tags);
+            java.util.Collections.sort(listTags);
+            listTags.add(0, "");
+            addSearchTagCombo.getItems().setAll(listTags);
+            
+            addSearchTitoloField.clear();
+            addSearchAutoreField.clear();
+            addSearchAnnoCombo.setValue(null);
+            addSearchGenereCombo.setValue(null);
+            addSearchTagCombo.setValue(null);
+        }
+        applicaFiltroAggiuntaBrani();
+        libreriaView.switchToView(viewSelezioneBrano);
+    }
+    
+    private void applicaFiltroAggiuntaBrani() {
+        if (addSearchTitoloField == null) return;
+        
+        String t = addSearchTitoloField.getText() == null ? "" : addSearchTitoloField.getText().toLowerCase().trim();
+        String a = addSearchAutoreField.getText() == null ? "" : addSearchAutoreField.getText().toLowerCase().trim();
+        String anno = addSearchAnnoCombo.getValue();
+        String gen = addSearchGenereCombo.getValue();
+        String tag = addSearchTagCombo.getValue();
 
-        ListView<Brano> listView = new ListView<>();
-        listView.getItems().addAll(braniDisponibili);
-        listView.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(Brano item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null)
-                    setText(null);
-                else
-                    setText(item.getTitolo() + " — "
-                            + java.nio.file.Paths.get(item.getPercorsoFile()).getFileName().toString());
+        java.util.List<String> filtrati = new java.util.ArrayList<>();
+        for (Brano b : braniDisponibiliOriginali) {
+            boolean matches = true;
+            if (!t.isEmpty() && !b.getTitolo().toLowerCase().contains(t)) matches = false;
+            if (!a.isEmpty() && !b.getAutore().toLowerCase().contains(a)) matches = false;
+            if (anno != null && !anno.isEmpty() && (b.getAnno() <= 0 || !String.valueOf(b.getAnno()).equals(anno))) matches = false;
+            if (gen != null && !gen.isEmpty() && (b.getGenere() == null || !b.getGenere().equals(gen))) matches = false;
+            if (tag != null && !tag.isEmpty()) {
+                if (b.getTag() == null || b.getTag().getEtichetta() == null) {
+                    matches = false;
+                } else {
+                    boolean hasTag = false;
+                    for (String tk : b.getTag().getEtichetta().split(",")) {
+                        if (tk.trim().equals(tag)) {
+                            hasTag = true;
+                            break;
+                        }
+                    }
+                    if (!hasTag) matches = false;
+                }
             }
-        });
-        dialog.getDialogPane().setContent(listView);
+            if (matches) {
+                filtrati.add(b.getTitolo() + " — " + java.nio.file.Paths.get(b.getPercorsoFile()).getFileName().toString());
+            }
+        }
+        branoSelectionListView.getItems().setAll(filtrati);
+    }
 
-        ButtonType btnAggiungi = new ButtonType("Aggiungi", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(btnAggiungi, ButtonType.CANCEL);
-
-        dialog.setResultConverter(
-                button -> button == btnAggiungi ? listView.getSelectionModel().getSelectedItem() : null);
-        dialog.showAndWait().ifPresent(b -> {
+    private void eseguiAggiuntaBrani() {
+        if (playlistPerAggiuntaBrani == null) return;
+        String sel = branoSelectionListView.getSelectionModel().getSelectedItem();
+        if (sel == null) {
+            libreriaView.showAlert("Nessun brano selezionato.", Alert.AlertType.WARNING);
+            return;
+        }
+        
+        String fn = sel.substring(sel.lastIndexOf("—") + 1).trim();
+        Brano b = null;
+        for (IBrano ib : libreriaController.getBrani()) {
+            if (ib instanceof Brano && java.nio.file.Paths.get(((Brano)ib).getPercorsoFile()).getFileName().toString().equals(fn)) {
+                b = (Brano) ib;
+                break;
+            }
+        }
+        
+        if (b != null) {
             try {
-                libreriaController.aggiungiAPlaylist(b, nomePlaylist);
+                libreriaController.aggiungiAPlaylist(b, playlistPerAggiuntaBrani);
+                libreriaView.impostaPlaylist(playlistPerAggiuntaBrani);
+                playlistPerAggiuntaBrani = null;
             } catch (Exception ex) {
                 libreriaView.mostraErrore(new ValidazioneException("Errore aggiunta: " + ex.getMessage()));
             }
-        });
+        }
     }
 }

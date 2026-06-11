@@ -37,6 +37,15 @@ public class ShuffleIteratorTest {
         }
 
         @Override
+        public int getPlayCount() {
+            return 0;
+        }
+
+        @Override
+        public void incrementPlayCount() {
+        }
+
+        @Override
         public String getTitolo() {
             return titolo;
         }

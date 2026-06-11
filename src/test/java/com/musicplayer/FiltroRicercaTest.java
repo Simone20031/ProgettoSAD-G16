@@ -313,6 +313,15 @@ public class FiltroRicercaTest {
             }
 
             @Override
+            public int getPlayCount() {
+                return 0;
+            }
+
+            @Override
+            public void incrementPlayCount() {
+            }
+
+            @Override
             public java.util.Map<String, String> getDettagli() {
                 return new java.util.HashMap<>();
             }

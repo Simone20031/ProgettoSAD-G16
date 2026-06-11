@@ -14,6 +14,7 @@ public class Playlist implements Playable {
     private String id;
     private String nome;
     private final List<IBrano> brani = new ArrayList<>();
+    private int playCount = 0;
 
     public Playlist(String id, String nome) {
         this.id = id == null ? "" : id;
@@ -86,6 +87,21 @@ public class Playlist implements Playable {
     @Override
     public int getDurataTotale() {
         return brani.stream().mapToInt(IBrano::getDurata).sum();
+    }
+
+    @Override
+    public int getPlayCount() {
+        return playCount;
+    }
+
+    @Override
+    public void incrementPlayCount() {
+        this.playCount++;
+    }
+
+    // Setter for loading from metadata
+    public void setPlayCount(int playCount) {
+        this.playCount = Math.max(0, playCount);
     }
     // ── Accessori ─────────────────────────────────────────────────────────────
 

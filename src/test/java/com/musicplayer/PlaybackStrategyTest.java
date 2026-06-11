@@ -43,6 +43,15 @@ public class PlaybackStrategyTest {
         public int getDurataTotale() {
             return getDurata();
         }
+        
+        @Override
+        public int getPlayCount() {
+            return 0;
+        }
+        
+        @Override
+        public void incrementPlayCount() {
+        }
 
         @Override
         public String toString() {
@@ -228,7 +237,7 @@ public class PlaybackStrategyTest {
         // When playNext() is called on empty iterator
         gestore.playNext();
         
-        // It must stop and transition to StoppedState
-        assertTrue(gestore.getStato() instanceof StoppedState);
+        // It must stop and transition to PausedState
+        assertTrue(gestore.getStato() instanceof PausedState);
     }
 }

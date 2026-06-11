@@ -22,6 +22,7 @@ public class GestoreRiproduzione {
     private PlayerState statoCorrente = new StoppedState();
     private PlaylistIterator iteratorCorrente;
     private PlaybackStrategy strategia = new SequentialStrategy();
+    private boolean singleSongLoop = false;
 
     private GestoreRiproduzione() {
         // Costruttore privato
@@ -71,20 +72,7 @@ public class GestoreRiproduzione {
         if (file == null)
             return;
 
-        // 1. SE IL PLAYER ESISTE GIA' E IL BRANO E' LO STESSO
-        if (mediaPlayer != null && media != null) {
-            try {
-                Path currentPath = Path.of(java.net.URI.create(media.getSource()));
-                if (currentPath.toAbsolutePath().normalize().equals(file.toAbsolutePath().normalize())) {
-                    mediaPlayer.play();
-                    statoCorrente = new PlayingState();
-                    notificaPlay();
-                    return;
-                }
-            } catch (Exception ignored) {
-                // ignore and recreate
-            }
-        }
+
 
         // 2. DISTRUGGI VECCHIO PLAYER SE E' DIVERSO
         if (mediaPlayer != null) {
@@ -111,11 +99,15 @@ public class GestoreRiproduzione {
 
             mediaPlayer.setOnEndOfMedia(() -> {
                 javafx.application.Platform.runLater(() -> {
-                    if (iteratorCorrente != null && iteratorCorrente.hasNext()) {
+                    if (singleSongLoop) {
+                        mediaPlayer.seek(Duration.ZERO);
+                        mediaPlayer.play();
+                        notificaBranoRipetuto();
+                    } else if (iteratorCorrente != null && iteratorCorrente.hasNext()) {
                         playNext();
                     } else {
-                        eseguiStop();
-                        statoCorrente = new StoppedState();
+                        eseguiPausa();
+                        statoCorrente = new PausedState();
                     }
                 });
             });
@@ -128,6 +120,14 @@ public class GestoreRiproduzione {
         } catch (Exception e) {
             System.err.println("Errore caricamento media: " + e.getMessage());
         }
+    }
+
+    public void setSingleSongLoop(boolean singleSongLoop) {
+        this.singleSongLoop = singleSongLoop;
+    }
+
+    public boolean isSingleSongLoop() {
+        return this.singleSongLoop;
     }
 
     public void setIterator(PlaylistIterator iterator) {
@@ -267,8 +267,8 @@ public class GestoreRiproduzione {
                 playNext(); // Salta se non è un Brano riproducibile
             }
         } else {
-            eseguiStop();
-            statoCorrente = new StoppedState();
+            eseguiPausa();
+            statoCorrente = new PausedState();
         }
     }
 
@@ -318,6 +318,16 @@ public class GestoreRiproduzione {
             mediaPlayer.seek(Duration.ZERO);
             // In questo modo usiamo internamente la pausa ma lo stato visivo è Stop.
             // Così se l'utente sposta lo slider e fa play, riprende dalla nuova posizione.
+            notificaStop();
+        }
+    }
+
+    public void clearMedia() {
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.dispose();
+            mediaPlayer = null;
+            media = null;
             notificaStop();
         }
     }
@@ -382,5 +392,10 @@ public class GestoreRiproduzione {
     private void notificaBranoCambiato(String path) {
         for (RiproduzioneObserver o : observers)
             o.onBranoCambiato(path);
+    }
+
+    private void notificaBranoRipetuto() {
+        for (RiproduzioneObserver o : observers)
+            o.onBranoRipetuto();
     }
 }

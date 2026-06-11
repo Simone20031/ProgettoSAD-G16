@@ -288,6 +288,44 @@ public class LibreriaController {
         return libreria.cercaBrani(filtro);
     }
 
+    public void registraAscolto(Playable p) {
+        if (p == null) return;
+        p.incrementPlayCount();
+        if (p instanceof Brano b) {
+            String filename = PathUtils.filenameFromPath(b.getPercorsoFile());
+            // Need to pass the raw tag from the brano (we don't have the original raw tag here, but we can reconstruct it from SongMetadata if needed, 
+            // but Brano's getTag().name() is the fallback. A better way is to use MetadataService.aggiornaMetadata(filename, b))
+            // Actually, wait, MetadataService.aggiornaMetadata(String, Brano) uses new SongMetadata(Brano), which loses multiple tags.
+            // Let's use the full SongMetadata from memory or just modify the playCount in the file directly.
+            // The cleanest way is to load the existing SongMetadata, update playCount, and save it.
+            Map<String, SongMetadata> map = new HashMap<>();
+            MetadataService.caricaMappaDalCSV(map);
+            SongMetadata m = map.get(filename);
+            if (m != null) {
+                m.playCount = b.getPlayCount();
+                MetadataService.aggiornaMetadata(filename, m);
+            } else {
+                MetadataService.aggiornaMetadata(filename, b);
+            }
+        } else if (p instanceof Playlist pl) {
+            MetadataService.salvaPlaylistSpecificaSuCSV(pl);
+        }
+    }
+
+    public List<IBrano> getTopBraniAscoltati() {
+        List<IBrano> sorted = new ArrayList<>(libreria.getBrani());
+        // Rimuoviamo i brani con 0 ascolti per la home page
+        sorted.removeIf(b -> b.getPlayCount() == 0);
+        sorted.sort((b1, b2) -> Integer.compare(b2.getPlayCount(), b1.getPlayCount()));
+        return sorted.subList(0, Math.min(5, sorted.size()));
+    }
+
+    public List<Playlist> getTopPlaylistsAscoltate() {
+        List<Playlist> sorted = new ArrayList<>(playlistMap.values());
+        sorted.sort((p1, p2) -> Integer.compare(p2.getPlayCount(), p1.getPlayCount()));
+        return sorted.subList(0, Math.min(5, sorted.size()));
+    }
+
     /**
      * Carica i brani dal CSV nella Libreria in-memory (bootstrap applicazione).
      * Da chiamare una volta sola all'avvio.
@@ -318,6 +356,7 @@ public class LibreriaController {
                         meta.title, meta.author, meta.genre,
                         anno, meta.filename, durata,
                         Tag.fromString(meta.tag));
+                b.setPlayCount(meta.playCount);
                 libreria.aggiungiBrano(b);
             } catch (ValidazioneException e) {
                 System.err.println("Errore validazione durante caricamento brano: " + e.getMessage());
@@ -477,6 +516,7 @@ public class LibreriaController {
         MetadataService.rinominaPlaylistFisica(vecchioNome, nuovoNome, caseChangeOnly);
 
         Playlist nuovaPlaylist = new Playlist(p.getId(), nuovoNome);
+        nuovaPlaylist.setPlayCount(p.getPlayCount());
         for (IBrano ib : p.getBrani()) {
             if (ib instanceof Brano b) {
                 try {

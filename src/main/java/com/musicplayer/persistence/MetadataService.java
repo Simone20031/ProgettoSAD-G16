@@ -250,6 +250,7 @@ public class MetadataService {
             }
             try (java.io.PrintWriter pw = new java.io.PrintWriter(Files.newBufferedWriter(csvPath))) {
                 pw.println("# Playlist: " + pl.getNome());
+                pw.println("# PlayCount: " + pl.getPlayCount());
                 pw.println("# Formato: ID_Playlist,PercorsoAssoluto_MP3");
                 for (com.musicplayer.model.IBrano ib : pl.getBrani()) {
                     if (ib instanceof com.musicplayer.model.Brano b) {
@@ -277,12 +278,19 @@ public class MetadataService {
                         String realName = null;
                         String id = java.util.UUID.randomUUID().toString().substring(0, 8); // fallback ID
                         
-                        // 1. Leggi il VERO nome (case-sensitive) dall'header del CSV
+                        int playCount = 0;
+                        
+                        // 1. Leggi il VERO nome (case-sensitive) e PlayCount dall'header del CSV
                         try (java.io.BufferedReader br = Files.newBufferedReader(csvPath)) {
                             String linea;
                             while ((linea = br.readLine()) != null) {
                                 if (linea.startsWith("# Playlist: ")) {
                                     realName = linea.substring("# Playlist: ".length()).trim();
+                                } else if (linea.startsWith("# PlayCount: ")) {
+                                    try {
+                                        playCount = Integer.parseInt(linea.substring("# PlayCount: ".length()).trim());
+                                    } catch (NumberFormatException ignored) {}
+                                } else if (linea.startsWith("# Formato: ")) {
                                     break;
                                 }
                             }
@@ -297,6 +305,7 @@ public class MetadataService {
                             pl = new com.musicplayer.model.Playlist(id, realName);
                             playlistMap.put(realName, pl);
                         }
+                        pl.setPlayCount(playCount);
 
                         // 2. Carica i brani per questa playlist
                         try (java.io.BufferedReader br = Files.newBufferedReader(csvPath)) {

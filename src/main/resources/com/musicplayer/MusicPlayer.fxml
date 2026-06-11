@@ -29,7 +29,8 @@
           <Label style="-fx-text-fill: #ffffff; -fx-font-size: 18px; -fx-font-weight: bold; -fx-font-family: 'Helvetica Neue';" text="SonicWave"/>
         </HBox>
         <VBox spacing="4" style="-fx-padding: 0 10 16 10;">
-          <Button fx:id="btnMostraLibreria" alignment="CENTER_LEFT" maxWidth="Infinity" style="-fx-background-color: #1a1a1a; -fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;" text="🏠 Libreria Generale"/>
+          <Button fx:id="btnMostraPiuAscoltati" alignment="CENTER_LEFT" maxWidth="Infinity" style="-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;" text="🏠 Home Page"/>
+          <Button fx:id="btnMostraLibreria" alignment="CENTER_LEFT" maxWidth="Infinity" style="-fx-background-color: #1a1a1a; -fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;" text="Libreria Generale"/>
         </VBox>
         <Region maxWidth="Infinity" prefHeight="1" style="-fx-background-color: #282828;">
           <VBox.margin>
@@ -55,6 +56,28 @@
           <HBox alignment="TOP_CENTER" spacing="10" style="-fx-padding: 0 24 16 24;">
             <Button fx:id="addBtn" alignment="TOP_CENTER" contentDisplay="CENTER" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand; -fx-border-color: transparent;" text="Importa MP3"/>
           </HBox>
+          <HBox fx:id="playlistControlsBox" alignment="CENTER" spacing="16" style="-fx-padding: 0 24 16 24;">
+            <Button fx:id="playlistPlayBtn" alignment="CENTER" ellipsisString="" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;" text="▶" textAlignment="CENTER">
+              <font>
+                <Font size="18.0"/>
+              </font>
+            </Button>
+            <Button fx:id="playlistStopBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;" text="⏹" textAlignment="CENTER">
+              <padding>
+                <Insets top="-4.0" />
+              </padding>
+            </Button>
+            <Button fx:id="playlistShuffleBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;" text="🔀" textAlignment="CENTER">
+              <font>
+                <Font size="18.0"/>
+              </font>
+            </Button>
+            <Button fx:id="playlistLoopBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;" text="🔁" textAlignment="CENTER">
+              <font>
+                <Font size="19.0"/>
+              </font>
+            </Button>
+          </HBox>
           <VBox spacing="10" style="-fx-padding: 0 24 16 24;">
             <HBox alignment="CENTER_LEFT" spacing="8">
               <TextField fx:id="searchTitoloField" prefWidth="140" promptText="Titolo..." style="-fx-background-color: #333333; -fx-text-fill: #ffffff;"/>
@@ -77,24 +100,77 @@
           </HBox>
           <ListView fx:id="songListView" style="-fx-background-color: #121212; -fx-control-inner-background: #121212; -fx-border-color: transparent;" VBox.vgrow="ALWAYS"/>
         </VBox>
-        <VBox fx:id="viewCreazione" alignment="CENTER" spacing="30" style="-fx-background-color: #121212; -fx-padding: 50;" visible="false">
-          <VBox alignment="CENTER" spacing="10">
-            <Label style="-fx-text-fill: #ffffff; -fx-font-size: 32px; -fx-font-weight: bold;" text="Crea una nuova playlist"/>
-            <Label style="-fx-text-fill: #a7a7a7; -fx-font-size: 14px;" text="Dai un nome alla tua collezione musicale."/>
-          </VBox>
-          <TextField fx:id="playlistNameField" maxWidth="400" promptText="Nome della playlist" style="-fx-background-color: #333333; -fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-padding: 12; -fx-background-radius: 8;"/>
-          <HBox alignment="CENTER" spacing="15">
-            <Button fx:id="btnAnnullaCreazione" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-cursor: hand;" text="Annulla"/>
-            <Button fx:id="createPlaylistBtn" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 16px; -fx-background-radius: 30; -fx-padding: 12 40; -fx-cursor: hand;" text="CREA"/>
-          </HBox>
+        <VBox fx:id="viewCreazione" alignment="CENTER" spacing="0" style="-fx-background-color: linear-gradient(to bottom, #0d2318 0%, #121212 35%);" visible="false">
+          <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+            <content>
+              <VBox alignment="CENTER" spacing="0" style="-fx-padding: 60 48 60 48;">
+                <VBox alignment="CENTER" maxWidth="500" spacing="30" style="-fx-background-color: #121212; -fx-padding: 40; -fx-background-radius: 12; -fx-border-color: #333333; -fx-border-radius: 12; -fx-border-width: 1;">
+                  <VBox alignment="CENTER" spacing="6">
+                    <Label fx:id="lblGestionePlaylistTitle" style="-fx-text-fill: #ffffff; -fx-font-size: 28px; -fx-font-weight: bold;" text="Nuova Playlist"/>
+                  </VBox>
+                  <VBox spacing="16">
+                    <VBox spacing="6">
+                      <Label style="-fx-text-fill: #a7a7a7; -fx-font-size: 11px; -fx-font-weight: bold;" text="NOME PLAYLIST"/>
+                      <TextField fx:id="playlistNameField" promptText="Es. Le mie preferite" style="-fx-background-color: #1e1e1e; -fx-text-fill: #ffffff; -fx-font-size: 15px; -fx-padding: 12 16; -fx-background-radius: 8; -fx-border-color: #333333; -fx-border-radius: 8; -fx-border-width: 1;"/>
+                    </VBox>
+                  </VBox>
+                  <HBox alignment="CENTER" spacing="16" style="-fx-padding: 8 0 0 0;">
+                    <Button fx:id="btnAnnullaCreazione" style="-fx-background-color: transparent; -fx-text-fill: #a7a7a7; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 12 24; -fx-border-color: #444444; -fx-border-radius: 30; -fx-border-width: 1; -fx-background-radius: 30;" text="Annulla"/>
+                    <Button fx:id="createPlaylistBtn" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 15px; -fx-background-radius: 30; -fx-padding: 12 40; -fx-cursor: hand;" text="SALVA"/>
+                  </HBox>
+                </VBox>
+              </VBox>
+            </content>
+          </ScrollPane>
         </VBox>
-        <VBox fx:id="viewSelezionePlaylist" alignment="CENTER" spacing="20" style="-fx-background-color: #121212; -fx-padding: 40;" visible="false">
-          <Label style="-fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-font-weight: bold;" text="Aggiungi a playlist"/>
-          <ListView fx:id="playlistSelectionListView" maxHeight="300" maxWidth="400" style="-fx-background-color: #1e1e1e; -fx-control-inner-background: #1e1e1e; -fx-border-color: transparent;"/>
-          <HBox alignment="CENTER" spacing="15">
-            <Button fx:id="btnAnnullaSelezione" style="-fx-background-color: transparent; -fx-text-fill: #ffffff;" text="Annulla"/>
-            <Button fx:id="btnConfermaSelezione" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-font-weight: bold;" text="AGGIUNGI"/>
-          </HBox>
+        <VBox fx:id="viewSelezionePlaylist" spacing="0" style="-fx-background-color: linear-gradient(to bottom, #0d2318 0%, #121212 35%);" visible="false">
+          <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+            <content>
+              <VBox spacing="24" style="-fx-padding: 36 48 36 48;">
+                <VBox spacing="6">
+                  <Label style="-fx-text-fill: #ffffff; -fx-font-size: 28px; -fx-font-weight: bold;" text="Aggiungi alla Playlist"/>
+                  <Label style="-fx-text-fill: #a7a7a7; -fx-font-size: 14px;" text="Seleziona la playlist di destinazione."/>
+                </VBox>
+                <ListView fx:id="playlistSelectionListView" maxHeight="400" prefHeight="300" style="-fx-background-color: #1e1e1e; -fx-control-inner-background: #1e1e1e; -fx-border-color: transparent; -fx-background-radius: 8; -fx-padding: 8;"/>
+                <HBox alignment="CENTER_LEFT" spacing="16" style="-fx-padding: 8 0 0 0;">
+                  <Button fx:id="btnAnnullaSelezione" style="-fx-background-color: transparent; -fx-text-fill: #a7a7a7; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 12 24; -fx-border-color: #444444; -fx-border-radius: 30; -fx-border-width: 1; -fx-background-radius: 30;" text="Annulla"/>
+                  <Button fx:id="btnConfermaSelezione" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 15px; -fx-background-radius: 30; -fx-padding: 12 40; -fx-cursor: hand;" text="AGGIUNGI BRANO"/>
+                </HBox>
+              </VBox>
+            </content>
+          </ScrollPane>
+        </VBox>
+        <VBox fx:id="viewSelezioneBrano" spacing="0" style="-fx-background-color: linear-gradient(to bottom, #0d2318 0%, #121212 35%);" visible="false">
+          <VBox spacing="24" style="-fx-padding: 24 24 24 24;" VBox.vgrow="ALWAYS">
+            <VBox alignment="CENTER" spacing="6">
+              <Label fx:id="lblSelezioneBranoTitle" style="-fx-text-fill: #ffffff; -fx-font-size: 28px; -fx-font-weight: bold;" text="Aggiungi Brani"/>
+              <Label style="-fx-text-fill: #a7a7a7; -fx-font-size: 14px;" text="Seleziona il brano da inserire nella playlist."/>
+            </VBox>
+            <HBox alignment="CENTER_LEFT" spacing="8">
+              <TextField fx:id="addSearchTitoloField" prefWidth="140" promptText="Titolo..." style="-fx-background-color: #333333; -fx-text-fill: #ffffff;"/>
+              <TextField fx:id="addSearchAutoreField" prefWidth="140" promptText="Autore..." style="-fx-background-color: #333333; -fx-text-fill: #ffffff;"/>
+              <ComboBox fx:id="addSearchAnnoCombo" prefWidth="90" promptText="Anno" style="-fx-base: #333333;"/>
+              <ComboBox fx:id="addSearchGenereCombo" prefWidth="110" promptText="Genere" style="-fx-base: #333333;"/>
+              <ComboBox fx:id="addSearchTagCombo" prefWidth="120" promptText="Tag" style="-fx-base: #333333;"/>
+              <Pane HBox.hgrow="ALWAYS"/>
+              <Button fx:id="addResetSearchBtn" prefWidth="80" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-border-color: #555555; -fx-border-radius: 4;" text="Azzera"/>
+            </HBox>
+            <VBox spacing="0" style="-fx-background-color: #1e1e1e; -fx-background-radius: 8; -fx-padding: 0;" VBox.vgrow="ALWAYS">
+              <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 8 24 8 24; -fx-border-color: transparent transparent #282828 transparent; -fx-border-width: 0 0 1 0;">
+                <Label maxWidth="40" minWidth="40" prefWidth="40" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="#"/>
+                <Label maxWidth="280" minWidth="280" prefWidth="280" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
+                <Label maxWidth="180" minWidth="180" prefWidth="180" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
+                <Label maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Label maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="🕒"/>
+              </HBox>
+              <ListView fx:id="branoSelectionListView" style="-fx-background-color: transparent; -fx-control-inner-background: #1e1e1e; -fx-border-color: transparent; -fx-padding: 8;" VBox.vgrow="ALWAYS"/>
+            </VBox>
+            <HBox alignment="CENTER_LEFT" spacing="16" style="-fx-padding: 8 0 0 0;">
+              <Button fx:id="btnAnnullaSelezioneBrano" style="-fx-background-color: transparent; -fx-text-fill: #a7a7a7; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 12 24; -fx-border-color: #444444; -fx-border-radius: 30; -fx-border-width: 1; -fx-background-radius: 30;" text="Annulla"/>
+              <Button fx:id="btnConfermaSelezioneBrano" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 15px; -fx-background-radius: 30; -fx-padding: 12 40; -fx-cursor: hand;" text="AGGIUNGI ALLA PLAYLIST"/>
+            </HBox>
+          </VBox>
         </VBox>
         <!-- VIEW AGGIUNTA BRANO inline (sostituisce il vecchio popup) -->
         <VBox fx:id="viewAggiuntaBrano" spacing="0" style="-fx-background-color: linear-gradient(to bottom, #0d2318 0%, #121212 35%);" visible="false">
@@ -142,6 +218,28 @@
             </content>
           </ScrollPane>
         </VBox>
+        <VBox fx:id="viewHome" style="-fx-background-color: linear-gradient(to bottom, #112a1c 0%, #121212 40%);" visible="false">
+          <HBox alignment="TOP_CENTER" style="-fx-padding: 24 24 16 24;">
+            <Label style="-fx-text-fill: #ffffff; -fx-font-size: 26px; -fx-font-weight: bold;" text="🏠 Home Page"/>
+          </HBox>
+          <VBox spacing="10" style="-fx-padding: 0 24 16 24;">
+            <Label style="-fx-text-fill: #ffffff; -fx-font-size: 18px; -fx-font-weight: bold;" text="Top Playlists 🎵"/>
+            <HBox fx:id="topPlaylistsBox" spacing="16"/>
+          </VBox>
+          <VBox spacing="10" style="-fx-padding: 0 24 16 24;" VBox.vgrow="ALWAYS">
+            <Label style="-fx-text-fill: #ffffff; -fx-font-size: 18px; -fx-font-weight: bold;" text="Top Brani 🎧"/>
+            <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 8 8 8 8; -fx-border-color: transparent transparent #282828 transparent; -fx-border-width: 0 0 1 0;">
+              <Label maxWidth="40" minWidth="40" prefWidth="40" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="#"/>
+              <Label maxWidth="280" minWidth="280" prefWidth="280" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
+              <Label maxWidth="180" minWidth="180" prefWidth="180" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
+              <Label maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
+              <Pane HBox.hgrow="ALWAYS"/>
+              <Label alignment="CENTER" maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="🕒"/>
+              <Label alignment="CENTER" maxWidth="80" minWidth="80" prefWidth="80" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="🎧 ASCOLTI"/>
+            </HBox>
+            <ListView fx:id="topSongsListView" style="-fx-background-color: #121212; -fx-control-inner-background: #121212; -fx-border-color: transparent;" VBox.vgrow="ALWAYS"/>
+          </VBox>
+        </VBox>
       </StackPane>
       <VBox maxWidth="350.0" minWidth="250.0" spacing="16" style="-fx-background-color: #121212; -fx-padding: 24 20 24 20; -fx-border-color: transparent transparent transparent #282828; -fx-border-width: 0 0 0 1;">
         <Label alignment="TOP_CENTER" prefHeight="20.0" prefWidth="262.0" style="-fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold;" text="Dettagli Brano" textAlignment="CENTER"/>
@@ -187,21 +285,21 @@
               <Font size="18.0"/>
             </font>
           </Button>
-          <Button fx:id="skipBackBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;" text="⏮" textAlignment="CENTER" />
+          <Button fx:id="skipBackBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;" text="⏮" textAlignment="CENTER"/>
           <Button fx:id="playBtn" alignment="CENTER" ellipsisString="" style="-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;" text="▶" textAlignment="CENTER">
             <font>
               <Font size="18.0"/>
             </font>
           </Button>
           <Button fx:id="stopBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;" text="⏹" textAlignment="CENTER">
-             <HBox.margin>
-                <Insets left="-5.0" />
-             </HBox.margin>
+            <HBox.margin>
+              <Insets left="-5.0"/>
+            </HBox.margin>
           </Button>
           <Button fx:id="skipBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;" text="⏭" textAlignment="CENTER">
-             <HBox.margin>
-                <Insets left="-12.0" />
-             </HBox.margin>
+            <HBox.margin>
+              <Insets left="-12.0"/>
+            </HBox.margin>
           </Button>
           <Button fx:id="loopBtn" alignment="CENTER" style="-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;" text="🔁" textAlignment="CENTER">
             <font>

@@ -69,7 +69,7 @@ public class SongMetadata {
         this.duration = String.valueOf(brano.getDurata());
         this.genre = dettagli.getOrDefault("genere", "");
         this.tag = dettagli.getOrDefault("tag", "NESSUNO");
-        this.playCount = 0;
+        this.playCount = brano.getPlayCount();
     }
     
     /**
@@ -88,7 +88,7 @@ public class SongMetadata {
                 String.valueOf(brano.getDurata()),
                 brano.getGenere(),
                 tagDaSalvare,
-                0
+                brano.getPlayCount()
         );
     }
 }
