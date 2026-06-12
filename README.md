@@ -1,6 +1,6 @@
-# ProgettoSAD-G16 - MP3 Manager
+# ProgettoSAD-G16 - Sonic Wave
 
-**MP3 Manager** è un'applicazione desktop sviluppata in **Java 17** con **JavaFX** per la gestione e la riproduzione di una libreria musicale locale (file MP3). Il progetto applica i principi dell'Ingegneria del Software e i Design Pattern per garantire una struttura modulare, manutenibile e scalabile.
+**Sonic Wave** è un'applicazione desktop sviluppata in **Java 17** con **JavaFX** per la gestione e la riproduzione di una libreria musicale locale (file MP3). Il progetto applica i principi dell'Ingegneria del Software e i Design Pattern per garantire una struttura modulare, manutenibile e scalabile.
 
 ## 🎵 Funzionalità Principali
 
