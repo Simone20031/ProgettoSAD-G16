@@ -456,6 +456,49 @@ public class LibreriaController {
         }
     }
 
+    public void aggiungiAPlaylist(Brano brano, String playlistName, int index) throws ValidazioneException {
+        if (playlistName == null || playlistName.isBlank())
+            return;
+
+        String targetName = playlistName;
+        boolean exists = false;
+        for (String existingName : playlistMap.keySet()) {
+            if (existingName.equalsIgnoreCase(playlistName)) {
+                targetName = existingName;
+                exists = true;
+                break;
+            }
+        }
+
+        if (exists && brano == null) {
+            throw new ValidazioneException("Una playlist con lo stesso nome esiste già!");
+        }
+
+        // Se la playlist non esiste, creala
+        if (!exists) {
+            String univoqueId = java.util.UUID.randomUUID().toString().substring(0, 8);
+            Playlist nuovaPlaylist = new Playlist(univoqueId, targetName);
+            playlistMap.put(targetName, nuovaPlaylist);
+            MetadataService.salvaIndicePlaylistSuCSV(playlistMap.values());
+            MetadataService.salvaPlaylistSpecificaSuCSV(nuovaPlaylist);
+        }
+
+        Playlist pl = playlistMap.get(targetName);
+        if (brano != null) {
+            try {
+                pl.aggiungiBrano(brano, index);
+                MetadataService.salvaPlaylistSpecificaSuCSV(pl);
+                GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
+            } catch (IllegalArgumentException e) {
+                // Brano già presente, ignoriamo
+            }
+        }
+
+        for (LibreriaObserver obs : observers) {
+            obs.onPlaylistAggiornata(pl);
+        }
+    }
+
     public void rimuoviDaPlaylist(Brano brano, String playlistName) throws ValidazioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brano != null) {

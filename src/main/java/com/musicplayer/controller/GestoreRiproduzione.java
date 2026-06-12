@@ -251,6 +251,7 @@ public class GestoreRiproduzione {
             nuovoIter.impostaBranoCorrente(currentBrano);
         }
         this.iteratorCorrente = nuovoIter;
+        notificaCodaAggiornata();
     }
 
     public void playNext() {
@@ -397,5 +398,10 @@ public class GestoreRiproduzione {
     private void notificaBranoRipetuto() {
         for (RiproduzioneObserver o : observers)
             o.onBranoRipetuto();
+    }
+
+    private void notificaCodaAggiornata() {
+        for (RiproduzioneObserver o : observers)
+            o.onCodaAggiornata();
     }
 }

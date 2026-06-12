@@ -301,11 +301,18 @@ public class PlayerView implements RiproduzioneObserver {
 
     @Override
     public void onBranoCambiato(String nuovoPercorso) {
-        // Nessun aggiornamento necessario nel PlayerView, ci pensa LibreriaView
+        // Ignoriamo, abbiamo gestito in LibreriaView
     }
 
     @Override
     public void onBranoRipetuto() {
-        // Il player view non fa nulla di speciale, la logica è in LibreriaView
+        // Ignoriamo
+    }
+
+    @Override
+    public void onCodaAggiornata() {
+        if (libreriaView != null) {
+            libreriaView.aggiornaVisualizzazioneCoda();
+        }
     }
 }

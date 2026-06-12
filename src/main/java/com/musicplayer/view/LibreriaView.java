@@ -5,6 +5,7 @@ import com.musicplayer.model.*;
 import com.musicplayer.controller.*;
 import com.musicplayer.strategy.*;
 import com.musicplayer.state.*;
+import com.musicplayer.command.*;
 
 
 import com.musicplayer.persistence.MetadataService;
@@ -47,6 +48,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
     @FXML
     private Button addBtn;
+    @FXML
+    private Button undoBtn;
     @FXML
     private Button btnMostraLibreria;
     @FXML
@@ -202,6 +205,90 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private TextField currentGenreField;
     private TextField currentYearField;
 
+    private final UndoManager undoManager = new UndoManager();
+    private javafx.stage.Popup undoPopup;
+    private javafx.animation.PauseTransition undoDelay;
+
+    public void mostraNotificaUndo(String messaggio) {
+        if (primaryStage == null) return;
+        
+        if (undoPopup != null && undoPopup.isShowing()) {
+            undoPopup.hide();
+        }
+        if (undoDelay != null) {
+            undoDelay.stop();
+        }
+
+        undoPopup = new javafx.stage.Popup();
+        HBox snackbar = new HBox(20);
+        snackbar.setAlignment(javafx.geometry.Pos.CENTER);
+        snackbar.setStyle("-fx-background-color: #282828; -fx-background-radius: 8; -fx-padding: 12 24; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5); -fx-border-color: #404040; -fx-border-radius: 8; -fx-border-width: 1;");
+        
+        Label lblMsg = new Label(messaggio);
+        lblMsg.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
+        
+        Button btnAnnulla = new Button("ANNULLA");
+        btnAnnulla.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 0;");
+        
+        snackbar.getChildren().addAll(lblMsg, btnAnnulla);
+        undoPopup.getContent().add(snackbar);
+        
+        btnAnnulla.setOnAction(e -> {
+            try {
+                if (undoManager.canUndo()) {
+                    undoManager.annullaUltimaOperazione();
+                    refreshList();
+                    refreshPlaylistList();
+                    undoPopup.hide();
+                    if (undoDelay != null) undoDelay.stop();
+                }
+            } catch (Exception ex) {
+                mostraErrore(new ValidazioneException("Errore annullamento: " + ex.getMessage()));
+            }
+        });
+
+        snackbar.applyCss();
+        snackbar.layout();
+        
+        javafx.beans.value.ChangeListener<Number> positionUpdater = (obs, oldVal, newVal) -> {
+            if (undoPopup.isShowing()) {
+                undoPopup.setX(primaryStage.getX() + (primaryStage.getWidth() - snackbar.prefWidth(-1)) / 2);
+                undoPopup.setY(primaryStage.getY() + primaryStage.getHeight() - 100);
+            }
+        };
+        
+        primaryStage.xProperty().addListener(positionUpdater);
+        primaryStage.yProperty().addListener(positionUpdater);
+        primaryStage.widthProperty().addListener(positionUpdater);
+        primaryStage.heightProperty().addListener(positionUpdater);
+        
+        undoPopup.setOnShown(e -> {
+            undoPopup.setX(primaryStage.getX() + (primaryStage.getWidth() - snackbar.getWidth()) / 2);
+            undoPopup.setY(primaryStage.getY() + primaryStage.getHeight() - 100);
+        });
+
+        undoPopup.setOnHidden(e -> {
+            primaryStage.xProperty().removeListener(positionUpdater);
+            primaryStage.yProperty().removeListener(positionUpdater);
+            primaryStage.widthProperty().removeListener(positionUpdater);
+            primaryStage.heightProperty().removeListener(positionUpdater);
+        });
+
+        undoPopup.show(primaryStage);
+        
+        undoDelay = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(5));
+        undoDelay.setOnFinished(e -> {
+            if (undoPopup.isShowing()) {
+                undoPopup.hide();
+            }
+        });
+        undoDelay.play();
+    }
+
+    public UndoManager getUndoManager() {
+        return undoManager;
+    }
+
     public Map<String, SongMetadata> getMetadataMap() {
         return metadataMap;
     }
@@ -217,7 +304,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     MetadataService.caricaMappaDalCSV(metadataMap);
                     switchToView(viewLista);
                     mostraLibreriaGenerale();
-                }, primaryStage);
+                }, this::mostraNotificaUndo, primaryStage, undoManager);
     }
 
     @Override
@@ -367,6 +454,26 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             switchToView(viewLista);
             mostraLibreriaGenerale();
         });
+        
+        if (undoBtn != null) {
+            undoBtn.setOnAction(e -> {
+                try {
+                    if (undoManager.canUndo()) {
+                        undoManager.annullaUltimaOperazione();
+                        refreshList();
+                        refreshPlaylistList();
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Operazione annullata con successo!");
+                        alert.show();
+                    } else {
+                        Alert alert = new Alert(Alert.AlertType.WARNING, "Nessuna operazione da annullare.");
+                        alert.show();
+                    }
+                } catch (Exception ex) {
+                    mostraErrore(new ValidazioneException("Errore durante l'annullamento: " + ex.getMessage()));
+                }
+            });
+        }
+        
         btnAnnullaSelezione.setOnAction(e -> switchToView(viewLista));
 
         btnConfermaSelezione.setOnAction(e -> {
@@ -417,7 +524,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             String contestoProvenienza = playlistSelezionata;
             if (branoInAttesaDiPlaylist != null) {
                 try {
-                    libreriaController.aggiungiAPlaylist(branoInAttesaDiPlaylist, nomePlaylistSelezionato);
+                    Command cmd = new AggiungiAPlaylistCmd(libreriaController, branoInAttesaDiPlaylist, nomePlaylistSelezionato);
+                    cmd.esegui();
+                    undoManager.aggiungiComando(cmd);
+                    mostraNotificaUndo("Brano aggiunto alla playlist");
                     branoInAttesaDiPlaylist = null;
                     refreshList();
                     refreshPlaylistList();
@@ -590,6 +700,13 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                             }
                         }
                     }
+                });
+            }
+
+            @Override
+            public void onCodaAggiornata() {
+                javafx.application.Platform.runLater(() -> {
+                    aggiornaVisualizzazioneCoda();
                 });
             }
         });
@@ -1766,8 +1883,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
 
         try {
-            // Rimuove solo il riferimento dalla libreria (nessun file fisico eliminato)
-            libreriaController.eliminaBranoPerFilename(fn);
+            Command cmd = new RimuoviDaLibreriaCmd(libreriaController, branoDaEliminare);
+            cmd.esegui();
+            if (undoManager != null) {
+                undoManager.aggiungiComando(cmd);
+                mostraNotificaUndo("Brano rimosso dalla libreria");
+            }
             detailsLabel.setText("Brano rimosso dalla libreria.");
             syncAndRefresh();
         } catch (Exception ex) {
