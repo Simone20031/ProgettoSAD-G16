@@ -46,10 +46,10 @@ public class Playlist implements Playable {
         if (col == null) return;
         java.util.Set<IBrano> set = new java.util.HashSet<>(brani);
         for (Playable p : col) {
+            if (p == null) {
+                throw new IllegalArgumentException("Impossibile aggiungere un brano nullo alla playlist.");
+            }
             if (p instanceof IBrano b) {
-                if (b == null) {
-                    throw new IllegalArgumentException("Impossibile aggiungere un brano nullo alla playlist.");
-                }
                 if (set.contains(b)) {
                     throw new IllegalArgumentException("Il brano è già presente in questa playlist.");
                 }
