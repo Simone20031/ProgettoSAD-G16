@@ -132,6 +132,10 @@ public class FeaturesTest {
             @Override
             public void onBranoRipetuto() {
             }
+
+            @Override
+            public void onCodaAggiornata() {
+            }
         };
 
         gestore.addObserver(observer);

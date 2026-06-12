@@ -3,7 +3,6 @@ package com.musicplayer.command;
 import com.musicplayer.controller.LibreriaController;
 import com.musicplayer.model.Brano;
 import com.musicplayer.model.ValidazioneException;
-import java.io.File;
 import java.io.IOException;
 
 public class AggiungiALibreriaCmd implements Command {
@@ -31,7 +30,6 @@ public class AggiungiALibreriaCmd implements Command {
     @Override
     public void esegui() throws ValidazioneException {
         try {
-            int prevSize = controller.getBrani().size();
             controller.aggiungiBrano(titolo, autore, genere, anno, percorsoFile, durataSec, tagRaw);
             
             // Per poterlo annullare, ci serve il brano appena aggiunto.
