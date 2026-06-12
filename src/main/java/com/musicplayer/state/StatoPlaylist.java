@@ -18,7 +18,7 @@ public class StatoPlaylist implements StatoUI {
 
     @Override
     public List<String> getOpzioniSingolo() {
-        return Arrays.asList("Aggiungi ai preferiti", "Modifica", "Elimina brano", "Aggiungi a playlist", "Rimuovi da questa playlist");
+        return Arrays.asList("Aggiungi ai preferiti", "Modifica", "Aggiungi a playlist", "Rimuovi da questa playlist");
     }
 
     @Override

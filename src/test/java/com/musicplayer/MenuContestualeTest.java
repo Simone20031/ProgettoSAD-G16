@@ -18,4 +18,14 @@ public class MenuContestualeTest {
         List<String> opts = mc.getOpzioni();
         assertEquals(4, opts.size(), "StatoLibreria deve fornire esattamente 4 opzioni");
     }
+
+    @Test
+    public void testStatoPlaylistOptions() {
+        StatoPlaylist stato = new StatoPlaylist("Rock");
+        MenuContestuale mc = new MenuContestuale(stato);
+        List<String> opts = mc.getOpzioni();
+        assertEquals(4, opts.size(), "StatoPlaylist deve fornire esattamente 4 opzioni");
+        assertFalse(opts.contains("Elimina brano"), "Lo StatoPlaylist non deve contenere l'opzione 'Elimina brano'");
+        assertTrue(opts.contains("Rimuovi da questa playlist"), "Lo StatoPlaylist deve contenere l'opzione 'Rimuovi da questa playlist'");
+    }
 }

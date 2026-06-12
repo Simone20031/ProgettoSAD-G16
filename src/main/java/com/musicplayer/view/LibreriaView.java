@@ -745,15 +745,15 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     }
 
                     if (selectedItems.size() > 1) {
-                        MenuItem miElimina = new MenuItem("Elimina definitivamente dalla libreria");
-                        miElimina.setOnAction(ev -> eliminaBraniBulk(selectedItems));
-                        
                         MenuItem miAggiungi = new MenuItem(playlistSelezionata == null ? "Aggiungi a playlist" : "Aggiungi a un'altra playlist");
                         miAggiungi.setOnAction(ev -> aggiungiBraniAPlaylistBulk(selectedItems));
                         
-                        menu.getItems().addAll(miElimina, miAggiungi);
-                        
-                        if (playlistSelezionata != null) {
+                        if (playlistSelezionata == null) {
+                            MenuItem miElimina = new MenuItem("Elimina definitivamente dalla libreria");
+                            miElimina.setOnAction(ev -> eliminaBraniBulk(selectedItems));
+                            menu.getItems().addAll(miElimina, miAggiungi);
+                        } else {
+                            menu.getItems().add(miAggiungi);
                             MenuItem miRimuovi = new MenuItem("Rimuovi dalla playlist corrente");
                             miRimuovi.setOnAction(ev -> rimuoviBraniDaPlaylistBulk(selectedItems, playlistSelezionata));
                             menu.getItems().add(miRimuovi);
