@@ -27,8 +27,12 @@ public class StatoPlaylist implements StatoUI {
         
         if (opzione.equals("Rimuovi da questa playlist")) {
             try {
-                // 🚀 Avvolgiamo la chiamata in un blocco try-catch per gestire l'eccezione controllata
-                controller.rimuoviDaPlaylist(selezionato, nomePlaylist);
+                com.musicplayer.command.Command cmd = new com.musicplayer.command.RimuoviDaPlaylistCmd(controller, selezionato, nomePlaylist);
+                cmd.esegui();
+                if (view != null && view.getUndoManager() != null) {
+                    view.getUndoManager().aggiungiComando(cmd);
+                    view.mostraNotificaUndo("Brano rimosso dalla playlist");
+                }
             } catch (ValidazioneException ve) {
                 // Sfruttiamo il quarto parametro 'view' per mostrare il popup di errore a schermo
                 view.mostraErrore(ve);

@@ -9,6 +9,7 @@ public class FiltroRicerca {
     private String titolo;
     private String autore;
     private int anno;
+    private int decennio;
     private Genere genere;
     private Tag tag;
 
@@ -48,6 +49,14 @@ public class FiltroRicerca {
         this.anno = anno;
     }
 
+    public int getDecennio() {
+        return decennio;
+    }
+
+    public void setDecennio(int decennio) {
+        this.decennio = decennio;
+    }
+
     public Genere getGenere() {
         return genere;
     }
@@ -68,12 +77,13 @@ public class FiltroRicerca {
         this.titolo = "";
         this.autore = "";
         this.anno = 0;
+        this.decennio = 0;
         this.genere = Genere.NESSUNO;
         this.tag = Tag.NESSUNO;
     }
 
     public boolean isVuoto() {
-        return titolo.isEmpty() && autore.isEmpty() && anno == 0
+        return titolo.isEmpty() && autore.isEmpty() && anno == 0 && decennio == 0
                 && genere == Genere.NESSUNO && tag == Tag.NESSUNO;
     }
 
@@ -90,6 +100,12 @@ public class FiltroRicerca {
         }
         if (anno != 0) {
             if (b.getAnno() != anno) {
+                return false;
+            }
+        }
+        if (decennio != 0) {
+            int decennioBrano = (b.getAnno() / 10) * 10;
+            if (decennioBrano != decennio) {
                 return false;
             }
         }

@@ -32,12 +32,26 @@ public class Playlist implements Playable {
             throw new IllegalArgumentException("Impossibile aggiungere un brano nullo alla playlist.");
         }
 
-        // Verifica la presenza del duplicato sfruttando il metodo interno
         if (contieneBrano(b)) {
             throw new IllegalArgumentException("Il brano è già presente in questa playlist.");
         }
 
         brani.add(b);
+    }
+
+    public void aggiungiBrano(IBrano b, int index) {
+        if (b == null) {
+            throw new IllegalArgumentException("Impossibile aggiungere un brano nullo alla playlist.");
+        }
+
+        if (contieneBrano(b)) {
+            throw new IllegalArgumentException("Il brano è già presente in questa playlist.");
+        }
+
+        if (index < 0 || index > brani.size()) {
+            index = brani.size();
+        }
+        brani.add(index, b);
     }
 
     public void aggiungiBrani(java.util.Collection<? extends Playable> col) {

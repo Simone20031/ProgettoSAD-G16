@@ -11,7 +11,7 @@ import java.util.Map;
  * Libreria: collezione centrale di brani e playlist.
  * Pattern: Singleton + Observer.
  */
-public class Libreria {
+public class Libreria implements ICatalogo {
 
     // ── Singleton ─────────────────────────────────────────────────────────────
 

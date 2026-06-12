@@ -2,6 +2,7 @@ package com.musicplayer.view;
 
 import com.musicplayer.model.*;
 import com.musicplayer.controller.*;
+import com.musicplayer.command.*;
 
 
 import com.musicplayer.persistence.MetadataService;
@@ -36,6 +37,7 @@ public class FormBranoView {
 
     private final LibreriaController libreriaController;
     private final Runnable onComplete;
+    private final java.util.function.Consumer<String> onShowUndo;
     private final Stage primaryStage;
 
     private File pendingImportFile = null;
@@ -49,11 +51,13 @@ public class FormBranoView {
     private static final String PILL_ON_GREEN = PILL_BASE + "-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-border-color: #1DB954;";
     private static final String PILL_ON_TAG = PILL_BASE + "-fx-background-color: #4a90d9; -fx-text-fill: #ffffff; -fx-border-color: #4a90d9;";
 
+    private final UndoManager undoManager;
+
     public FormBranoView(
             TextField importTitleField, TextField importAuthorField, TextField importYearField,
             Label lblImportTitle, Label lblImportFilename, Button btnConfermaImport,
             VBox genreContainer, VBox tagContainer,
-            LibreriaController libreriaController, Runnable onComplete, Stage primaryStage) {
+            LibreriaController libreriaController, Runnable onComplete, java.util.function.Consumer<String> onShowUndo, Stage primaryStage, UndoManager undoManager) {
 
         this.importTitleField = importTitleField;
         this.importAuthorField = importAuthorField;
@@ -65,7 +69,9 @@ public class FormBranoView {
         this.tagContainer = tagContainer;
         this.libreriaController = libreriaController;
         this.onComplete = onComplete;
+        this.onShowUndo = onShowUndo;
         this.primaryStage = primaryStage;
+        this.undoManager = undoManager;
 
         this.genreButtonBox = new FlowPane();
         this.genreButtonBox.setHgap(8);
@@ -249,14 +255,23 @@ public class FormBranoView {
 
             libreriaController.modificaBrano(pendingEditBrano, dati);
         } else {
-            libreriaController.aggiungiBrano(
+            Command cmd = new AggiungiALibreriaCmd(
+                    libreriaController,
                     importTitleField.getText(),
                     importAuthorField.getText(),
                     selectedGenre == Genere.NESSUNO ? "" : selectedGenre.getEtichetta(),
                     anno,
                     pendingImportFile.getAbsolutePath(),
                     pendingDuration,
-                    tagRaw);
+                    tagRaw
+            );
+            cmd.esegui();
+            if (undoManager != null) {
+                undoManager.aggiungiComando(cmd);
+                if (onShowUndo != null) {
+                    onShowUndo.accept("Brano aggiunto alla libreria");
+                }
+            }
         }
 
         if (onComplete != null) onComplete.run();

@@ -1,24 +1,26 @@
 package com.musicplayer.command;
 
 import com.musicplayer.model.*;
-
+import com.musicplayer.controller.LibreriaController;
 
 public class AggiungiAPlaylistCmd implements Command {
-    private final Playlist playlist;
-    private final IBrano brano;
+    private final LibreriaController controller;
+    private final Brano brano;
+    private final String playlistName;
 
-    public AggiungiAPlaylistCmd(Playlist playlist, IBrano brano) {
-        this.playlist = playlist;
+    public AggiungiAPlaylistCmd(LibreriaController controller, Brano brano, String playlistName) {
+        this.controller = controller;
         this.brano = brano;
+        this.playlistName = playlistName;
     }
 
     @Override
     public void esegui() throws ValidazioneException {
-        playlist.aggiungiBrano(brano);
+        controller.aggiungiAPlaylist(brano, playlistName);
     }
 
     @Override
-    public void annulla() {
-        playlist.rimuoviBrano(brano);
+    public void annulla() throws ValidazioneException {
+        controller.rimuoviDaPlaylist(brano, playlistName);
     }
 }

@@ -224,7 +224,23 @@
           </HBox>
           <VBox spacing="10" style="-fx-padding: 0 24 16 24;">
             <Label style="-fx-text-fill: #ffffff; -fx-font-size: 18px; -fx-font-weight: bold;" text="Top Playlists 🎵"/>
-            <HBox fx:id="topPlaylistsBox" spacing="16"/>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+               <Button fx:id="btnScrollLeftTop" text="&lt;" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;" />
+               <ScrollPane fx:id="scrollTopPlaylists" vbarPolicy="NEVER" hbarPolicy="NEVER" minHeight="110" prefHeight="110" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 0;" HBox.hgrow="ALWAYS">
+                  <HBox fx:id="topPlaylistsBox" spacing="16" />
+               </ScrollPane>
+               <Button fx:id="btnScrollRightTop" text="&gt;" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;" />
+            </HBox>
+          </VBox>
+          <VBox spacing="10" style="-fx-padding: 0 24 16 24;">
+            <Label style="-fx-text-fill: #ffffff; -fx-font-size: 18px; -fx-font-weight: bold;" text="Smart Playlists 🧠"/>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+               <Button fx:id="btnScrollLeftSmart" text="&lt;" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;" />
+               <ScrollPane fx:id="scrollSmartPlaylists" vbarPolicy="NEVER" hbarPolicy="NEVER" minHeight="110" prefHeight="110" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 0;" HBox.hgrow="ALWAYS">
+                  <HBox fx:id="smartPlaylistsBox" spacing="16" />
+               </ScrollPane>
+               <Button fx:id="btnScrollRightSmart" text="&gt;" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;" />
+            </HBox>
           </VBox>
           <VBox spacing="10" style="-fx-padding: 0 24 16 24;" VBox.vgrow="ALWAYS">
             <Label style="-fx-text-fill: #ffffff; -fx-font-size: 18px; -fx-font-weight: bold;" text="Top Brani 🎧"/>

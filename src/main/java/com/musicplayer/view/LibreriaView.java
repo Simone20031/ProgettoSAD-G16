@@ -5,6 +5,7 @@ import com.musicplayer.model.*;
 import com.musicplayer.controller.*;
 import com.musicplayer.strategy.*;
 import com.musicplayer.state.*;
+import com.musicplayer.command.*;
 
 
 import com.musicplayer.persistence.MetadataService;
@@ -47,6 +48,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
     @FXML
     private Button addBtn;
+    @FXML
+    private Button undoBtn;
     @FXML
     private Button btnMostraLibreria;
     @FXML
@@ -108,6 +111,22 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private VBox viewHome;
     @FXML
     private HBox topPlaylistsBox;
+    @FXML
+    private javafx.scene.control.ScrollPane scrollTopPlaylists;
+    @FXML
+    private Button btnScrollLeftTop;
+    @FXML
+    private Button btnScrollRightTop;
+
+    @FXML
+    private HBox smartPlaylistsBox;
+    @FXML
+    private javafx.scene.control.ScrollPane scrollSmartPlaylists;
+    @FXML
+    private Button btnScrollLeftSmart;
+    @FXML
+    private Button btnScrollRightSmart;
+
     @FXML
     private TextField playlistNameField;
     @FXML
@@ -202,6 +221,90 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private TextField currentGenreField;
     private TextField currentYearField;
 
+    private final UndoManager undoManager = new UndoManager();
+    private javafx.stage.Popup undoPopup;
+    private javafx.animation.PauseTransition undoDelay;
+
+    public void mostraNotificaUndo(String messaggio) {
+        if (primaryStage == null) return;
+        
+        if (undoPopup != null && undoPopup.isShowing()) {
+            undoPopup.hide();
+        }
+        if (undoDelay != null) {
+            undoDelay.stop();
+        }
+
+        undoPopup = new javafx.stage.Popup();
+        HBox snackbar = new HBox(20);
+        snackbar.setAlignment(javafx.geometry.Pos.CENTER);
+        snackbar.setStyle("-fx-background-color: #282828; -fx-background-radius: 8; -fx-padding: 12 24; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5); -fx-border-color: #404040; -fx-border-radius: 8; -fx-border-width: 1;");
+        
+        Label lblMsg = new Label(messaggio);
+        lblMsg.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
+        
+        Button btnAnnulla = new Button("ANNULLA");
+        btnAnnulla.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 0;");
+        
+        snackbar.getChildren().addAll(lblMsg, btnAnnulla);
+        undoPopup.getContent().add(snackbar);
+        
+        btnAnnulla.setOnAction(e -> {
+            try {
+                if (undoManager.canUndo()) {
+                    undoManager.annullaUltimaOperazione();
+                    refreshList();
+                    refreshPlaylistList();
+                    undoPopup.hide();
+                    if (undoDelay != null) undoDelay.stop();
+                }
+            } catch (Exception ex) {
+                mostraErrore(new ValidazioneException("Errore annullamento: " + ex.getMessage()));
+            }
+        });
+
+        snackbar.applyCss();
+        snackbar.layout();
+        
+        javafx.beans.value.ChangeListener<Number> positionUpdater = (obs, oldVal, newVal) -> {
+            if (undoPopup.isShowing()) {
+                undoPopup.setX(primaryStage.getX() + (primaryStage.getWidth() - snackbar.prefWidth(-1)) / 2);
+                undoPopup.setY(primaryStage.getY() + primaryStage.getHeight() - 100);
+            }
+        };
+        
+        primaryStage.xProperty().addListener(positionUpdater);
+        primaryStage.yProperty().addListener(positionUpdater);
+        primaryStage.widthProperty().addListener(positionUpdater);
+        primaryStage.heightProperty().addListener(positionUpdater);
+        
+        undoPopup.setOnShown(e -> {
+            undoPopup.setX(primaryStage.getX() + (primaryStage.getWidth() - snackbar.getWidth()) / 2);
+            undoPopup.setY(primaryStage.getY() + primaryStage.getHeight() - 100);
+        });
+
+        undoPopup.setOnHidden(e -> {
+            primaryStage.xProperty().removeListener(positionUpdater);
+            primaryStage.yProperty().removeListener(positionUpdater);
+            primaryStage.widthProperty().removeListener(positionUpdater);
+            primaryStage.heightProperty().removeListener(positionUpdater);
+        });
+
+        undoPopup.show(primaryStage);
+        
+        undoDelay = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(5));
+        undoDelay.setOnFinished(e -> {
+            if (undoPopup.isShowing()) {
+                undoPopup.hide();
+            }
+        });
+        undoDelay.play();
+    }
+
+    public UndoManager getUndoManager() {
+        return undoManager;
+    }
+
     public Map<String, SongMetadata> getMetadataMap() {
         return metadataMap;
     }
@@ -217,7 +320,15 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     MetadataService.caricaMappaDalCSV(metadataMap);
                     switchToView(viewLista);
                     mostraLibreriaGenerale();
-                }, primaryStage);
+                }, this::mostraNotificaUndo, primaryStage, undoManager);
+    }
+
+    private void animateScroll(javafx.scene.control.ScrollPane scrollPane, double targetHvalue) {
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline();
+        javafx.animation.KeyValue kv = new javafx.animation.KeyValue(scrollPane.hvalueProperty(), targetHvalue, javafx.animation.Interpolator.EASE_BOTH);
+        javafx.animation.KeyFrame kf = new javafx.animation.KeyFrame(javafx.util.Duration.millis(300), kv);
+        timeline.getKeyFrames().add(kf);
+        timeline.play();
     }
 
     @Override
@@ -255,6 +366,44 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         refreshList();
         refreshPlaylistList();
+
+        btnScrollLeftTop.setOnAction(e -> {
+            double contentW = topPlaylistsBox.getWidth();
+            double viewportW = scrollTopPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollTopPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.max(0, Math.round((currentPx - 216) / 216.0) * 216.0);
+                animateScroll(scrollTopPlaylists, newPx / (contentW - viewportW));
+            }
+        });
+        btnScrollRightTop.setOnAction(e -> {
+            double contentW = topPlaylistsBox.getWidth();
+            double viewportW = scrollTopPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollTopPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.min(contentW - viewportW, Math.round((currentPx + 216) / 216.0) * 216.0);
+                animateScroll(scrollTopPlaylists, newPx / (contentW - viewportW));
+            }
+        });
+
+        btnScrollLeftSmart.setOnAction(e -> {
+            double contentW = smartPlaylistsBox.getWidth();
+            double viewportW = scrollSmartPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollSmartPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.max(0, Math.round((currentPx - 216) / 216.0) * 216.0);
+                animateScroll(scrollSmartPlaylists, newPx / (contentW - viewportW));
+            }
+        });
+        btnScrollRightSmart.setOnAction(e -> {
+            double contentW = smartPlaylistsBox.getWidth();
+            double viewportW = scrollSmartPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollSmartPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.min(contentW - viewportW, Math.round((currentPx + 216) / 216.0) * 216.0);
+                animateScroll(scrollSmartPlaylists, newPx / (contentW - viewportW));
+            }
+        });
 
         javafx.util.Callback<ListView<String>, javafx.scene.control.ListCell<String>> selectionCellFactory = lv -> new javafx.scene.control.ListCell<String>() {
             {
@@ -367,6 +516,26 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             switchToView(viewLista);
             mostraLibreriaGenerale();
         });
+        
+        if (undoBtn != null) {
+            undoBtn.setOnAction(e -> {
+                try {
+                    if (undoManager.canUndo()) {
+                        undoManager.annullaUltimaOperazione();
+                        refreshList();
+                        refreshPlaylistList();
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Operazione annullata con successo!");
+                        alert.show();
+                    } else {
+                        Alert alert = new Alert(Alert.AlertType.WARNING, "Nessuna operazione da annullare.");
+                        alert.show();
+                    }
+                } catch (Exception ex) {
+                    mostraErrore(new ValidazioneException("Errore durante l'annullamento: " + ex.getMessage()));
+                }
+            });
+        }
+        
         btnAnnullaSelezione.setOnAction(e -> switchToView(viewLista));
 
         btnConfermaSelezione.setOnAction(e -> {
@@ -417,7 +586,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             String contestoProvenienza = playlistSelezionata;
             if (branoInAttesaDiPlaylist != null) {
                 try {
-                    libreriaController.aggiungiAPlaylist(branoInAttesaDiPlaylist, nomePlaylistSelezionato);
+                    Command cmd = new AggiungiAPlaylistCmd(libreriaController, branoInAttesaDiPlaylist, nomePlaylistSelezionato);
+                    cmd.esegui();
+                    undoManager.aggiungiComando(cmd);
+                    mostraNotificaUndo("Brano aggiunto alla playlist");
                     branoInAttesaDiPlaylist = null;
                     refreshList();
                     refreshPlaylistList();
@@ -592,6 +764,13 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     }
                 });
             }
+
+            @Override
+            public void onCodaAggiornata() {
+                javafx.application.Platform.runLater(() -> {
+                    aggiornaVisualizzazioneCoda();
+                });
+            }
         });
 
         songListView.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
@@ -627,6 +806,13 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
                 parentNode = parentNode.getParent();
             }
+        });
+
+        // Set Home Page as default view
+        javafx.application.Platform.runLater(() -> {
+            impostaTabAttivo("PIU_ASCOLTATI");
+            switchToView(viewHome);
+            mostraPiuaAscoltati();
         });
     }
 
@@ -1007,7 +1193,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
 
         // Filtra la playlist corrente se siamo dentro a una playlist
-        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream().map(Playlist::getNome);
+        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream()
+                .filter(p -> !(p instanceof SmartPlaylist))
+                .map(Playlist::getNome);
         if (playlistSelezionata != null) {
             stream = stream.filter(nome -> !nome.equals(playlistSelezionata));
         }
@@ -1033,8 +1221,14 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         
         // Popola la sezione delle playlist
         topPlaylistsBox.getChildren().clear();
+        if (smartPlaylistsBox != null) {
+            smartPlaylistsBox.getChildren().clear();
+        }
+        
         List<Playlist> topPlaylists = libreriaController.getTopPlaylistsAscoltate();
         for (Playlist pl : topPlaylists) {
+            if (pl instanceof SmartPlaylist) continue;
+            
             VBox card = new VBox(5);
             card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
             card.setPrefWidth(200);
@@ -1059,10 +1253,45 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             topPlaylistsBox.getChildren().add(card);
         }
 
-        if (topPlaylists.isEmpty()) {
+        if (topPlaylistsBox.getChildren().isEmpty()) {
             Label empty = new Label("Nessuna playlist presente.");
             empty.setStyle("-fx-text-fill: #a7a7a7;");
             topPlaylistsBox.getChildren().add(empty);
+        }
+
+        if (smartPlaylistsBox != null) {
+            for (Playlist pl : libreriaController.getPlaylist()) {
+                if (!(pl instanceof SmartPlaylist)) continue;
+                
+                VBox card = new VBox(5);
+                card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
+                card.setPrefWidth(200);
+                card.setMinWidth(200);
+                
+                Label title = new Label(pl.getNome());
+                title.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;");
+                
+                Label count = new Label("Brani: " + pl.getBrani().size());
+                count.setStyle("-fx-text-fill: #1DB954; -fx-font-size: 12px; -fx-font-weight: bold;");
+                
+                card.getChildren().addAll(title, count);
+                
+                card.setOnMouseClicked(e -> {
+                    impostaPlaylist(pl.getNome());
+                    switchToView(viewLista);
+                    refreshList();
+                });
+                
+                card.setOnMouseEntered(e -> card.setStyle("-fx-background-color: #383838; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+                card.setOnMouseExited(e -> card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+                
+                smartPlaylistsBox.getChildren().add(card);
+            }
+            if (smartPlaylistsBox.getChildren().isEmpty()) {
+                Label empty = new Label("Nessuna smart playlist generata.");
+                empty.setStyle("-fx-text-fill: #a7a7a7;");
+                smartPlaylistsBox.getChildren().add(empty);
+            }
         }
 
         // Popola la sezione dei brani
@@ -1766,8 +1995,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
 
         try {
-            // Rimuove solo il riferimento dalla libreria (nessun file fisico eliminato)
-            libreriaController.eliminaBranoPerFilename(fn);
+            Command cmd = new RimuoviDaLibreriaCmd(libreriaController, branoDaEliminare);
+            cmd.esegui();
+            if (undoManager != null) {
+                undoManager.aggiungiComando(cmd);
+                mostraNotificaUndo("Brano rimosso dalla libreria");
+            }
             detailsLabel.setText("Brano rimosso dalla libreria.");
             syncAndRefresh();
         } catch (Exception ex) {
@@ -2236,7 +2469,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             return;
         }
 
-        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream().map(Playlist::getNome);
+        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream()
+                .filter(p -> !(p instanceof SmartPlaylist))
+                .map(Playlist::getNome);
         if (playlistSelezionata != null) {
             stream = stream.filter(nome -> !nome.equals(playlistSelezionata));
         }
