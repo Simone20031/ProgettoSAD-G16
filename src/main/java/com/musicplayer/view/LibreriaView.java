@@ -112,6 +112,22 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private HBox topPlaylistsBox;
     @FXML
+    private javafx.scene.control.ScrollPane scrollTopPlaylists;
+    @FXML
+    private Button btnScrollLeftTop;
+    @FXML
+    private Button btnScrollRightTop;
+
+    @FXML
+    private HBox smartPlaylistsBox;
+    @FXML
+    private javafx.scene.control.ScrollPane scrollSmartPlaylists;
+    @FXML
+    private Button btnScrollLeftSmart;
+    @FXML
+    private Button btnScrollRightSmart;
+
+    @FXML
     private TextField playlistNameField;
     @FXML
     private Button createPlaylistBtn;
@@ -307,6 +323,14 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }, this::mostraNotificaUndo, primaryStage, undoManager);
     }
 
+    private void animateScroll(javafx.scene.control.ScrollPane scrollPane, double targetHvalue) {
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline();
+        javafx.animation.KeyValue kv = new javafx.animation.KeyValue(scrollPane.hvalueProperty(), targetHvalue, javafx.animation.Interpolator.EASE_BOTH);
+        javafx.animation.KeyFrame kf = new javafx.animation.KeyFrame(javafx.util.Duration.millis(300), kv);
+        timeline.getKeyFrames().add(kf);
+        timeline.play();
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
@@ -342,6 +366,44 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         refreshList();
         refreshPlaylistList();
+
+        btnScrollLeftTop.setOnAction(e -> {
+            double contentW = topPlaylistsBox.getWidth();
+            double viewportW = scrollTopPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollTopPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.max(0, Math.round((currentPx - 216) / 216.0) * 216.0);
+                animateScroll(scrollTopPlaylists, newPx / (contentW - viewportW));
+            }
+        });
+        btnScrollRightTop.setOnAction(e -> {
+            double contentW = topPlaylistsBox.getWidth();
+            double viewportW = scrollTopPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollTopPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.min(contentW - viewportW, Math.round((currentPx + 216) / 216.0) * 216.0);
+                animateScroll(scrollTopPlaylists, newPx / (contentW - viewportW));
+            }
+        });
+
+        btnScrollLeftSmart.setOnAction(e -> {
+            double contentW = smartPlaylistsBox.getWidth();
+            double viewportW = scrollSmartPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollSmartPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.max(0, Math.round((currentPx - 216) / 216.0) * 216.0);
+                animateScroll(scrollSmartPlaylists, newPx / (contentW - viewportW));
+            }
+        });
+        btnScrollRightSmart.setOnAction(e -> {
+            double contentW = smartPlaylistsBox.getWidth();
+            double viewportW = scrollSmartPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollSmartPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.min(contentW - viewportW, Math.round((currentPx + 216) / 216.0) * 216.0);
+                animateScroll(scrollSmartPlaylists, newPx / (contentW - viewportW));
+            }
+        });
 
         javafx.util.Callback<ListView<String>, javafx.scene.control.ListCell<String>> selectionCellFactory = lv -> new javafx.scene.control.ListCell<String>() {
             {
@@ -745,6 +807,13 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 parentNode = parentNode.getParent();
             }
         });
+
+        // Set Home Page as default view
+        javafx.application.Platform.runLater(() -> {
+            impostaTabAttivo("PIU_ASCOLTATI");
+            switchToView(viewHome);
+            mostraPiuaAscoltati();
+        });
     }
 
     public void switchToView(VBox viewToShow) {
@@ -1124,7 +1193,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
 
         // Filtra la playlist corrente se siamo dentro a una playlist
-        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream().map(Playlist::getNome);
+        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream()
+                .filter(p -> !(p instanceof SmartPlaylist))
+                .map(Playlist::getNome);
         if (playlistSelezionata != null) {
             stream = stream.filter(nome -> !nome.equals(playlistSelezionata));
         }
@@ -1150,8 +1221,14 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         
         // Popola la sezione delle playlist
         topPlaylistsBox.getChildren().clear();
+        if (smartPlaylistsBox != null) {
+            smartPlaylistsBox.getChildren().clear();
+        }
+        
         List<Playlist> topPlaylists = libreriaController.getTopPlaylistsAscoltate();
         for (Playlist pl : topPlaylists) {
+            if (pl instanceof SmartPlaylist) continue;
+            
             VBox card = new VBox(5);
             card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
             card.setPrefWidth(200);
@@ -1176,10 +1253,45 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             topPlaylistsBox.getChildren().add(card);
         }
 
-        if (topPlaylists.isEmpty()) {
+        if (topPlaylistsBox.getChildren().isEmpty()) {
             Label empty = new Label("Nessuna playlist presente.");
             empty.setStyle("-fx-text-fill: #a7a7a7;");
             topPlaylistsBox.getChildren().add(empty);
+        }
+
+        if (smartPlaylistsBox != null) {
+            for (Playlist pl : libreriaController.getPlaylist()) {
+                if (!(pl instanceof SmartPlaylist)) continue;
+                
+                VBox card = new VBox(5);
+                card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
+                card.setPrefWidth(200);
+                card.setMinWidth(200);
+                
+                Label title = new Label(pl.getNome());
+                title.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;");
+                
+                Label count = new Label("Brani: " + pl.getBrani().size());
+                count.setStyle("-fx-text-fill: #1DB954; -fx-font-size: 12px; -fx-font-weight: bold;");
+                
+                card.getChildren().addAll(title, count);
+                
+                card.setOnMouseClicked(e -> {
+                    impostaPlaylist(pl.getNome());
+                    switchToView(viewLista);
+                    refreshList();
+                });
+                
+                card.setOnMouseEntered(e -> card.setStyle("-fx-background-color: #383838; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+                card.setOnMouseExited(e -> card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+                
+                smartPlaylistsBox.getChildren().add(card);
+            }
+            if (smartPlaylistsBox.getChildren().isEmpty()) {
+                Label empty = new Label("Nessuna smart playlist generata.");
+                empty.setStyle("-fx-text-fill: #a7a7a7;");
+                smartPlaylistsBox.getChildren().add(empty);
+            }
         }
 
         // Popola la sezione dei brani
@@ -2357,7 +2469,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             return;
         }
 
-        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream().map(Playlist::getNome);
+        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream()
+                .filter(p -> !(p instanceof SmartPlaylist))
+                .map(Playlist::getNome);
         if (playlistSelezionata != null) {
             stream = stream.filter(nome -> !nome.equals(playlistSelezionata));
         }

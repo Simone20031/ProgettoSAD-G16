@@ -143,4 +143,33 @@ public class FeaturesTest {
         // verifichiamo che l'attach dell'observer avvenga senza errori.
         gestore.removeObserver(observer);
     }
+
+    @Test
+    void testSmartPlaylistAggiuntaAutomaticaJazz() throws Exception {
+        // Test feature 21.4: Aggiunta automatica di un brano a una SmartPlaylist
+        FiltroRicerca filtroJazz = new FiltroRicerca();
+        filtroJazz.setGenere(Genere.JAZZ);
+        SmartPlaylist playlistJazz = new SmartPlaylist("test-sp-1", "Genere: Jazz", filtroJazz, libreria);
+        
+        controller.addObserver(playlistJazz);
+        
+        // Creiamo e aggiungiamo un brano Jazz
+        Brano branoJazz = factory.creaBrano("Take Five", "Dave Brubeck", "Jazz", 1959, "C:\\fake_jazz.mp3", 324, Tag.NESSUNO);
+        libreria.aggiungiBrano(branoJazz);
+        
+        // Simuliamo l'evento di notifica che il controller invierebbe
+        playlistJazz.onBranoAggiunto(branoJazz);
+        
+        // Verifichiamo che la playlist abbia automaticamente incluso il brano Jazz
+        assertTrue(playlistJazz.contieneBrano(branoJazz), "La SmartPlaylist dovrebbe contenere il brano Jazz aggiunto");
+        assertEquals(1, playlistJazz.getBrani().size());
+        
+        // Creiamo e aggiungiamo un brano Pop per verificare che NON venga aggiunto
+        Brano branoPop = factory.creaBrano("Billie Jean", "Michael Jackson", "Pop", 1982, "C:\\fake_pop.mp3", 294, Tag.NESSUNO);
+        libreria.aggiungiBrano(branoPop);
+        playlistJazz.onBranoAggiunto(branoPop);
+        
+        // La playlist Jazz non deve includere il brano Pop
+        assertEquals(1, playlistJazz.getBrani().size(), "Il brano Pop non deve essere aggiunto alla playlist Jazz");
+    }
 }

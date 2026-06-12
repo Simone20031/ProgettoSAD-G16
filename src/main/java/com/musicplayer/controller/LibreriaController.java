@@ -364,6 +364,72 @@ public class LibreriaController {
         }
 
         MetadataService.caricaPlaylistDaCSV(playlistMap, this::findBranoByFilename);
+        generaSmartPlaylistTematiche();
+    }
+
+    private void gestisciConflittoSmartPlaylist(String nome) {
+        if (playlistMap.containsKey(nome) && !(playlistMap.get(nome) instanceof SmartPlaylist)) {
+            Playlist old = playlistMap.remove(nome);
+            com.musicplayer.persistence.MetadataService.eliminaPlaylistFisica(old.getNome());
+            com.musicplayer.persistence.MetadataService.salvaIndicePlaylistSuCSV(playlistMap.values());
+        }
+    }
+
+    public void generaSmartPlaylistTematiche() {
+        java.util.Set<Genere> generi = new java.util.HashSet<>();
+        java.util.Set<Integer> decenni = new java.util.HashSet<>();
+        java.util.Set<Tag> tags = new java.util.HashSet<>();
+
+        for (IBrano ib : libreria.getBrani()) {
+            if (ib instanceof Brano b) {
+                if (b.getGenereEnum() != null && b.getGenereEnum() != Genere.NESSUNO) {
+                    generi.add(b.getGenereEnum());
+                }
+                if (b.getAnno() > 0) {
+                    decenni.add((b.getAnno() / 10) * 10);
+                }
+                if (b.getTag() != null && b.getTag() != Tag.NESSUNO) {
+                    tags.add(b.getTag());
+                }
+            }
+        }
+
+        for (Genere g : generi) {
+            String nome = "Genere: " + g.getEtichetta();
+            gestisciConflittoSmartPlaylist(nome);
+            if (!playlistMap.containsKey(nome)) {
+                FiltroRicerca f = new FiltroRicerca();
+                f.setGenere(g);
+                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f, libreria);
+                playlistMap.put(nome, sp);
+                addObserver(sp);
+            }
+        }
+
+        for (Integer d : decenni) {
+            String decStr = String.valueOf(d).substring(2);
+            String nome = "Anni " + decStr;
+            gestisciConflittoSmartPlaylist(nome);
+            if (!playlistMap.containsKey(nome)) {
+                FiltroRicerca f = new FiltroRicerca();
+                f.setDecennio(d);
+                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f, libreria);
+                playlistMap.put(nome, sp);
+                addObserver(sp);
+            }
+        }
+
+        for (Tag t : tags) {
+            String nome = "Tag: " + t.name();
+            gestisciConflittoSmartPlaylist(nome);
+            if (!playlistMap.containsKey(nome)) {
+                FiltroRicerca f = new FiltroRicerca();
+                f.setTag(t);
+                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f, libreria);
+                playlistMap.put(nome, sp);
+                addObserver(sp);
+            }
+        }
     }
 
     // =========================================================================
