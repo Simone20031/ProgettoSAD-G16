@@ -288,6 +288,24 @@ public class LibreriaController {
         return libreria.cercaBrani(filtro);
     }
 
+    public void ordinaLibreria(CampoOrdinamento campo, String playlistName) {
+        libreria.ordinaBrani(campo);
+        if (playlistName != null) {
+            Playlist p = playlistMap.get(playlistName);
+            if (p != null) {
+                p.ordina(new com.musicplayer.strategy.OrdinaBrani(), libreria.getUltimoCampoOrdinamento(), libreria.isUltimoOrdineCrescente());
+            }
+        }
+    }
+
+    public CampoOrdinamento getUltimoCampoOrdinamento() {
+        return libreria.getUltimoCampoOrdinamento();
+    }
+
+    public boolean isUltimoOrdineCrescente() {
+        return libreria.isUltimoOrdineCrescente();
+    }
+
     public void registraAscolto(Playable p) {
         if (p == null) return;
         p.incrementPlayCount();

@@ -91,9 +91,11 @@
           </VBox>
           <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 8 32 8 32; -fx-border-color: transparent transparent #282828 transparent; -fx-border-width: 0 0 1 0;">
             <Label maxWidth="40" minWidth="40" prefWidth="40" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="#"/>
-            <Label maxWidth="280" minWidth="280" prefWidth="280" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
-            <Label maxWidth="180" minWidth="180" prefWidth="180" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
-            <Label maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
+            <Label fx:id="lblHeaderTitolo" maxWidth="200" minWidth="200" prefWidth="200" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="TITOLO"/>
+            <Label fx:id="lblHeaderAutore" maxWidth="150" minWidth="150" prefWidth="150" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="AUTORE"/>
+            <Label fx:id="lblHeaderAnno" maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="ANNO"/>
+            <Label fx:id="lblHeaderGenere" maxWidth="100" minWidth="100" prefWidth="100" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="GENERE"/>
+            <Label fx:id="lblHeaderTag" maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="TAG"/>
             <Pane HBox.hgrow="ALWAYS"/>
             <Label maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="🕒"/>
             <Label maxWidth="20" minWidth="20" prefWidth="20"/>
@@ -158,9 +160,11 @@
             <VBox spacing="0" style="-fx-background-color: #1e1e1e; -fx-background-radius: 8; -fx-padding: 0;" VBox.vgrow="ALWAYS">
               <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 8 24 8 24; -fx-border-color: transparent transparent #282828 transparent; -fx-border-width: 0 0 1 0;">
                 <Label maxWidth="40" minWidth="40" prefWidth="40" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="#"/>
-                <Label maxWidth="280" minWidth="280" prefWidth="280" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
-                <Label maxWidth="180" minWidth="180" prefWidth="180" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
-                <Label maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
+                <Label maxWidth="200" minWidth="200" prefWidth="200" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
+                <Label maxWidth="150" minWidth="150" prefWidth="150" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
+                <Label maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="ANNO"/>
+                <Label maxWidth="100" minWidth="100" prefWidth="100" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
+                <Label maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TAG"/>
                 <Pane HBox.hgrow="ALWAYS"/>
                 <Label maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="🕒"/>
               </HBox>
