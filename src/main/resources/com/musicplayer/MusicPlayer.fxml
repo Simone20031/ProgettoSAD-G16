@@ -55,6 +55,7 @@
           </HBox>
           <HBox alignment="TOP_CENTER" spacing="10" style="-fx-padding: 0 24 16 24;">
             <Button fx:id="addBtn" alignment="TOP_CENTER" contentDisplay="CENTER" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand; -fx-border-color: transparent;" text="Importa MP3"/>
+            <Button fx:id="undoBtn" alignment="TOP_CENTER" contentDisplay="CENTER" disable="true" style="-fx-background-color: transparent; -fx-text-fill: #555555; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: default; -fx-border-color: #555555; -fx-border-width: 1;" text="Annulla Ultima Operazione"/>
           </HBox>
           <HBox fx:id="playlistControlsBox" alignment="CENTER" spacing="16" style="-fx-padding: 0 24 16 24;">
             <Button fx:id="playlistPlayBtn" alignment="CENTER" ellipsisString="" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;" text="▶" textAlignment="CENTER">

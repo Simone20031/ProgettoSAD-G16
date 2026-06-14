@@ -21,6 +21,7 @@ public class Libreria implements ICatalogo {
     private static Libreria instance;
 
     private final List<IBrano> catalogo = new ArrayList<>();
+    private final List<IBrano> catalogoOriginale = new ArrayList<>();
 
     // private final List<Playlist> playlist = new ArrayList<>();
 
@@ -43,6 +44,7 @@ public class Libreria implements ICatalogo {
         if (b == null || catalogo.contains(b))
             return;
         catalogo.add(b);
+        catalogoOriginale.add(b);
         // observer disabilitato in questo momento
     }
 
@@ -53,6 +55,7 @@ public class Libreria implements ICatalogo {
             if (p instanceof IBrano b) {
                 if (b != null && !set.contains(b)) {
                     catalogo.add(b);
+                    catalogoOriginale.add(b);
                     set.add(b);
                 }
             }
@@ -76,6 +79,7 @@ public class Libreria implements ICatalogo {
 
         // Basta una sola riga per rimuovere l'oggetto
         catalogo.remove(b);
+        catalogoOriginale.remove(b);
 
         // Non aggiungere altro qui, la logica di pulizia delle playlist
         // la stiamo gestendo direttamente nel LibreriaController
@@ -91,6 +95,7 @@ public class Libreria implements ICatalogo {
             }
         }
         catalogo.removeAll(toRemove);
+        catalogoOriginale.removeAll(toRemove);
     }
 
     // ── Gestione playlist ─────────────────────────────────────────────────────
@@ -123,13 +128,26 @@ public class Libreria implements ICatalogo {
     }
 
     public void ordinaBrani(CampoOrdinamento campo) {
+        if (campo == null) {
+            ultimoCampoOrdinamento = null;
+            catalogo.clear();
+            catalogo.addAll(catalogoOriginale);
+            return;
+        }
         if (ultimoCampoOrdinamento == campo) {
-            ultimoOrdineCrescente = !ultimoOrdineCrescente;
+            if (ultimoOrdineCrescente) {
+                ultimoOrdineCrescente = false;
+                ordinamentoStrategy.ordina(catalogo, ultimoCampoOrdinamento, ultimoOrdineCrescente);
+            } else {
+                ultimoCampoOrdinamento = null;
+                catalogo.clear();
+                catalogo.addAll(catalogoOriginale);
+            }
         } else {
             ultimoCampoOrdinamento = campo;
             ultimoOrdineCrescente = true;
+            ordinamentoStrategy.ordina(catalogo, ultimoCampoOrdinamento, ultimoOrdineCrescente);
         }
-        ordinamentoStrategy.ordina(catalogo, ultimoCampoOrdinamento, ultimoOrdineCrescente);
     }
 
     public CampoOrdinamento getUltimoCampoOrdinamento() {

@@ -233,83 +233,33 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private TextField currentYearField;
 
     private final UndoManager undoManager = new UndoManager();
-    private javafx.stage.Popup undoPopup;
-    private javafx.animation.PauseTransition undoDelay;
+
+    public void resetHeaderLabels() {
+        if (lblHeaderTitolo != null) lblHeaderTitolo.setText("TITOLO");
+        if (lblHeaderAutore != null) lblHeaderAutore.setText("AUTORE");
+        if (lblHeaderAnno != null) lblHeaderAnno.setText("ANNO");
+        if (lblHeaderGenere != null) lblHeaderGenere.setText("GENERE");
+        if (lblHeaderTag != null) lblHeaderTag.setText("TAG");
+    }
+
+    public void aggiornaStatoUndo() {
+        if (undoBtn != null) {
+            boolean canUndo = undoManager.canUndo();
+            undoBtn.setDisable(!canUndo);
+            if (canUndo) {
+                undoBtn.setStyle("-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand; -fx-border-color: transparent;");
+            } else {
+                undoBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #555555; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: default; -fx-border-color: #555555; -fx-border-width: 1;");
+                undoBtn.setTooltip(null);
+            }
+        }
+    }
 
     public void mostraNotificaUndo(String messaggio) {
-        if (primaryStage == null) return;
-        
-        if (undoPopup != null && undoPopup.isShowing()) {
-            undoPopup.hide();
+        aggiornaStatoUndo();
+        if (undoBtn != null && messaggio != null) {
+            undoBtn.setTooltip(new Tooltip("Annulla: " + messaggio));
         }
-        if (undoDelay != null) {
-            undoDelay.stop();
-        }
-
-        undoPopup = new javafx.stage.Popup();
-        HBox snackbar = new HBox(20);
-        snackbar.setAlignment(javafx.geometry.Pos.CENTER);
-        snackbar.setStyle("-fx-background-color: #282828; -fx-background-radius: 8; -fx-padding: 12 24; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5); -fx-border-color: #404040; -fx-border-radius: 8; -fx-border-width: 1;");
-        
-        Label lblMsg = new Label(messaggio);
-        lblMsg.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
-        
-        Button btnAnnulla = new Button("ANNULLA");
-        btnAnnulla.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 0;");
-        
-        snackbar.getChildren().addAll(lblMsg, btnAnnulla);
-        undoPopup.getContent().add(snackbar);
-        
-        btnAnnulla.setOnAction(e -> {
-            try {
-                if (undoManager.canUndo()) {
-                    undoManager.annullaUltimaOperazione();
-                    refreshList();
-                    refreshPlaylistList();
-                    undoPopup.hide();
-                    if (undoDelay != null) undoDelay.stop();
-                }
-            } catch (Exception ex) {
-                mostraErrore(new ValidazioneException("Errore annullamento: " + ex.getMessage()));
-            }
-        });
-
-        snackbar.applyCss();
-        snackbar.layout();
-        
-        javafx.beans.value.ChangeListener<Number> positionUpdater = (obs, oldVal, newVal) -> {
-            if (undoPopup.isShowing()) {
-                undoPopup.setX(primaryStage.getX() + (primaryStage.getWidth() - snackbar.prefWidth(-1)) / 2);
-                undoPopup.setY(primaryStage.getY() + primaryStage.getHeight() - 100);
-            }
-        };
-        
-        primaryStage.xProperty().addListener(positionUpdater);
-        primaryStage.yProperty().addListener(positionUpdater);
-        primaryStage.widthProperty().addListener(positionUpdater);
-        primaryStage.heightProperty().addListener(positionUpdater);
-        
-        undoPopup.setOnShown(e -> {
-            undoPopup.setX(primaryStage.getX() + (primaryStage.getWidth() - snackbar.getWidth()) / 2);
-            undoPopup.setY(primaryStage.getY() + primaryStage.getHeight() - 100);
-        });
-
-        undoPopup.setOnHidden(e -> {
-            primaryStage.xProperty().removeListener(positionUpdater);
-            primaryStage.yProperty().removeListener(positionUpdater);
-            primaryStage.widthProperty().removeListener(positionUpdater);
-            primaryStage.heightProperty().removeListener(positionUpdater);
-        });
-
-        undoPopup.show(primaryStage);
-        
-        undoDelay = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(5));
-        undoDelay.setOnFinished(e -> {
-            if (undoPopup.isShowing()) {
-                undoPopup.hide();
-            }
-        });
-        undoDelay.play();
     }
 
     public UndoManager getUndoManager() {
@@ -350,7 +300,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             // Ignored intentionally
         }
 
+        this.gestoreRiproduzione = GestoreRiproduzione.getInstance();
         libreriaController.addObserver(this);
+        libreriaController.addObserver(gestoreRiproduzione);
         libreriaController.caricaDaCSV();
         MetadataService.caricaMappaDalCSV(metadataMap);
 
@@ -541,6 +493,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         undoManager.annullaUltimaOperazione();
                         refreshList();
                         refreshPlaylistList();
+                        aggiornaStatoUndo();
                         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Operazione annullata con successo!");
                         alert.show();
                     } else {
@@ -551,28 +504,18 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     mostraErrore(new ValidazioneException("Errore durante l'annullamento: " + ex.getMessage()));
                 }
             });
+            aggiornaStatoUndo();
         }
         
         btnAnnullaSelezione.setOnAction(e -> switchToView(viewLista));
 
-        btnConfermaSelezione.setOnAction(e -> {
-            String nomePlaylist = playlistSelectionListView.getSelectionModel().getSelectedItem();
-            if (nomePlaylist != null && branoInAttesaDiPlaylist != null) {
-                try {
-                    libreriaController.aggiungiAPlaylist(branoInAttesaDiPlaylist, nomePlaylist);
-                    switchToView(viewLista);
-                    detailsLabel.setText("Brano aggiunto a " + nomePlaylist);
-                } catch (ValidazioneException ve) {
-                    mostraErrore(ve);
-                }
-            }
-        });
         btnConfermaImport.setOnAction(e -> {
             try {
                 if (formBranoView != null) {
                     formBranoView.confermaImportBrano();
                 }
             } catch (Exception ve) {
+                ve.printStackTrace();
                 if (ve instanceof ValidazioneException) {
                     mostraErrore((ValidazioneException) ve);
                 } else {
@@ -619,8 +562,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         mostraLibreriaGenerale();
                     }
                 } catch (ValidazioneException ve) {
+                    ve.printStackTrace();
                     mostraErrore(ve);
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
                 }
             } else if (braniInAttesaDiPlaylistBulk != null && !braniInAttesaDiPlaylistBulk.isEmpty()) {
@@ -638,14 +583,15 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         mostraLibreriaGenerale();
                     }
                 } catch (ValidazioneException ve) {
+                    ve.printStackTrace();
                     mostraErrore(ve);
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
                 }
             }
         });
-        // Inizializza GestoreRiproduzione e PlayerView
-        this.gestoreRiproduzione = GestoreRiproduzione.getInstance();
+        // Inizializza PlayerView
         this.playerView = new PlayerView(playBtn, stopBtn, skipBackBtn, skipBtn, loopBtn, currentTimeLabel, totalTimeLabel,
                 progressSlider,
                 gestoreRiproduzione, this);
@@ -1004,6 +950,82 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
                 selectedProperty().addListener((obs, o, isSelected) -> updateStyle(isSelected, isHover()));
                 hoverProperty().addListener((obs, o, isHover) -> updateStyle(isSelected(), isHover));
+
+                // Drag and drop event handlers for reordering
+                setOnDragDetected(event -> {
+                    if (getItem() == null) {
+                        return;
+                    }
+                    if (playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            javafx.scene.input.Dragboard db = startDragAndDrop(javafx.scene.input.TransferMode.MOVE);
+                            javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+                            content.putString(getItem());
+                            db.setContent(content);
+                            event.consume();
+                        }
+                    }
+                });
+
+                setOnDragOver(event -> {
+                    if (event.getGestureSource() != this && event.getDragboard().hasString() && playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            event.acceptTransferModes(javafx.scene.input.TransferMode.MOVE);
+                        }
+                    }
+                    event.consume();
+                });
+
+                setOnDragEntered(event -> {
+                    if (event.getGestureSource() != this && event.getDragboard().hasString() && playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            setStyle("-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 2 0 0 0;");
+                        }
+                    }
+                });
+
+                setOnDragExited(event -> {
+                    if (event.getGestureSource() != this && event.getDragboard().hasString() && playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            setStyle("-fx-background-color: transparent; -fx-padding: 4 8 4 8;");
+                        }
+                    }
+                });
+
+                setOnDragDropped(event -> {
+                    javafx.scene.input.Dragboard db = event.getDragboard();
+                    boolean success = false;
+                    if (db.hasString() && playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            @SuppressWarnings("unchecked")
+                            ListCell<String> sourceCell = (ListCell<String>) event.getGestureSource();
+                            int idxFrom = sourceCell.getIndex();
+                            int idxTo = getIndex();
+                            if (idxFrom >= 0 && idxTo >= 0 && idxFrom != idxTo) {
+                                try {
+                                    String targetStr = db.getString();
+                                    String fn = extractFilename(targetStr);
+                                    Brano brano = findBranoByFilename(fn);
+                                    if (brano != null) {
+                                        libreriaController.spostaBranoInPlaylist(brano, playlistSelezionata, idxTo);
+                                        success = true;
+                                    }
+                                } catch (Exception ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                    event.setDropCompleted(success);
+                    event.consume();
+                });
+
+                setOnDragDone(javafx.scene.input.DragEvent::consume);
             }
 
             private void updateStyle(boolean selected, boolean hovered) {
@@ -1480,8 +1502,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             try {
                 libreriaController.aggiungiAPlaylist(selezionato, playlistTarget);
             } catch (ValidazioneException ve) {
+                ve.printStackTrace();
                 mostraErrore(ve);
             } catch (Exception ex) {
+                ex.printStackTrace();
                 mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
             }
         });
@@ -2319,6 +2343,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             refreshPlaylistList();
             refreshList();
             aggiornaIteratoreCorrente();
+            if (libreriaController.getUltimoCampoOrdinamento() == null) {
+                resetHeaderLabels();
+            }
+            aggiornaStatoUndo();
         });
     }
 
@@ -2557,8 +2585,11 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         if (lblHeaderGenere != null) lblHeaderGenere.setText("GENERE");
         if (lblHeaderTag != null) lblHeaderTag.setText("TAG");
         
-        boolean crescente = libreriaController.isUltimoOrdineCrescente();
-        labelCliccata.setText(campo.getEtichetta().toUpperCase() + (crescente ? " ▲" : " ▼"));
+        CampoOrdinamento ultimo = libreriaController.getUltimoCampoOrdinamento();
+        if (ultimo != null) {
+            boolean crescente = libreriaController.isUltimoOrdineCrescente();
+            labelCliccata.setText(campo.getEtichetta().toUpperCase() + (crescente ? " ▲" : " ▼"));
+        }
         
         refreshList();
         aggiornaIteratoreCorrente();

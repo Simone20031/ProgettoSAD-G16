@@ -12,11 +12,29 @@ public class Playlist implements Playable {
     private String id;
     private String nome;
     private final List<IBrano> brani = new ArrayList<>();
+    private final List<IBrano> braniOriginali = new ArrayList<>();
     private int playCount = 0;
+    private int[] ordinamento = new int[0];
 
     public Playlist(String id, String nome) {
         this.id = id == null ? "" : id;
         this.nome = nome == null ? "" : nome;
+        aggiornaOrdinamento();
+    }
+
+    public int[] getOrdinamento() {
+        return ordinamento;
+    }
+
+    public void setOrdinamento(int[] ordinamento) {
+        this.ordinamento = ordinamento;
+    }
+
+    private void aggiornaOrdinamento() {
+        this.ordinamento = new int[brani.size()];
+        for (int i = 0; i < brani.size(); i++) {
+            this.ordinamento[i] = i;
+        }
     }
 
     // ── Gestione brani ────────────────────────────────────────────────────────
@@ -37,6 +55,8 @@ public class Playlist implements Playable {
         }
 
         brani.add(b);
+        braniOriginali.add(b);
+        aggiornaOrdinamento();
     }
 
     public void aggiungiBrano(IBrano b, int index) {
@@ -52,6 +72,10 @@ public class Playlist implements Playable {
             index = brani.size();
         }
         brani.add(index, b);
+        
+        int origIndex = Math.max(0, Math.min(index, braniOriginali.size()));
+        braniOriginali.add(origIndex, b);
+        aggiornaOrdinamento();
     }
 
     public void aggiungiBrani(java.util.Collection<? extends Playable> col) {
@@ -64,13 +88,17 @@ public class Playlist implements Playable {
                     throw new IllegalArgumentException("Il brano è già presente in questa playlist.");
                 }
                 brani.add(b);
+                braniOriginali.add(b);
                 set.add(b);
             }
         }
+        aggiornaOrdinamento();
     }
 
     public void rimuoviBrano(IBrano b) {
         brani.remove(b);
+        braniOriginali.remove(b);
+        aggiornaOrdinamento();
     }
 
     public void rimuoviBrani(java.util.Collection<? extends Playable> col) {
@@ -83,6 +111,8 @@ public class Playlist implements Playable {
             }
         }
         brani.removeAll(toRemove);
+        braniOriginali.removeAll(toRemove);
+        aggiornaOrdinamento();
     }
 
     public boolean contieneBrano(IBrano b) {
@@ -95,6 +125,17 @@ public class Playlist implements Playable {
         brani.remove(b);
         int pos = Math.max(0, Math.min(posizione, brani.size()));
         brani.add(pos, b);
+
+        braniOriginali.remove(b);
+        int posOrig = Math.max(0, Math.min(posizione, braniOriginali.size()));
+        braniOriginali.add(posOrig, b);
+        aggiornaOrdinamento();
+    }
+
+    public void ripristinaOrdineOriginale() {
+        brani.clear();
+        brani.addAll(braniOriginali);
+        aggiornaOrdinamento();
     }
 
     public void rinomina(String nuovoNome) {
@@ -110,6 +151,7 @@ public class Playlist implements Playable {
 
     public void ordina(com.musicplayer.strategy.OrdinamentoStrategy strategy, CampoOrdinamento campo, boolean crescente) {
         strategy.ordina(brani, campo, crescente);
+        aggiornaOrdinamento();
     }
 
     // ── Iteratori (Factory Method) ────────────────────────────────────────────

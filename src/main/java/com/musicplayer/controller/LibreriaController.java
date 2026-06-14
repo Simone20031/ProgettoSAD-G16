@@ -50,7 +50,7 @@ public class LibreriaController {
     private final List<LibreriaObserver> observers = new ArrayList<>();
 
     public void addObserver(LibreriaObserver observer) {
-        if (!observers.contains(observer)) {
+        if (observer != null && !observers.contains(observer)) {
             observers.add(observer);
         }
     }
@@ -293,7 +293,11 @@ public class LibreriaController {
         if (playlistName != null) {
             Playlist p = playlistMap.get(playlistName);
             if (p != null) {
-                p.ordina(new com.musicplayer.strategy.OrdinaBrani(), libreria.getUltimoCampoOrdinamento(), libreria.isUltimoOrdineCrescente());
+                if (libreria.getUltimoCampoOrdinamento() == null) {
+                    p.ripristinaOrdineOriginale();
+                } else {
+                    p.ordina(new com.musicplayer.strategy.OrdinaBrani(), libreria.getUltimoCampoOrdinamento(), libreria.isUltimoOrdineCrescente());
+                }
             }
         }
     }
@@ -744,6 +748,10 @@ public class LibreriaController {
     public void spostaBranoInPlaylist(Brano brano, String playlistName, int nuovaPosizione) throws ValidazioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brano != null) {
+            if (libreria.getUltimoCampoOrdinamento() != null) {
+                libreria.ordinaBrani(null);
+                pl.ripristinaOrdineOriginale();
+            }
             pl.spostaBrano(brano, nuovaPosizione);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
             // Task 22.1: Aggiorna la coda di riproduzione dopo lo spostamento

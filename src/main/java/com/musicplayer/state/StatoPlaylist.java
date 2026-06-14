@@ -34,9 +34,11 @@ public class StatoPlaylist implements StatoUI {
                     view.mostraNotificaUndo("Brano rimosso dalla playlist");
                 }
             } catch (ValidazioneException ve) {
+                ve.printStackTrace();
                 // Sfruttiamo il quarto parametro 'view' per mostrare il popup di errore a schermo
                 view.mostraErrore(ve);
             } catch (Exception e) {
+                e.printStackTrace();
                 view.mostraErrore(new ValidazioneException("Errore durante la rimozione: " + e.getMessage()));
             }
         } else {
