@@ -91,6 +91,17 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Label nextSongLabel;
 
+    @FXML
+    private Label lblHeaderTitolo;
+    @FXML
+    private Label lblHeaderAutore;
+    @FXML
+    private Label lblHeaderAnno;
+    @FXML
+    private Label lblHeaderGenere;
+    @FXML
+    private Label lblHeaderTag;
+
 
     private boolean playlistShuffleEnabled = false;
     private boolean playlistLoopEnabled = false;
@@ -363,6 +374,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         searchTagCombo.valueProperty().addListener((obs, oldV, newV) -> applicaFiltro());
 
         resetSearchBtn.setOnAction(e -> azzeraFiltro());
+
+        if (lblHeaderTitolo != null) lblHeaderTitolo.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.TITOLO, lblHeaderTitolo));
+        if (lblHeaderAutore != null) lblHeaderAutore.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.AUTORE, lblHeaderAutore));
+        if (lblHeaderAnno != null) lblHeaderAnno.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.ANNO, lblHeaderAnno));
+        if (lblHeaderGenere != null) lblHeaderGenere.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.GENERE, lblHeaderGenere));
+        if (lblHeaderTag != null) lblHeaderTag.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.TAG, lblHeaderTag));
 
         refreshList();
         refreshPlaylistList();
@@ -853,7 +870,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             private final Label lblId = new Label();
             private final Label lblTitolo = new Label();
             private final Label lblAutore = new Label();
+            private final Label lblAnno = new Label();
             private final Label lblGenere = new Label();
+            private final Label lblTag = new Label();
             private final Label lblDurata = new Label();
             private final Pane spacer = new Pane();
             private final Button btnOpzioni = new Button("⋮");
@@ -894,17 +913,25 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 lblId.setPrefWidth(40);
                 lblId.setMaxWidth(40);
 
-                lblTitolo.setMinWidth(280);
-                lblTitolo.setPrefWidth(280);
-                lblTitolo.setMaxWidth(280);
+                lblTitolo.setMinWidth(200);
+                lblTitolo.setPrefWidth(200);
+                lblTitolo.setMaxWidth(200);
 
-                lblAutore.setMinWidth(180);
-                lblAutore.setPrefWidth(180);
-                lblAutore.setMaxWidth(180);
+                lblAutore.setMinWidth(150);
+                lblAutore.setPrefWidth(150);
+                lblAutore.setMaxWidth(150);
 
-                lblGenere.setMinWidth(120);
-                lblGenere.setPrefWidth(120);
-                lblGenere.setMaxWidth(120);
+                lblAnno.setMinWidth(60);
+                lblAnno.setPrefWidth(60);
+                lblAnno.setMaxWidth(60);
+
+                lblGenere.setMinWidth(100);
+                lblGenere.setPrefWidth(100);
+                lblGenere.setMaxWidth(100);
+
+                lblTag.setMinWidth(120);
+                lblTag.setPrefWidth(120);
+                lblTag.setMaxWidth(120);
 
                 lblDurata.setMinWidth(60);
                 lblDurata.setPrefWidth(60);
@@ -918,7 +945,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 container.setPadding(new javafx.geometry.Insets(10, 16, 10, 16));
                 container.setSpacing(10);
 
-                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblGenere, spacer, lblDurata, btnOpzioni);
+                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblAnno, lblGenere, lblTag, spacer, lblDurata, btnOpzioni);
 
                 btnOpzioni.setOnAction(e -> {
                     e.consume();
@@ -1009,7 +1036,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     container.setStyle("-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 4; -fx-background-radius: 6;");
                     lblTitolo.setStyle("-fx-text-fill: #1DB954; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #ffffff; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
@@ -1017,7 +1046,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     container.setStyle("-fx-background-color: #3e3e3e; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 2; -fx-background-radius: 6;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #ffffff; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
@@ -1025,7 +1056,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     container.setStyle("-fx-background-color: #282828; -fx-background-radius: 6;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #ffffff; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
@@ -1033,7 +1066,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     container.setStyle("-fx-background-color: transparent;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #b3b3b3; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
@@ -1059,7 +1094,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
                     if (m != null) {
                         lblAutore.setText(m.author != null ? m.author : "");
+                        lblAnno.setText(m.year != null && !m.year.isBlank() ? m.year : "");
                         lblGenere.setText(m.genre != null ? m.genre : "");
+                        lblTag.setText(m.tag != null && !m.tag.isBlank() && !m.tag.equalsIgnoreCase("NESSUNO") ? m.tag : "");
 
                         String dur = "--:--";
                         try {
@@ -1072,7 +1109,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         lblDurata.setText(dur);
                     } else {
                         lblAutore.setText("");
+                        lblAnno.setText("");
                         lblGenere.setText("");
+                        lblTag.setText("");
                         lblDurata.setText("--:--");
                     }
 
@@ -1695,7 +1734,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             private final Label lblId = new Label();
             private final Label lblTitolo = new Label();
             private final Label lblAutore = new Label();
+            private final Label lblAnno = new Label();
             private final Label lblGenere = new Label();
+            private final Label lblTag = new Label();
             private final Label lblDurata = new Label();
             private final Pane spacer = new Pane();
 
@@ -1704,17 +1745,25 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 lblId.setPrefWidth(40);
                 lblId.setMaxWidth(40);
 
-                lblTitolo.setMinWidth(280);
-                lblTitolo.setPrefWidth(280);
-                lblTitolo.setMaxWidth(280);
+                lblTitolo.setMinWidth(200);
+                lblTitolo.setPrefWidth(200);
+                lblTitolo.setMaxWidth(200);
 
-                lblAutore.setMinWidth(180);
-                lblAutore.setPrefWidth(180);
-                lblAutore.setMaxWidth(180);
+                lblAutore.setMinWidth(150);
+                lblAutore.setPrefWidth(150);
+                lblAutore.setMaxWidth(150);
 
-                lblGenere.setMinWidth(120);
-                lblGenere.setPrefWidth(120);
-                lblGenere.setMaxWidth(120);
+                lblAnno.setMinWidth(60);
+                lblAnno.setPrefWidth(60);
+                lblAnno.setMaxWidth(60);
+
+                lblGenere.setMinWidth(100);
+                lblGenere.setPrefWidth(100);
+                lblGenere.setMaxWidth(100);
+
+                lblTag.setMinWidth(120);
+                lblTag.setPrefWidth(120);
+                lblTag.setMaxWidth(120);
 
                 lblDurata.setMinWidth(60);
                 lblDurata.setPrefWidth(60);
@@ -1726,7 +1775,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 container.setPadding(new javafx.geometry.Insets(10, 16, 10, 16));
                 container.setSpacing(10);
 
-                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblGenere, spacer, lblDurata);
+                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblAnno, lblGenere, lblTag, spacer, lblDurata);
 
                 selectedProperty().addListener((obs, o, isSelected) -> updateStyle(isSelected, isHover()));
                 hoverProperty().addListener((obs, o, isHover) -> updateStyle(isSelected(), isHover));
@@ -1738,21 +1787,27 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     lblId.setStyle("-fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 13px;");
                     lblTitolo.setStyle("-fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
                 } else if (hovered) {
                     container.setStyle("-fx-background-color: #282828; -fx-background-radius: 6;");
                     lblId.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 13px;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                 } else {
                     container.setStyle("-fx-background-color: transparent;");
                     lblId.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                 }
             }
@@ -1776,7 +1831,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
                     if (m != null) {
                         lblAutore.setText(m.author != null ? m.author : "");
+                        lblAnno.setText(m.year != null && !m.year.isBlank() ? m.year : "");
                         lblGenere.setText(m.genre != null ? m.genre : "");
+                        lblTag.setText(m.tag != null && !m.tag.isBlank() && !m.tag.equalsIgnoreCase("NESSUNO") ? m.tag : "");
 
                         String dur = "--:--";
                         try {
@@ -1789,7 +1846,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         lblDurata.setText(dur);
                     } else {
                         lblAutore.setText("");
+                        lblAnno.setText("");
                         lblGenere.setText("");
+                        lblTag.setText("");
                         lblDurata.setText("--:--");
                     }
 
@@ -2191,6 +2250,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         filtroAttivo.setTag(tagSel);
 
         refreshList();
+        aggiornaIteratoreCorrente();
     }
 
     private void azzeraFiltro() {
@@ -2206,6 +2266,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         if (searchTagCombo != null)
             searchTagCombo.setValue("");
         refreshList();
+        aggiornaIteratoreCorrente();
     }
 
     public void showAlert(String msg, Alert.AlertType type) {
@@ -2485,5 +2546,21 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         playlistSelectionListView.getItems().setAll(opzioni);
         switchToView(viewSelezionePlaylist);
+    }
+
+    private void handleOrdinamento(CampoOrdinamento campo, Label labelCliccata) {
+        libreriaController.ordinaLibreria(campo, playlistSelezionata);
+        
+        if (lblHeaderTitolo != null) lblHeaderTitolo.setText("TITOLO");
+        if (lblHeaderAutore != null) lblHeaderAutore.setText("AUTORE");
+        if (lblHeaderAnno != null) lblHeaderAnno.setText("ANNO");
+        if (lblHeaderGenere != null) lblHeaderGenere.setText("GENERE");
+        if (lblHeaderTag != null) lblHeaderTag.setText("TAG");
+        
+        boolean crescente = libreriaController.isUltimoOrdineCrescente();
+        labelCliccata.setText(campo.getEtichetta().toUpperCase() + (crescente ? " ▲" : " ▼"));
+        
+        refreshList();
+        aggiornaIteratoreCorrente();
     }
 }

@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.musicplayer.strategy.OrdinamentoStrategy;
+import com.musicplayer.strategy.OrdinaBrani;
+
 /**
  * Libreria: collezione centrale di brani e playlist.
  * Pattern: Singleton + Observer.
@@ -19,8 +22,11 @@ public class Libreria implements ICatalogo {
 
     private final List<IBrano> catalogo = new ArrayList<>();
 
-    // Playlist non implementata in questo momento
     // private final List<Playlist> playlist = new ArrayList<>();
+
+    private OrdinamentoStrategy ordinamentoStrategy = new OrdinaBrani();
+    private CampoOrdinamento ultimoCampoOrdinamento = null;
+    private boolean ultimoOrdineCrescente = true;
 
     private Libreria() {
     }
@@ -114,6 +120,24 @@ public class Libreria implements ICatalogo {
         if (filtro == null)
             return getBrani();
         return filtro.applica(getBrani());
+    }
+
+    public void ordinaBrani(CampoOrdinamento campo) {
+        if (ultimoCampoOrdinamento == campo) {
+            ultimoOrdineCrescente = !ultimoOrdineCrescente;
+        } else {
+            ultimoCampoOrdinamento = campo;
+            ultimoOrdineCrescente = true;
+        }
+        ordinamentoStrategy.ordina(catalogo, ultimoCampoOrdinamento, ultimoOrdineCrescente);
+    }
+
+    public CampoOrdinamento getUltimoCampoOrdinamento() {
+        return ultimoCampoOrdinamento;
+    }
+
+    public boolean isUltimoOrdineCrescente() {
+        return ultimoOrdineCrescente;
     }
 
     public boolean isEmpty() {

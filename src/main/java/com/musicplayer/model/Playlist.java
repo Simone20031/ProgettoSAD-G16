@@ -108,6 +108,10 @@ public class Playlist implements Playable {
         return List.copyOf(brani);
     }
 
+    public void ordina(com.musicplayer.strategy.OrdinamentoStrategy strategy, CampoOrdinamento campo, boolean crescente) {
+        strategy.ordina(brani, campo, crescente);
+    }
+
     // ── Iteratori (Factory Method) ────────────────────────────────────────────
     public PlaylistIterator creaIterator() {
         return new SequentialIterator(brani);
