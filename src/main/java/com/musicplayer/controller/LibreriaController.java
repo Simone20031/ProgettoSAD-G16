@@ -778,8 +778,11 @@ public class LibreriaController {
     }
 
     public void eliminaPlaylist(String nome) throws IOException {
-        if (playlistMap.remove(nome) != null) {
-            MetadataService.eliminaPlaylistFisica(nome);
+        Playlist p = playlistMap.remove(nome);
+        if (p != null) {
+            if (!(p instanceof SmartPlaylist)) {
+                MetadataService.eliminaPlaylistFisica(nome);
+            }
             MetadataService.salvaIndicePlaylistSuCSV(playlistMap.values());
             for (LibreriaObserver obs : observers) {
                 obs.onPlaylistAggiornata(null);
@@ -791,6 +794,9 @@ public class LibreriaController {
         Playlist p = playlistMap.get(vecchioNome);
         if (p == null)
             return;
+        if (p instanceof SmartPlaylist) {
+            throw new ValidazioneException("Non è possibile rinominare una playlist automatica (SmartPlaylist).");
+        }
         boolean caseChangeOnly = vecchioNome.equalsIgnoreCase(nuovoNome);
         if (!caseChangeOnly) {
             for (String existingName : playlistMap.keySet()) {
