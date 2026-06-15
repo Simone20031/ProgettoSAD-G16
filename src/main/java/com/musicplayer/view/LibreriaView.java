@@ -1599,9 +1599,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         textDialog.showAndWait().map(String::trim).filter(s -> !s.isEmpty()).ifPresent(playlistTarget -> {
             try {
                 libreriaController.aggiungiAPlaylist(selezionato, playlistTarget);
-            } catch (ValidazioneException ve) {
-                ve.printStackTrace();
-                mostraErrore(ve);
+            } catch (PlaylistException pe) {
+                pe.printStackTrace();
+                mostraErrore(pe);
             } catch (Exception ex) {
                 ex.printStackTrace();
                 mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
@@ -2240,9 +2240,19 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 libreriaController.aggiungiAPlaylist(brano, nome);
                 refreshPlaylistList();
                 detailsLabel.setText("Brano aggiunto alla playlist '" + nome + "'.");
-            } catch (ValidazioneException e) {
+            } catch (PlaylistException e) {
                 mostraErrore(e);
             }
+        });
+    }
+
+    public void mostraErrore(PlaylistException ex) {
+        javafx.application.Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Errore Playlist");
+            alert.setHeaderText("Operazione non consentita");
+            alert.setContentText(ex.getMessage());
+            alert.showAndWait();
         });
     }
 
