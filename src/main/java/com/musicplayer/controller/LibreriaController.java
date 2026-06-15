@@ -1,9 +1,8 @@
 package com.musicplayer.controller;
+
 import com.musicplayer.PathUtils;
 
 import com.musicplayer.model.*;
-
-
 
 import com.musicplayer.persistence.MetadataService;
 import com.musicplayer.persistence.SongMetadata;
@@ -419,7 +418,8 @@ public class LibreriaController {
             if (!playlistMap.containsKey(nome)) {
                 FiltroRicerca f = new FiltroRicerca();
                 f.setGenere(g);
-                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f, libreria);
+                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f,
+                        libreria);
                 playlistMap.put(nome, sp);
                 addObserver(sp);
             }
@@ -432,7 +432,8 @@ public class LibreriaController {
             if (!playlistMap.containsKey(nome)) {
                 FiltroRicerca f = new FiltroRicerca();
                 f.setDecennio(d);
-                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f, libreria);
+                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f,
+                        libreria);
                 playlistMap.put(nome, sp);
                 addObserver(sp);
             }
@@ -444,7 +445,8 @@ public class LibreriaController {
             if (!playlistMap.containsKey(nome)) {
                 FiltroRicerca f = new FiltroRicerca();
                 f.setTag(t);
-                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f, libreria);
+                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f,
+                        libreria);
                 playlistMap.put(nome, sp);
                 addObserver(sp);
             }
@@ -604,7 +606,8 @@ public class LibreriaController {
         }
     }
 
-    public void aggiungiBraniAPlaylist(Collection<? extends Playable> braniCollection, String playlistName) throws ValidazioneException {
+    public void aggiungiBraniAPlaylist(Collection<? extends Playable> braniCollection, String playlistName)
+            throws ValidazioneException {
         if (playlistName == null || playlistName.isBlank())
             return;
 
@@ -635,7 +638,8 @@ public class LibreriaController {
         if (braniCollection != null && !braniCollection.isEmpty()) {
             pl.aggiungiBrani(braniCollection);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
-            // Aggiorna la coda di riproduzione con la lista aggiornata senza interrompere l'audio
+            // Aggiorna la coda di riproduzione con la lista aggiornata senza interrompere
+            // l'audio
             GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
         }
 
@@ -644,7 +648,8 @@ public class LibreriaController {
         }
     }
 
-    public void rimuoviDaPlaylist(Collection<? extends Playable> brani, String playlistName) throws ValidazioneException {
+    public void rimuoviDaPlaylist(Collection<? extends Playable> brani, String playlistName)
+            throws ValidazioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brani != null && !brani.isEmpty()) {
             // Controlla se almeno uno dei brani è in riproduzione
@@ -679,7 +684,8 @@ public class LibreriaController {
         if (daEliminare.isEmpty())
             return;
 
-        // 0. Controlla se uno dei brani è in riproduzione, fermiamo per sbloccare il file lock
+        // 0. Controlla se uno dei brani è in riproduzione, fermiamo per sbloccare il
+        // file lock
         boolean stopPlayback = false;
         for (Brano b : daEliminare) {
             String filename = PathUtils.filenameFromPath(b.getPercorsoFile());
@@ -742,7 +748,8 @@ public class LibreriaController {
         }
     }
 
-    public void spostaBranoInPlaylist(Brano brano, String playlistName, int nuovaPosizione) throws ValidazioneException {
+    public void spostaBranoInPlaylist(Brano brano, String playlistName, int nuovaPosizione)
+            throws ValidazioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brano != null) {
             if (libreria.getUltimoCampoOrdinamento() != null) {
