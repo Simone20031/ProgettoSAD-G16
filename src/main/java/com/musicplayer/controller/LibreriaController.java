@@ -562,10 +562,7 @@ public class LibreriaController {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brano != null) {
 
-            Path branoPath = libDir().resolve(PathUtils.filenameFromPath(brano.getPercorsoFile()));
-            if (GestoreRiproduzione.getInstance().isCurrentFile(branoPath)) {
-                throw new ValidazioneException("Traccia in riproduzione, attendere la fine o saltarla.");
-            }
+
             pl.rimuoviBrano(brano);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
 
@@ -621,15 +618,7 @@ public class LibreriaController {
             throws ValidazioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brani != null && !brani.isEmpty()) {
-            // Controlla se almeno uno dei brani è in riproduzione
-            for (Playable p : brani) {
-                if (p instanceof Brano brano) {
-                    Path branoPath = libDir().resolve(PathUtils.filenameFromPath(brano.getPercorsoFile()));
-                    if (GestoreRiproduzione.getInstance().isCurrentFile(branoPath)) {
-                        throw new ValidazioneException("Traccia in riproduzione, attendere la fine o saltarla.");
-                    }
-                }
-            }
+
             pl.rimuoviBrani(brani);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
             GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());

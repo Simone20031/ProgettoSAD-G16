@@ -18,6 +18,7 @@ public class PlayerView implements RiproduzioneObserver {
     private final Label currentTimeLabel;
     private final Label totalTimeLabel;
     private final Slider progressSlider;
+    private final Slider volumeSlider;
 
     private final GestoreRiproduzione gestoreRiproduzione;
     private final LibreriaView libreriaView; // Per chiamare playSelected() della view
@@ -26,7 +27,7 @@ public class PlayerView implements RiproduzioneObserver {
     private boolean loopEnabled = false;
 
     public PlayerView(Button playBtn, Button stopBtn, Button skipBackBtn, Button skipBtn, Button loopBtn,
-            Label currentTimeLabel, Label totalTimeLabel, Slider progressSlider,
+            Label currentTimeLabel, Label totalTimeLabel, Slider progressSlider, Slider volumeSlider,
             GestoreRiproduzione gestoreRiproduzione, LibreriaView libreriaView) {
         this.playBtn = playBtn;
         this.stopBtn = stopBtn;
@@ -36,6 +37,7 @@ public class PlayerView implements RiproduzioneObserver {
         this.currentTimeLabel = currentTimeLabel;
         this.totalTimeLabel = totalTimeLabel;
         this.progressSlider = progressSlider;
+        this.volumeSlider = volumeSlider;
         this.gestoreRiproduzione = gestoreRiproduzione;
         this.libreriaView = libreriaView;
 
@@ -140,7 +142,15 @@ public class PlayerView implements RiproduzioneObserver {
                 libreriaView.aggiornaVisualizzazioneCoda();
             });
         }
+
+        if (volumeSlider != null) {
+            volumeSlider.setValue(gestoreRiproduzione.getVolume());
+            volumeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+                gestoreRiproduzione.setVolume(newVal.doubleValue());
+            });
+        }
     }
+
 
     public boolean isShuffleEnabled() {
         return shuffleEnabled;

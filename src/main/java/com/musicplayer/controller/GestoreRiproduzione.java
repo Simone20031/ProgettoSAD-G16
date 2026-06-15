@@ -23,6 +23,18 @@ public class GestoreRiproduzione implements LibreriaObserver {
     private PlaylistIterator iteratorCorrente;
     private PlaybackStrategy strategia = new SequentialStrategy();
     private boolean singleSongLoop = false;
+    private double globalVolume = 0.5;
+
+    public void setVolume(double vol) {
+        this.globalVolume = vol;
+        if (mediaPlayer != null) {
+            mediaPlayer.setVolume(vol);
+        }
+    }
+
+    public double getVolume() {
+        return globalVolume;
+    }
     private Playlist playlistCorrente;
 
     public Playlist getPlaylistCorrente() {
@@ -74,6 +86,7 @@ public class GestoreRiproduzione implements LibreriaObserver {
         try {
             media = new Media(file.toUri().toString());
             mediaPlayer = new MediaPlayer(media);
+            mediaPlayer.setVolume(globalVolume);
 
             mediaPlayer.setOnReady(() -> {
                 int durataSec = (int) media.getDuration().toSeconds();

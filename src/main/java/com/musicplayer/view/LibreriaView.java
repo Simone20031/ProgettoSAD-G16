@@ -1,4 +1,5 @@
 package com.musicplayer.view;
+
 import com.musicplayer.PathUtils;
 
 import com.musicplayer.model.*;
@@ -6,7 +7,6 @@ import com.musicplayer.controller.*;
 import com.musicplayer.strategy.*;
 import com.musicplayer.state.*;
 import com.musicplayer.command.*;
-
 
 import com.musicplayer.persistence.MetadataService;
 import com.musicplayer.persistence.SongMetadata;
@@ -81,6 +81,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Slider progressSlider;
     @FXML
+    private Slider volumeSlider;
+    @FXML
     private Label detailsLabel;
     @FXML
     private Label playingTitleLabel;
@@ -102,7 +104,6 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Label lblHeaderTag;
 
-
     private boolean playlistShuffleEnabled = false;
     private boolean playlistLoopEnabled = false;
     private String playingContext = "LIBRERIA";
@@ -119,7 +120,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private VBox viewAggiuntaBrano;
     @FXML
-    private VBox viewHome;
+    private javafx.scene.control.ScrollPane viewHome;
     @FXML
     private HBox topPlaylistsBox;
     @FXML
@@ -214,7 +215,20 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private ComboBox<String> addSearchTagCombo;
     @FXML
     private Button addResetSearchBtn;
-    
+
+    @FXML
+    private Button btnQueue;
+    @FXML
+    private VBox viewCoda;
+    @FXML
+    private VBox viewDettagli;
+    @FXML
+    private ListView<String> codaListView;
+    @FXML
+    private Label lblCodaStaiAscoltandoTitolo;
+    @FXML
+    private Label lblCodaStaiAscoltandoAutore;
+
     // Costruito dinamicamente per il form
     private FormBranoView formBranoView;
 
@@ -235,11 +249,16 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private final UndoManager undoManager = new UndoManager();
 
     public void resetHeaderLabels() {
-        if (lblHeaderTitolo != null) lblHeaderTitolo.setText("TITOLO");
-        if (lblHeaderAutore != null) lblHeaderAutore.setText("AUTORE");
-        if (lblHeaderAnno != null) lblHeaderAnno.setText("ANNO");
-        if (lblHeaderGenere != null) lblHeaderGenere.setText("GENERE");
-        if (lblHeaderTag != null) lblHeaderTag.setText("TAG");
+        if (lblHeaderTitolo != null)
+            lblHeaderTitolo.setText("TITOLO");
+        if (lblHeaderAutore != null)
+            lblHeaderAutore.setText("AUTORE");
+        if (lblHeaderAnno != null)
+            lblHeaderAnno.setText("ANNO");
+        if (lblHeaderGenere != null)
+            lblHeaderGenere.setText("GENERE");
+        if (lblHeaderTag != null)
+            lblHeaderTag.setText("TAG");
     }
 
     public void aggiornaStatoUndo() {
@@ -247,9 +266,11 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             boolean canUndo = undoManager.canUndo();
             undoBtn.setDisable(!canUndo);
             if (canUndo) {
-                undoBtn.setStyle("-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand; -fx-border-color: transparent;");
+                undoBtn.setStyle(
+                        "-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand; -fx-border-color: transparent;");
             } else {
-                undoBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #555555; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: default; -fx-border-color: #555555; -fx-border-width: 1;");
+                undoBtn.setStyle(
+                        "-fx-background-color: transparent; -fx-text-fill: #555555; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: default; -fx-border-color: #555555; -fx-border-width: 1;");
                 undoBtn.setTooltip(null);
             }
         }
@@ -286,7 +307,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
     private void animateScroll(javafx.scene.control.ScrollPane scrollPane, double targetHvalue) {
         javafx.animation.Timeline timeline = new javafx.animation.Timeline();
-        javafx.animation.KeyValue kv = new javafx.animation.KeyValue(scrollPane.hvalueProperty(), targetHvalue, javafx.animation.Interpolator.EASE_BOTH);
+        javafx.animation.KeyValue kv = new javafx.animation.KeyValue(scrollPane.hvalueProperty(), targetHvalue,
+                javafx.animation.Interpolator.EASE_BOTH);
         javafx.animation.KeyFrame kf = new javafx.animation.KeyFrame(javafx.util.Duration.millis(300), kv);
         timeline.getKeyFrames().add(kf);
         timeline.play();
@@ -309,7 +331,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         this.playlistView = new PlaylistView(playlistListView, viewLista, viewCreazione,
                 playlistNameField, createPlaylistBtn, btnAnnullaCreazione, btnApriCreazione,
                 lblGestionePlaylistTitle, viewSelezioneBrano, branoSelectionListView,
-                btnAnnullaSelezioneBrano, btnConfermaSelezioneBrano, 
+                btnAnnullaSelezioneBrano, btnConfermaSelezioneBrano,
                 addSearchTitoloField, addSearchAutoreField, addSearchAnnoCombo,
                 addSearchGenereCombo, addSearchTagCombo, addResetSearchBtn,
                 libreriaController, this);
@@ -327,14 +349,49 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         resetSearchBtn.setOnAction(e -> azzeraFiltro());
 
-        if (lblHeaderTitolo != null) lblHeaderTitolo.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.TITOLO, lblHeaderTitolo));
-        if (lblHeaderAutore != null) lblHeaderAutore.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.AUTORE, lblHeaderAutore));
-        if (lblHeaderAnno != null) lblHeaderAnno.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.ANNO, lblHeaderAnno));
-        if (lblHeaderGenere != null) lblHeaderGenere.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.GENERE, lblHeaderGenere));
-        if (lblHeaderTag != null) lblHeaderTag.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.TAG, lblHeaderTag));
+        if (lblHeaderTitolo != null)
+            lblHeaderTitolo.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.TITOLO, lblHeaderTitolo));
+        if (lblHeaderAutore != null)
+            lblHeaderAutore.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.AUTORE, lblHeaderAutore));
+        if (lblHeaderAnno != null)
+            lblHeaderAnno.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.ANNO, lblHeaderAnno));
+        if (lblHeaderGenere != null)
+            lblHeaderGenere.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.GENERE, lblHeaderGenere));
+        if (lblHeaderTag != null)
+            lblHeaderTag.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.TAG, lblHeaderTag));
 
         refreshList();
         refreshPlaylistList();
+
+        if (btnQueue != null) {
+            btnQueue.setOnAction(e -> {
+                if (viewCoda != null && viewCoda.isVisible()) {
+                    // Coda è visibile, nascondila e mostra i dettagli
+                    viewCoda.setVisible(false);
+                    viewCoda.setManaged(false);
+                    if (viewDettagli != null) {
+                        viewDettagli.setVisible(true);
+                        viewDettagli.setManaged(true);
+                    }
+                } else {
+                    // Coda non visibile, mostrala e nascondi i dettagli
+                    if (viewDettagli != null) {
+                        viewDettagli.setVisible(false);
+                        viewDettagli.setManaged(false);
+                    }
+                    if (viewCoda != null) {
+                        viewCoda.setVisible(true);
+                        viewCoda.setManaged(true);
+                        aggiornaVisualizzazioneCoda();
+                    }
+                }
+            });
+        }
+
+        setupArrowButton(btnScrollLeftTop);
+        setupArrowButton(btnScrollRightTop);
+        setupArrowButton(btnScrollLeftSmart);
+        setupArrowButton(btnScrollRightSmart);
 
         btnScrollLeftTop.setOnAction(e -> {
             double contentW = topPlaylistsBox.getWidth();
@@ -379,16 +436,18 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 selectedProperty().addListener((obs, oldVal, newVal) -> updateStyle(newVal, isHover()));
                 hoverProperty().addListener((obs, oldVal, newVal) -> updateStyle(isSelected(), newVal));
             }
-            
+
             private void updateStyle(boolean selected, boolean hovered) {
                 if (getItem() == null) {
                     setStyle("-fx-background-color: transparent;");
                     return;
                 }
                 if (selected) {
-                    setStyle("-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-padding: 10; -fx-background-radius: 4;");
+                    setStyle(
+                            "-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-padding: 10; -fx-background-radius: 4;");
                 } else if (hovered) {
-                    setStyle("-fx-background-color: #282828; -fx-text-fill: #ffffff; -fx-padding: 10; -fx-background-radius: 4;");
+                    setStyle(
+                            "-fx-background-color: #282828; -fx-text-fill: #ffffff; -fx-padding: 10; -fx-background-radius: 4;");
                 } else {
                     setStyle("-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-padding: 10;");
                 }
@@ -408,7 +467,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         };
 
         playlistSelectionListView.setCellFactory(selectionCellFactory);
-        
+
         if (branoSelectionListView != null) {
             branoSelectionListView.setCellFactory(creaCellFactorySelezioneBrano());
         }
@@ -485,7 +544,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             switchToView(viewLista);
             mostraLibreriaGenerale();
         });
-        
+
         if (undoBtn != null) {
             undoBtn.setOnAction(e -> {
                 try {
@@ -506,7 +565,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             });
             aggiornaStatoUndo();
         }
-        
+
         btnAnnullaSelezione.setOnAction(e -> switchToView(viewLista));
 
         btnConfermaImport.setOnAction(e -> {
@@ -546,7 +605,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             String contestoProvenienza = playlistSelezionata;
             if (branoInAttesaDiPlaylist != null) {
                 try {
-                    Command cmd = new AggiungiAPlaylistCmd(libreriaController, branoInAttesaDiPlaylist, nomePlaylistSelezionato);
+                    Command cmd = new AggiungiAPlaylistCmd(libreriaController, branoInAttesaDiPlaylist,
+                            nomePlaylistSelezionato);
                     cmd.esegui();
                     undoManager.aggiungiComando(cmd);
                     mostraNotificaUndo("Brano aggiunto alla playlist");
@@ -570,7 +630,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
             } else if (braniInAttesaDiPlaylistMassivo != null && !braniInAttesaDiPlaylistMassivo.isEmpty()) {
                 try {
-                    Command cmd = new AggiungiMassivoCmd(libreriaController, braniInAttesaDiPlaylistMassivo, nomePlaylistSelezionato);
+                    Command cmd = new AggiungiMassivoCmd(libreriaController, braniInAttesaDiPlaylistMassivo,
+                            nomePlaylistSelezionato);
                     cmd.esegui();
                     if (undoManager != null) {
                         undoManager.aggiungiComando(cmd);
@@ -597,8 +658,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             }
         });
         // Inizializza PlayerView
-        this.playerView = new PlayerView(playBtn, stopBtn, skipBackBtn, skipBtn, loopBtn, currentTimeLabel, totalTimeLabel,
-                progressSlider,
+        this.playerView = new PlayerView(playBtn, stopBtn, skipBackBtn, skipBtn, loopBtn, currentTimeLabel,
+                totalTimeLabel,
+                progressSlider, volumeSlider,
                 gestoreRiproduzione, this);
 
         initPlaylistControlsHandlers();
@@ -619,8 +681,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 javafx.application.Platform.runLater(() -> {
                     isPlayerPaused = false;
                     updatePlaylistPlayButtonUI();
-                    if (songListView != null) songListView.refresh();
-                    if (topSongsListView != null) topSongsListView.refresh();
+                    if (songListView != null)
+                        songListView.refresh();
+                    if (topSongsListView != null)
+                        topSongsListView.refresh();
                 });
             }
 
@@ -629,8 +693,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 javafx.application.Platform.runLater(() -> {
                     isPlayerPaused = true;
                     updatePlaylistPlayButtonUI();
-                    if (songListView != null) songListView.refresh();
-                    if (topSongsListView != null) topSongsListView.refresh();
+                    if (songListView != null)
+                        songListView.refresh();
+                    if (topSongsListView != null)
+                        topSongsListView.refresh();
                 });
             }
 
@@ -645,8 +711,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         playerView.setPlaybackControlsDisabled(true);
                     }
                     aggiornaStatoCuore(null);
-                    if (songListView != null) songListView.refresh();
-                    if (topSongsListView != null) topSongsListView.refresh();
+                    if (songListView != null)
+                        songListView.refresh();
+                    if (topSongsListView != null)
+                        topSongsListView.refresh();
                     updatePlaylistPlayButtonUI();
                     aggiornaVisualizzazioneCoda();
                 });
@@ -676,7 +744,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     Brano b = findBranoByFilename(fn);
                     if (b != null) {
                         libreriaController.registraAscolto(b);
-                        // Se stiamo suonando da una playlist, registriamo l'ascolto anche per la playlist
+                        // Se stiamo suonando da una playlist, registriamo l'ascolto anche per la
+                        // playlist
                         if (playlistSelezionata != null) {
                             Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
                             if (pl != null) {
@@ -689,23 +758,11 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         }
                     }
 
-                    String itemToSelect = null;
-                    String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
-                    if (playingContext.equals(currentViewContext)) {
-                        for (String item : songListView.getItems()) {
-                            if (extractFilename(item).equals(fn)) {
-                                itemToSelect = item;
-                                break;
-                            }
-                        }
-                    }
-                    if (itemToSelect != null) {
-                        songListView.getSelectionModel().select(itemToSelect);
-                        songListView.scrollTo(itemToSelect);
-                    }
                     currentlyPlayingFilename = fn;
-                    if (songListView != null) songListView.refresh();
-                    if (topSongsListView != null) topSongsListView.refresh();
+                    if (songListView != null)
+                        songListView.refresh();
+                    if (topSongsListView != null)
+                        topSongsListView.refresh();
                     aggiornaVisualizzazioneCoda();
                 });
             }
@@ -784,7 +841,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         });
     }
 
-    public void switchToView(VBox viewToShow) {
+    public void switchToView(javafx.scene.Node viewToShow) {
         // 1. Spegni e "nascondi" TUTTE le possibili viste
         viewLista.setVisible(false);
         viewLista.setManaged(false);
@@ -848,7 +905,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         songListView.getSelectionModel().select(getItem());
                         String fn = extractFilename(getItem());
                         String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
-                        if (currentlyPlayingFilename != null && currentlyPlayingFilename.equals(fn) && playingContext.equals(currentViewContext)) {
+                        if (currentlyPlayingFilename != null && currentlyPlayingFilename.equals(fn)
+                                && playingContext.equals(currentViewContext)) {
                             if (isPlayerPaused) {
                                 gestoreRiproduzione.play();
                             } else {
@@ -860,33 +918,33 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         event.consume();
                     }
                 });
-                lblId.setMinWidth(40);
-                lblId.setPrefWidth(40);
-                lblId.setMaxWidth(40);
+                lblId.setMinWidth(30);
+                lblId.setPrefWidth(30);
+                lblId.setMaxWidth(30);
 
-                lblTitolo.setMinWidth(200);
-                lblTitolo.setPrefWidth(200);
-                lblTitolo.setMaxWidth(200);
+                lblTitolo.setMinWidth(160);
+                lblTitolo.setPrefWidth(160);
+                lblTitolo.setMaxWidth(160);
 
-                lblAutore.setMinWidth(150);
-                lblAutore.setPrefWidth(150);
-                lblAutore.setMaxWidth(150);
+                lblAutore.setMinWidth(120);
+                lblAutore.setPrefWidth(120);
+                lblAutore.setMaxWidth(120);
 
-                lblAnno.setMinWidth(60);
-                lblAnno.setPrefWidth(60);
-                lblAnno.setMaxWidth(60);
+                lblAnno.setMinWidth(50);
+                lblAnno.setPrefWidth(50);
+                lblAnno.setMaxWidth(50);
 
-                lblGenere.setMinWidth(100);
-                lblGenere.setPrefWidth(100);
-                lblGenere.setMaxWidth(100);
+                lblGenere.setMinWidth(90);
+                lblGenere.setPrefWidth(90);
+                lblGenere.setMaxWidth(90);
 
-                lblTag.setMinWidth(120);
-                lblTag.setPrefWidth(120);
-                lblTag.setMaxWidth(120);
+                lblTag.setMinWidth(100);
+                lblTag.setPrefWidth(100);
+                lblTag.setMaxWidth(100);
 
-                lblDurata.setMinWidth(60);
-                lblDurata.setPrefWidth(60);
-                lblDurata.setMaxWidth(60);
+                lblDurata.setMinWidth(50);
+                lblDurata.setPrefWidth(50);
+                lblDurata.setMaxWidth(50);
 
                 HBox.setHgrow(spacer, Priority.ALWAYS);
 
@@ -896,7 +954,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 container.setPadding(new javafx.geometry.Insets(10, 16, 10, 16));
                 container.setSpacing(10);
 
-                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblAnno, lblGenere, lblTag, spacer, lblDurata, btnOpzioni);
+                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblAnno, lblGenere, lblTag, spacer,
+                        lblDurata, btnOpzioni);
 
                 btnOpzioni.setOnAction(e -> {
                     e.consume();
@@ -909,9 +968,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     }
 
                     if (selectedItems.size() > 1) {
-                        MenuItem miAggiungi = new MenuItem(playlistSelezionata == null ? "Aggiungi a playlist" : "Aggiungi a un'altra playlist");
+                        MenuItem miAggiungi = new MenuItem(
+                                playlistSelezionata == null ? "Aggiungi a playlist" : "Aggiungi a un'altra playlist");
                         miAggiungi.setOnAction(ev -> aggiungiBraniAPlaylistMassivo(selectedItems));
-                        
+
                         if (playlistSelezionata == null) {
                             MenuItem miElimina = new MenuItem("Elimina definitivamente dalla libreria");
                             miElimina.setOnAction(ev -> eliminaBraniMassivo(selectedItems));
@@ -919,7 +979,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         } else {
                             menu.getItems().add(miAggiungi);
                             MenuItem miRimuovi = new MenuItem("Rimuovi dalla playlist corrente");
-                            miRimuovi.setOnAction(ev -> rimuoviBraniDaPlaylistMassivo(selectedItems, playlistSelezionata));
+                            miRimuovi.setOnAction(
+                                    ev -> rimuoviBraniDaPlaylistMassivo(selectedItems, playlistSelezionata));
                             menu.getItems().add(miRimuovi);
                         }
                     } else if (!selectedItems.isEmpty()) {
@@ -974,7 +1035,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 });
 
                 setOnDragOver(event -> {
-                    if (event.getGestureSource() != this && event.getDragboard().hasString() && playlistSelezionata != null) {
+                    if (event.getGestureSource() != this && event.getDragboard().hasString()
+                            && playlistSelezionata != null) {
                         Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
                         if (pl != null && !(pl instanceof SmartPlaylist)) {
                             event.acceptTransferModes(javafx.scene.input.TransferMode.MOVE);
@@ -984,16 +1046,19 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 });
 
                 setOnDragEntered(event -> {
-                    if (event.getGestureSource() != this && event.getDragboard().hasString() && playlistSelezionata != null) {
+                    if (event.getGestureSource() != this && event.getDragboard().hasString()
+                            && playlistSelezionata != null) {
                         Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
                         if (pl != null && !(pl instanceof SmartPlaylist)) {
-                            setStyle("-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 2 0 0 0;");
+                            setStyle(
+                                    "-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 2 0 0 0;");
                         }
                     }
                 });
 
                 setOnDragExited(event -> {
-                    if (event.getGestureSource() != this && event.getDragboard().hasString() && playlistSelezionata != null) {
+                    if (event.getGestureSource() != this && event.getDragboard().hasString()
+                            && playlistSelezionata != null) {
                         Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
                         if (pl != null && !(pl instanceof SmartPlaylist)) {
                             setStyle("-fx-background-color: transparent; -fx-padding: 4 8 4 8;");
@@ -1038,12 +1103,14 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 if (!isEmpty()) {
                     String fn = extractFilename(getItem());
                     String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
-                    isPlaying = (currentlyPlayingFilename != null && currentlyPlayingFilename.equals(fn) && playingContext.equals(currentViewContext));
-                    
+                    isPlaying = (currentlyPlayingFilename != null && currentlyPlayingFilename.equals(fn)
+                            && playingContext.equals(currentViewContext));
+
                     if (isPlaying) {
                         if (hovered) {
                             lblId.setText(isPlayerPaused ? "▶" : "⏸");
-                            lblId.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
+                            lblId.setStyle(
+                                    "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
                         } else {
                             lblId.setText(String.valueOf(getIndex() + 1));
                             lblId.setStyle("-fx-text-fill: #1DB954; -fx-font-weight: bold; -fx-font-size: 13px;");
@@ -1051,7 +1118,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     } else {
                         if (hovered) {
                             lblId.setText("▶");
-                            lblId.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
+                            lblId.setStyle(
+                                    "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
                         } else {
                             lblId.setText(String.valueOf(getIndex() + 1));
                             lblId.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
@@ -1060,7 +1128,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
 
                 if (isPlaying) {
-                    container.setStyle("-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 4; -fx-background-radius: 6;");
+                    container.setStyle(
+                            "-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 4; -fx-background-radius: 6;");
                     lblTitolo.setStyle("-fx-text-fill: #1DB954; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
@@ -1070,7 +1139,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #ffffff; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
                 } else if (selected) {
-                    container.setStyle("-fx-background-color: #3e3e3e; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 2; -fx-background-radius: 6;");
+                    container.setStyle(
+                            "-fx-background-color: #3e3e3e; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 2; -fx-background-radius: 6;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
@@ -1123,7 +1193,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         lblAutore.setText(m.author != null ? m.author : "");
                         lblAnno.setText(m.year != null && !m.year.isBlank() ? m.year : "");
                         lblGenere.setText(m.genre != null ? m.genre : "");
-                        lblTag.setText(m.tag != null && !m.tag.isBlank() && !m.tag.equalsIgnoreCase("NESSUNO") ? m.tag : "");
+                        lblTag.setText(
+                                m.tag != null && !m.tag.isBlank() && !m.tag.equalsIgnoreCase("NESSUNO") ? m.tag : "");
 
                         String dur = "--:--";
                         try {
@@ -1197,7 +1268,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         refreshList();
         playlistControlsBox.setVisible(true);
         playlistControlsBox.setManaged(true);
-        
+
         mainTitleLabel.setText("🎵 Libreria Generale. Seleziona un brano per i dettagli.");
     }
 
@@ -1211,19 +1282,25 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
     private void impostaTabAttivo(String tab) {
         if ("LIBRERIA".equals(tab)) {
-            btnMostraLibreria.setStyle("-fx-background-color: #1a1a1a; -fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
+            btnMostraLibreria.setStyle(
+                    "-fx-background-color: #1a1a1a; -fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
             if (btnMostraPiuAscoltati != null) {
-                btnMostraPiuAscoltati.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
+                btnMostraPiuAscoltati.setStyle(
+                        "-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
             }
         } else if ("PIU_ASCOLTATI".equals(tab)) {
             if (btnMostraPiuAscoltati != null) {
-                btnMostraPiuAscoltati.setStyle("-fx-background-color: #1a1a1a; -fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
+                btnMostraPiuAscoltati.setStyle(
+                        "-fx-background-color: #1a1a1a; -fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
             }
-            btnMostraLibreria.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
+            btnMostraLibreria.setStyle(
+                    "-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
         } else {
-            btnMostraLibreria.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
+            btnMostraLibreria.setStyle(
+                    "-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
             if (btnMostraPiuAscoltati != null) {
-                btnMostraPiuAscoltati.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
+                btnMostraPiuAscoltati.setStyle(
+                        "-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 16; -fx-cursor: hand; -fx-border-color: transparent;");
             }
         }
     }
@@ -1245,6 +1322,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         if (playlistView != null) {
             playlistView.refreshPlaylistList(playlistSelezionata);
         }
+        refreshPiuaAscoltatiList();
     }
 
     public void apriSelezionePlaylist(Brano b) {
@@ -1275,6 +1353,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         // Carica le playlist nel ListView
         playlistSelectionListView.getItems().setAll(opzioni);
+        playlistSelectionListView.setPrefHeight(Math.max(200, opzioni.size() * 40 + 10));
 
         switchToView(viewSelezionePlaylist);
     }
@@ -1284,38 +1363,42 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         if (topSongsListView.getSelectionModel().getSelectedItem() != null) {
             savedSelection = extractFilename(topSongsListView.getSelectionModel().getSelectedItem());
         }
-        
+
         // Popola la sezione delle playlist
         topPlaylistsBox.getChildren().clear();
         if (smartPlaylistsBox != null) {
             smartPlaylistsBox.getChildren().clear();
         }
-        
+
         List<Playlist> topPlaylists = libreriaController.getTopPlaylistsAscoltate();
         for (Playlist pl : topPlaylists) {
-            if (pl instanceof SmartPlaylist) continue;
-            
+            if (pl instanceof SmartPlaylist)
+                continue;
+
             VBox card = new VBox(5);
-            card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
+            card.setStyle(
+                    "-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
             card.setPrefWidth(200);
-            
+
             Label title = new Label(pl.getNome());
             title.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;");
-            
+
             Label count = new Label("Ascolti: " + pl.getPlayCount());
             count.setStyle("-fx-text-fill: #1DB954; -fx-font-size: 12px; -fx-font-weight: bold;");
-            
+
             card.getChildren().addAll(title, count);
-            
+
             card.setOnMouseClicked(e -> {
                 impostaPlaylist(pl.getNome());
                 switchToView(viewLista);
                 refreshList();
             });
-            
-            card.setOnMouseEntered(e -> card.setStyle("-fx-background-color: #383838; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
-            card.setOnMouseExited(e -> card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
-            
+
+            card.setOnMouseEntered(e -> card.setStyle(
+                    "-fx-background-color: #383838; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+            card.setOnMouseExited(e -> card.setStyle(
+                    "-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+
             topPlaylistsBox.getChildren().add(card);
         }
 
@@ -1327,30 +1410,34 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         if (smartPlaylistsBox != null) {
             for (Playlist pl : libreriaController.getPlaylist()) {
-                if (!(pl instanceof SmartPlaylist)) continue;
-                
+                if (!(pl instanceof SmartPlaylist))
+                    continue;
+
                 VBox card = new VBox(5);
-                card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
+                card.setStyle(
+                        "-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
                 card.setPrefWidth(200);
                 card.setMinWidth(200);
-                
+
                 Label title = new Label(pl.getNome());
                 title.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;");
-                
+
                 Label count = new Label("Brani: " + pl.getBrani().size());
                 count.setStyle("-fx-text-fill: #1DB954; -fx-font-size: 12px; -fx-font-weight: bold;");
-                
+
                 card.getChildren().addAll(title, count);
-                
+
                 card.setOnMouseClicked(e -> {
                     impostaPlaylist(pl.getNome());
                     switchToView(viewLista);
                     refreshList();
                 });
-                
-                card.setOnMouseEntered(e -> card.setStyle("-fx-background-color: #383838; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
-                card.setOnMouseExited(e -> card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
-                
+
+                card.setOnMouseEntered(e -> card.setStyle(
+                        "-fx-background-color: #383838; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+                card.setOnMouseExited(e -> card.setStyle(
+                        "-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+
                 smartPlaylistsBox.getChildren().add(card);
             }
             if (smartPlaylistsBox.getChildren().isEmpty()) {
@@ -1375,9 +1462,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 topSongsListView.getItems().add(display);
             }
         }
-        
-        // rimosso il listener duplicato
-        
+
+        topSongsListView.setPrefHeight(Math.max(200, topSongsListView.getItems().size() * 45 + 20));
+
         String itemToSelect = null;
         for (String item : topSongsListView.getItems()) {
             if (extractFilename(item).equals(savedSelection)) {
@@ -1403,7 +1490,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         } else {
             playlistControlsBox.setVisible(true);
             playlistControlsBox.setManaged(true);
-            
+
             mainTitleLabel.setText("🎼 Playlist: " + playlistSelezionata);
             songListView.setCellFactory(creaCellFactoryTrePuntini(new StatoPlaylist(playlistSelezionata)));
 
@@ -1431,6 +1518,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 songListView.getItems().add(display);
             }
         }
+
+        songListView.setPrefHeight(Math.max(200, songListView.getItems().size() * 45 + 20));
 
         if (songListView.getItems().isEmpty()) {
             if (playlistSelezionata != null) {
@@ -1462,7 +1551,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     break;
                 }
             }
-        } else if (playlistSelezionata != null && gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia() && playingContext.equals(currentContext)) {
+        } else if (playlistSelezionata != null && gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()
+                && playingContext.equals(currentContext)) {
             String currentMedia = gestoreRiproduzione.getCurrentMediaSource();
             if (currentMedia != null && !currentMedia.isEmpty()) {
                 try {
@@ -1473,7 +1563,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                             break;
                         }
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         }
 
@@ -1484,9 +1575,11 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     }
 
     private void updatePlaylistPlayButtonUI() {
-        if (playlistPlayBtn == null) return;
+        if (playlistPlayBtn == null)
+            return;
         String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
-        if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia() && playingContext.equals(currentViewContext)) {
+        if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()
+                && playingContext.equals(currentViewContext)) {
             if (!isPlayerPaused) {
                 playlistPlayBtn.setText("⏸");
             } else {
@@ -1541,8 +1634,6 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         });
     }
 
-
-
     private void aggiornaIteratoreCorrente() {
         String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
         if (!playingContext.equals(currentViewContext)) {
@@ -1561,7 +1652,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         IBrano b = null;
         if (currentMedia != null && !currentMedia.isEmpty()) {
             try {
-                String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName().toString();
+                String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName()
+                        .toString();
                 b = findBranoByFilename(currentFilename);
             } catch (Exception ignored) {
             }
@@ -1604,7 +1696,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 IBrano branoCorrente = null;
                 String currentMedia = gestoreRiproduzione.getCurrentMediaSource();
                 try {
-                    String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName().toString();
+                    String currentFilename = java.nio.file.Path.of(java.net.URI.create(currentMedia)).getFileName()
+                            .toString();
                     branoCorrente = findBranoByFilename(currentFilename);
                 } catch (Exception ignored) {
                 }
@@ -1622,8 +1715,32 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     nextSongLabel.setText("Prossimo: Fine Coda");
                 }
 
+                if (lblCodaStaiAscoltandoTitolo != null && lblCodaStaiAscoltandoAutore != null) {
+                    if (branoCorrente != null) {
+                        lblCodaStaiAscoltandoTitolo.setText(branoCorrente.getTitolo());
+                        lblCodaStaiAscoltandoAutore.setText(branoCorrente.getDettagli().getOrDefault("autore", "-"));
+                    } else {
+                        lblCodaStaiAscoltandoTitolo.setText("Nessun brano");
+                        lblCodaStaiAscoltandoAutore.setText("-");
+                    }
+                }
+
+                if (codaListView != null) {
+                    List<String> codaItems = new ArrayList<>();
+                    if (gestoreRiproduzione.isSingleSongLoop() && branoCorrente != null) {
+                        codaItems.add(branoCorrente.getTitolo() + " - "
+                                + branoCorrente.getDettagli().getOrDefault("autore", "-"));
+                    } else {
+                        List<IBrano> coda = iter.getCodaBrani(20);
+                        for (IBrano cb : coda) {
+                            codaItems.add(cb.getTitolo() + " - " + cb.getDettagli().getOrDefault("autore", "-"));
+                        }
+                    }
+                    codaListView.getItems().setAll(codaItems);
+                }
+
                 // Se non c'è una selezione corrente nella ListView, mostra la coda nel pannello
-                // dei dettagli
+                // dei dettagli (vecchio fallback, per retrocompatibilità testuale)
                 if (songListView.getSelectionModel().getSelectedItem() == null) {
                     StringBuilder sb = new StringBuilder("--- CODA DI RIPRODUZIONE ---\n\n");
                     if (branoCorrente != null) {
@@ -1632,9 +1749,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
                     if (gestoreRiproduzione.isSingleSongLoop() && branoCorrente != null) {
                         sb.append("⏭ Brani successivi:\n");
-                        for (int idx = 1; idx <= 5; idx++) {
-                            sb.append(" ").append(idx).append(". ").append(branoCorrente.getTitolo()).append("\n");
-                        }
+                        sb.append("   ").append(branoCorrente.getTitolo()).append("\n");
                     } else {
                         List<IBrano> coda = iter.getCodaBrani(5);
                         if (!coda.isEmpty()) {
@@ -1652,6 +1767,14 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
             } else {
                 nextSongLabel.setText("");
+                if (lblCodaStaiAscoltandoTitolo != null && lblCodaStaiAscoltandoAutore != null) {
+                    lblCodaStaiAscoltandoTitolo.setText("Nessun brano");
+                    lblCodaStaiAscoltandoAutore.setText("-");
+                }
+                if (codaListView != null) {
+                    codaListView.getItems().clear();
+                }
+
                 if (songListView.getSelectionModel().getSelectedItem() == null) {
                     detailsLabel.setText("Seleziona un brano per i dettagli.");
                 }
@@ -1661,7 +1784,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
     public void playSelected() {
         String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
-        
+
         String sel = null;
         ListView<String> activeListView = null;
 
@@ -1674,7 +1797,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
 
         if (sel == null) {
-            if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia() && playingContext.equals(currentViewContext)) {
+            if (gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()
+                    && playingContext.equals(currentViewContext)) {
                 gestoreRiproduzione.play();
                 return;
             } else if (gestoreRiproduzione != null) {
@@ -1756,7 +1880,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
     }
 
-    // Cell Factory specifica per la schermata Selezione Brano (mostra i metadati inline)
+    // Cell Factory specifica per la schermata Selezione Brano (mostra i metadati
+    // inline)
     private javafx.util.Callback<ListView<String>, ListCell<String>> creaCellFactorySelezioneBrano() {
         return lv -> new ListCell<>() {
             private final HBox container = new HBox();
@@ -1770,33 +1895,33 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             private final Pane spacer = new Pane();
 
             {
-                lblId.setMinWidth(40);
-                lblId.setPrefWidth(40);
-                lblId.setMaxWidth(40);
+                lblId.setMinWidth(30);
+                lblId.setPrefWidth(30);
+                lblId.setMaxWidth(30);
 
-                lblTitolo.setMinWidth(200);
-                lblTitolo.setPrefWidth(200);
-                lblTitolo.setMaxWidth(200);
+                lblTitolo.setMinWidth(160);
+                lblTitolo.setPrefWidth(160);
+                lblTitolo.setMaxWidth(160);
 
-                lblAutore.setMinWidth(150);
-                lblAutore.setPrefWidth(150);
-                lblAutore.setMaxWidth(150);
+                lblAutore.setMinWidth(120);
+                lblAutore.setPrefWidth(120);
+                lblAutore.setMaxWidth(120);
 
-                lblAnno.setMinWidth(60);
-                lblAnno.setPrefWidth(60);
-                lblAnno.setMaxWidth(60);
+                lblAnno.setMinWidth(50);
+                lblAnno.setPrefWidth(50);
+                lblAnno.setMaxWidth(50);
 
-                lblGenere.setMinWidth(100);
-                lblGenere.setPrefWidth(100);
-                lblGenere.setMaxWidth(100);
+                lblGenere.setMinWidth(90);
+                lblGenere.setPrefWidth(90);
+                lblGenere.setMaxWidth(90);
 
-                lblTag.setMinWidth(120);
-                lblTag.setPrefWidth(120);
-                lblTag.setMaxWidth(120);
+                lblTag.setMinWidth(100);
+                lblTag.setPrefWidth(100);
+                lblTag.setMaxWidth(100);
 
-                lblDurata.setMinWidth(60);
-                lblDurata.setPrefWidth(60);
-                lblDurata.setMaxWidth(60);
+                lblDurata.setMinWidth(50);
+                lblDurata.setPrefWidth(50);
+                lblDurata.setMaxWidth(50);
 
                 HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 
@@ -1804,7 +1929,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 container.setPadding(new javafx.geometry.Insets(10, 16, 10, 16));
                 container.setSpacing(10);
 
-                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblAnno, lblGenere, lblTag, spacer, lblDurata);
+                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblAnno, lblGenere, lblTag, spacer,
+                        lblDurata);
 
                 selectedProperty().addListener((obs, o, isSelected) -> updateStyle(isSelected, isHover()));
                 hoverProperty().addListener((obs, o, isHover) -> updateStyle(isSelected(), isHover));
@@ -1862,7 +1988,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         lblAutore.setText(m.author != null ? m.author : "");
                         lblAnno.setText(m.year != null && !m.year.isBlank() ? m.year : "");
                         lblGenere.setText(m.genre != null ? m.genre : "");
-                        lblTag.setText(m.tag != null && !m.tag.isBlank() && !m.tag.equalsIgnoreCase("NESSUNO") ? m.tag : "");
+                        lblTag.setText(
+                                m.tag != null && !m.tag.isBlank() && !m.tag.equalsIgnoreCase("NESSUNO") ? m.tag : "");
 
                         String dur = "--:--";
                         try {
@@ -1911,7 +2038,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         topSongsListView.getSelectionModel().select(getItem());
                         String fn = extractFilename(getItem());
                         String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
-                        if (currentlyPlayingFilename != null && currentlyPlayingFilename.equals(fn) && playingContext.equals(currentViewContext)) {
+                        if (currentlyPlayingFilename != null && currentlyPlayingFilename.equals(fn)
+                                && playingContext.equals(currentViewContext)) {
                             if (isPlayerPaused) {
                                 gestoreRiproduzione.play();
                             } else {
@@ -1923,18 +2051,18 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         event.consume();
                     }
                 });
-                lblIdx.setPrefWidth(40);
-                lblTitolo.setPrefWidth(280);
-                lblAutore.setPrefWidth(180);
-                lblGenere.setPrefWidth(120);
-                lblAscolti.setMinWidth(80);
-                lblAscolti.setMaxWidth(80);
-                lblAscolti.setPrefWidth(80);
+                lblIdx.setPrefWidth(30);
+                lblTitolo.setPrefWidth(200);
+                lblAutore.setPrefWidth(130);
+                lblGenere.setPrefWidth(100);
+                lblAscolti.setMinWidth(70);
+                lblAscolti.setMaxWidth(70);
+                lblAscolti.setPrefWidth(70);
                 lblAscolti.setAlignment(javafx.geometry.Pos.CENTER);
-                
-                lblDurata.setMinWidth(60);
-                lblDurata.setMaxWidth(60);
-                lblDurata.setPrefWidth(60);
+
+                lblDurata.setMinWidth(50);
+                lblDurata.setMaxWidth(50);
+                lblDurata.setPrefWidth(50);
                 lblDurata.setAlignment(javafx.geometry.Pos.CENTER);
 
                 lblIdx.setStyle("-fx-text-fill: #b3b3b3;");
@@ -1958,12 +2086,14 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 if (!isEmpty()) {
                     String fn = extractFilename(getItem());
                     String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
-                    isPlaying = (currentlyPlayingFilename != null && currentlyPlayingFilename.equals(fn) && playingContext.equals(currentViewContext));
-                    
+                    isPlaying = (currentlyPlayingFilename != null && currentlyPlayingFilename.equals(fn)
+                            && playingContext.equals(currentViewContext));
+
                     if (isPlaying) {
                         if (hovered) {
                             lblIdx.setText(isPlayerPaused ? "▶" : "⏸");
-                            lblIdx.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
+                            lblIdx.setStyle(
+                                    "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
                         } else {
                             lblIdx.setText(String.valueOf(getIndex() + 1));
                             lblIdx.setStyle("-fx-text-fill: #1DB954; -fx-font-weight: bold; -fx-font-size: 13px;");
@@ -1971,7 +2101,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     } else {
                         if (hovered) {
                             lblIdx.setText("▶");
-                            lblIdx.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
+                            lblIdx.setStyle(
+                                    "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
                         } else {
                             lblIdx.setText(String.valueOf(getIndex() + 1));
                             lblIdx.setStyle("-fx-text-fill: #b3b3b3;");
@@ -1980,7 +2111,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
 
                 if (isPlaying) {
-                    root.setStyle("-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 4; -fx-background-radius: 4;");
+                    root.setStyle(
+                            "-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 4; -fx-background-radius: 4;");
                     lblTitolo.setStyle("-fx-text-fill: #1DB954; -fx-font-weight: bold;");
                 } else if (selected) {
                     root.setStyle("-fx-background-color: #333333; -fx-background-radius: 4;");
@@ -2360,8 +2492,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             playlistPlayBtn.setOnAction(e -> {
                 animatePlaylistButton(playlistPlayBtn);
                 String currentViewContext = playlistSelezionata == null ? "LIBRERIA" : playlistSelezionata;
-                boolean isPlayingContext = gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia() && playingContext.equals(currentViewContext);
-                
+                boolean isPlayingContext = gestoreRiproduzione != null && gestoreRiproduzione.hasActiveMedia()
+                        && playingContext.equals(currentViewContext);
+
                 if (isPlayingContext) {
                     // Stesso contesto: toggle play/pausa, ignora la selezione nella lista
                     if (isPlayerPaused) {
@@ -2384,7 +2517,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
             });
         }
-        
+
         if (playlistStopBtn != null) {
             playlistStopBtn.setOnAction(e -> {
                 animatePlaylistButton(playlistStopBtn);
@@ -2399,31 +2532,35 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
             });
         }
-        
+
         if (playlistShuffleBtn != null) {
             playlistShuffleBtn.setOnAction(e -> handleShuffleToggle());
         }
-        
+
         if (shuffleBtn != null) {
             shuffleBtn.setOnAction(e -> handleShuffleToggle());
         }
-        
+
         if (playlistLoopBtn != null) {
             playlistLoopBtn.setOnAction(e -> {
                 playlistLoopEnabled = !playlistLoopEnabled;
                 if (playlistLoopEnabled) {
-                    playlistLoopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
+                    playlistLoopBtn
+                            .setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
                     if (playlistShuffleEnabled) {
                         playlistShuffleEnabled = false;
                         if (playlistShuffleBtn != null) {
-                            playlistShuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+                            playlistShuffleBtn.setStyle(
+                                    "-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
                         }
                         if (shuffleBtn != null) {
-                            shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+                            shuffleBtn.setStyle(
+                                    "-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
                         }
                     }
                 } else {
-                    playlistLoopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+                    playlistLoopBtn
+                            .setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
                 }
                 aggiornaIteratoreCorrente();
             });
@@ -2433,31 +2570,72 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private void handleShuffleToggle() {
         playlistShuffleEnabled = !playlistShuffleEnabled;
         if (playlistShuffleEnabled) {
-            if (playlistShuffleBtn != null) playlistShuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
-            if (shuffleBtn != null) shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
-            
+            if (playlistShuffleBtn != null)
+                playlistShuffleBtn
+                        .setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
+            if (shuffleBtn != null)
+                shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-cursor: hand;");
+
             if (playlistLoopEnabled) {
                 playlistLoopEnabled = false;
                 if (playlistLoopBtn != null) {
-                    playlistLoopBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+                    playlistLoopBtn
+                            .setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
                 }
             }
         } else {
-            if (playlistShuffleBtn != null) playlistShuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
-            if (shuffleBtn != null) shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+            if (playlistShuffleBtn != null)
+                playlistShuffleBtn
+                        .setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
+            if (shuffleBtn != null)
+                shuffleBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #b3b3b3; -fx-cursor: hand;");
         }
         aggiornaIteratoreCorrente();
     }
 
+    private void setupArrowButton(Button btn) {
+        if (btn == null)
+            return;
+
+        btn.setOnMousePressed(e -> {
+            btn.setStyle(
+                    "-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;");
+            javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(100),
+                    btn);
+            st.setToX(0.8);
+            st.setToY(0.8);
+            st.play();
+        });
+        btn.setOnMouseReleased(e -> {
+            btn.setStyle(
+                    "-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;");
+            javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(100),
+                    btn);
+            st.setToX(1.0);
+            st.setToY(1.0);
+            st.play();
+        });
+        btn.setOnMouseEntered(e -> {
+            btn.setStyle(
+                    "-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;");
+        });
+        btn.setOnMouseExited(e -> {
+            btn.setStyle(
+                    "-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;");
+        });
+    }
+
     private void animatePlaylistButton(Button btn) {
-        if (btn == null) return;
-        
-        if (btn.getProperties().containsKey("isAnimating")) return;
+        if (btn == null)
+            return;
+
+        if (btn.getProperties().containsKey("isAnimating"))
+            return;
         btn.getProperties().put("isAnimating", true);
 
         String originalStyle;
         String greenStyle;
-        
+
         if (btn == playlistPlayBtn) {
             originalStyle = "-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;";
             greenStyle = "-fx-background-color: #15883e; -fx-text-fill: #ffffff; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;";
@@ -2465,25 +2643,27 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             originalStyle = "-fx-background-color: transparent; -fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-cursor: hand;";
             greenStyle = "-fx-background-color: transparent; -fx-text-fill: #1DB954; -fx-font-size: 24px; -fx-cursor: hand;";
         }
-        
+
         btn.setStyle(greenStyle);
 
-        javafx.animation.ScaleTransition scaleDown = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(100), btn);
+        javafx.animation.ScaleTransition scaleDown = new javafx.animation.ScaleTransition(
+                javafx.util.Duration.millis(100), btn);
         scaleDown.setToX(0.85);
         scaleDown.setToY(0.85);
-        
-        javafx.animation.ScaleTransition scaleUp = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(100), btn);
+
+        javafx.animation.ScaleTransition scaleUp = new javafx.animation.ScaleTransition(
+                javafx.util.Duration.millis(100), btn);
         scaleUp.setToX(1.0);
         scaleUp.setToY(1.0);
-        
+
         scaleDown.setOnFinished(e -> scaleUp.play());
-        
+
         javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(150));
         pause.setOnFinished(e -> {
             btn.setStyle(originalStyle);
             btn.getProperties().remove("isAnimating");
         });
-        
+
         scaleDown.play();
         pause.play();
     }
@@ -2491,7 +2671,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     public void eliminaBraniMassivo(List<String> items) {
         if (items == null || items.isEmpty())
             return;
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Eliminare i " + items.size() + " brani selezionati?", ButtonType.YES, ButtonType.NO);
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Eliminare i " + items.size() + " brani selezionati?",
+                ButtonType.YES, ButtonType.NO);
         if (confirm.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
             try {
                 List<Brano> brani = new ArrayList<>();
@@ -2536,7 +2717,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     public void rimuoviBraniDaPlaylistMassivo(List<String> items, String playlistName) {
         if (items == null || items.isEmpty() || playlistName == null)
             return;
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Rimuovere i " + items.size() + " brani selezionati da questa playlist?", ButtonType.YES, ButtonType.NO);
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+                "Rimuovere i " + items.size() + " brani selezionati da questa playlist?", ButtonType.YES,
+                ButtonType.NO);
         if (confirm.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
             try {
                 List<Brano> brani = new ArrayList<>();
@@ -2593,20 +2776,25 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
     private void handleOrdinamento(CampoOrdinamento campo, Label labelCliccata) {
         libreriaController.ordinaLibreria(campo, playlistSelezionata);
-        
-        if (lblHeaderTitolo != null) lblHeaderTitolo.setText("TITOLO");
-        if (lblHeaderAutore != null) lblHeaderAutore.setText("AUTORE");
-        if (lblHeaderAnno != null) lblHeaderAnno.setText("ANNO");
-        if (lblHeaderGenere != null) lblHeaderGenere.setText("GENERE");
-        if (lblHeaderTag != null) lblHeaderTag.setText("TAG");
-        
+
+        if (lblHeaderTitolo != null)
+            lblHeaderTitolo.setText("TITOLO");
+        if (lblHeaderAutore != null)
+            lblHeaderAutore.setText("AUTORE");
+        if (lblHeaderAnno != null)
+            lblHeaderAnno.setText("ANNO");
+        if (lblHeaderGenere != null)
+            lblHeaderGenere.setText("GENERE");
+        if (lblHeaderTag != null)
+            lblHeaderTag.setText("TAG");
+
         CampoOrdinamento ultimo = libreriaController.getUltimoCampoOrdinamento();
         if (ultimo != null) {
             boolean crescente = libreriaController.isUltimoOrdineCrescente();
             labelCliccata.setText(campo.getEtichetta().toUpperCase() + (crescente ? " ▲" : " ▼"));
         }
-        
+
         refreshList();
         aggiornaIteratoreCorrente();
     }
-}
+}

@@ -3,7 +3,6 @@ package com.musicplayer.view;
 import com.musicplayer.model.*;
 import com.musicplayer.controller.*;
 
-
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -27,7 +26,7 @@ public class PlaylistView {
     private final ListView<String> branoSelectionListView;
     private final Button btnAnnullaSelezioneBrano;
     private final Button btnConfermaSelezioneBrano;
-    
+
     private final TextField addSearchTitoloField;
     private final TextField addSearchAutoreField;
     private final ComboBox<String> addSearchAnnoCombo;
@@ -43,7 +42,7 @@ public class PlaylistView {
             TextField playlistNameField, Button createPlaylistBtn, Button btnAnnullaCreazione,
             Button btnApriCreazione, Label lblGestionePlaylistTitle,
             VBox viewSelezioneBrano, ListView<String> branoSelectionListView,
-            Button btnAnnullaSelezioneBrano, Button btnConfermaSelezioneBrano, 
+            Button btnAnnullaSelezioneBrano, Button btnConfermaSelezioneBrano,
             TextField addSearchTitoloField, TextField addSearchAutoreField, ComboBox<String> addSearchAnnoCombo,
             ComboBox<String> addSearchGenereCombo, ComboBox<String> addSearchTagCombo, Button addResetSearchBtn,
             LibreriaController libreriaController, LibreriaView libreriaView) {
@@ -54,20 +53,20 @@ public class PlaylistView {
         this.createPlaylistBtn = createPlaylistBtn;
         this.btnAnnullaCreazione = btnAnnullaCreazione;
         this.btnApriCreazione = btnApriCreazione;
-        
+
         this.lblGestionePlaylistTitle = lblGestionePlaylistTitle;
         this.viewSelezioneBrano = viewSelezioneBrano;
         this.branoSelectionListView = branoSelectionListView;
         this.btnAnnullaSelezioneBrano = btnAnnullaSelezioneBrano;
         this.btnConfermaSelezioneBrano = btnConfermaSelezioneBrano;
-        
+
         this.addSearchTitoloField = addSearchTitoloField;
         this.addSearchAutoreField = addSearchAutoreField;
         this.addSearchAnnoCombo = addSearchAnnoCombo;
         this.addSearchGenereCombo = addSearchGenereCombo;
         this.addSearchTagCombo = addSearchTagCombo;
         this.addResetSearchBtn = addResetSearchBtn;
-        
+
         this.libreriaController = libreriaController;
         this.libreriaView = libreriaView;
     }
@@ -102,14 +101,14 @@ public class PlaylistView {
         if (btnConfermaSelezioneBrano != null) {
             btnConfermaSelezioneBrano.setOnAction(e -> eseguiAggiuntaBrani());
         }
-        
+
         if (addSearchTitoloField != null) {
             addSearchTitoloField.textProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
             addSearchAutoreField.textProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
             addSearchAnnoCombo.valueProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
             addSearchGenereCombo.valueProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
             addSearchTagCombo.valueProperty().addListener((obs, oldVal, newVal) -> applicaFiltroAggiuntaBrani());
-            
+
             addResetSearchBtn.setOnAction(e -> {
                 addSearchTitoloField.clear();
                 addSearchAutoreField.clear();
@@ -230,7 +229,7 @@ public class PlaylistView {
                 throw new ValidazioneException("Il nome della playlist non può essere vuoto.",
                         ValidazioneException.TipoErrore.CAMPO_MANCANTE, "Nome");
             }
-            
+
             String cleanInput = nome.trim();
             if (playlistDaRinominare != null) {
                 // Rinomina
@@ -247,7 +246,7 @@ public class PlaylistView {
                 libreriaView.refreshList();
                 libreriaView.refreshPlaylistList();
             }
-            
+
             libreriaView.switchToView(viewLista);
         } catch (ValidazioneException ex) {
             libreriaView.mostraErrore(ex);
@@ -259,7 +258,7 @@ public class PlaylistView {
     private void handleRinominaPlaylist(String vecchioNome) {
         if (vecchioNome == null)
             return;
-        
+
         playlistDaRinominare = vecchioNome;
         if (lblGestionePlaylistTitle != null) {
             lblGestionePlaylistTitle.setText("Rinomina Playlist");
@@ -316,9 +315,12 @@ public class PlaylistView {
                 }
                 if (!giaPresente) {
                     braniDisponibili.add(b);
-                    if (b.getAnno() > 0) anni.add(String.valueOf(b.getAnno()));
-                    if (b.getGenere() != null && !b.getGenere().isEmpty()) generi.add(b.getGenere());
-                    if (b.getTag() != null && b.getTag().getEtichetta() != null && !b.getTag().getEtichetta().isEmpty()) {
+                    if (b.getAnno() > 0)
+                        anni.add(String.valueOf(b.getAnno()));
+                    if (b.getGenere() != null && !b.getGenere().isEmpty())
+                        generi.add(b.getGenere());
+                    if (b.getTag() != null && b.getTag().getEtichetta() != null
+                            && !b.getTag().getEtichetta().isEmpty()) {
                         for (String t : b.getTag().getEtichetta().split(",")) {
                             tags.add(t.trim());
                         }
@@ -333,23 +335,23 @@ public class PlaylistView {
 
         playlistPerAggiuntaBrani = nomePlaylist;
         braniDisponibiliOriginali = braniDisponibili;
-        
+
         if (addSearchAnnoCombo != null) {
             java.util.List<String> listAnni = new java.util.ArrayList<>(anni);
             java.util.Collections.sort(listAnni);
             listAnni.add(0, "");
             addSearchAnnoCombo.getItems().setAll(listAnni);
-            
+
             java.util.List<String> listGeneri = new java.util.ArrayList<>(generi);
             java.util.Collections.sort(listGeneri);
             listGeneri.add(0, "");
             addSearchGenereCombo.getItems().setAll(listGeneri);
-            
+
             java.util.List<String> listTags = new java.util.ArrayList<>(tags);
             java.util.Collections.sort(listTags);
             listTags.add(0, "");
             addSearchTagCombo.getItems().setAll(listTags);
-            
+
             addSearchTitoloField.clear();
             addSearchAutoreField.clear();
             addSearchAnnoCombo.setValue(null);
@@ -359,10 +361,11 @@ public class PlaylistView {
         applicaFiltroAggiuntaBrani();
         libreriaView.switchToView(viewSelezioneBrano);
     }
-    
+
     private void applicaFiltroAggiuntaBrani() {
-        if (addSearchTitoloField == null) return;
-        
+        if (addSearchTitoloField == null)
+            return;
+
         String t = addSearchTitoloField.getText() == null ? "" : addSearchTitoloField.getText().toLowerCase().trim();
         String a = addSearchAutoreField.getText() == null ? "" : addSearchAutoreField.getText().toLowerCase().trim();
         String anno = addSearchAnnoCombo.getValue();
@@ -372,10 +375,14 @@ public class PlaylistView {
         java.util.List<String> filtrati = new java.util.ArrayList<>();
         for (Brano b : braniDisponibiliOriginali) {
             boolean matches = true;
-            if (!t.isEmpty() && !b.getTitolo().toLowerCase().contains(t)) matches = false;
-            if (!a.isEmpty() && !b.getAutore().toLowerCase().contains(a)) matches = false;
-            if (anno != null && !anno.isEmpty() && (b.getAnno() <= 0 || !String.valueOf(b.getAnno()).equals(anno))) matches = false;
-            if (gen != null && !gen.isEmpty() && (b.getGenere() == null || !b.getGenere().equals(gen))) matches = false;
+            if (!t.isEmpty() && !b.getTitolo().toLowerCase().contains(t))
+                matches = false;
+            if (!a.isEmpty() && !b.getAutore().toLowerCase().contains(a))
+                matches = false;
+            if (anno != null && !anno.isEmpty() && (b.getAnno() <= 0 || !String.valueOf(b.getAnno()).equals(anno)))
+                matches = false;
+            if (gen != null && !gen.isEmpty() && (b.getGenere() == null || !b.getGenere().equals(gen)))
+                matches = false;
             if (tag != null && !tag.isEmpty()) {
                 if (b.getTag() == null || b.getTag().getEtichetta() == null) {
                     matches = false;
@@ -387,40 +394,47 @@ public class PlaylistView {
                             break;
                         }
                     }
-                    if (!hasTag) matches = false;
+                    if (!hasTag)
+                        matches = false;
                 }
             }
             if (matches) {
-                filtrati.add(b.getTitolo() + " — " + java.nio.file.Paths.get(b.getPercorsoFile()).getFileName().toString());
+                filtrati.add(
+                        b.getTitolo() + " — " + java.nio.file.Paths.get(b.getPercorsoFile()).getFileName().toString());
             }
         }
         branoSelectionListView.getItems().setAll(filtrati);
+        branoSelectionListView.setPrefHeight(Math.max(200, filtrati.size() * 40 + 20));
     }
 
     private void eseguiAggiuntaBrani() {
-        if (playlistPerAggiuntaBrani == null) return;
-        java.util.List<String> selections = new java.util.ArrayList<>(branoSelectionListView.getSelectionModel().getSelectedItems());
+        if (playlistPerAggiuntaBrani == null)
+            return;
+        java.util.List<String> selections = new java.util.ArrayList<>(
+                branoSelectionListView.getSelectionModel().getSelectedItems());
         if (selections.isEmpty()) {
             libreriaView.showAlert("Nessun brano selezionato.", Alert.AlertType.WARNING);
             return;
         }
-        
+
         java.util.List<Brano> braniDaAggiungere = new java.util.ArrayList<>();
         for (String sel : selections) {
             if (sel != null && sel.contains("—")) {
                 String fn = sel.substring(sel.lastIndexOf("—") + 1).trim();
                 for (IBrano ib : libreriaController.getBrani()) {
-                    if (ib instanceof Brano && java.nio.file.Paths.get(((Brano)ib).getPercorsoFile()).getFileName().toString().equals(fn)) {
+                    if (ib instanceof Brano && java.nio.file.Paths.get(((Brano) ib).getPercorsoFile()).getFileName()
+                            .toString().equals(fn)) {
                         braniDaAggiungere.add((Brano) ib);
                         break;
                     }
                 }
             }
         }
-        
+
         if (!braniDaAggiungere.isEmpty()) {
             try {
-                com.musicplayer.command.Command cmd = new com.musicplayer.command.AggiungiMassivoCmd(libreriaController, braniDaAggiungere, playlistPerAggiuntaBrani);
+                com.musicplayer.command.Command cmd = new com.musicplayer.command.AggiungiMassivoCmd(libreriaController,
+                        braniDaAggiungere, playlistPerAggiuntaBrani);
                 cmd.esegui();
                 if (libreriaView.getUndoManager() != null) {
                     libreriaView.getUndoManager().aggiungiComando(cmd);

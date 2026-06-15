@@ -85,10 +85,13 @@ public class SequentialIterator implements PlaylistIterator {
         int tempIndex = indice;
         for (int k = 0; k < maxElements; k++) {
             int nextIdx = strategy.prossimoIndice(tempIndex, brani.size(), null);
-            if (nextIdx == -1 || nextIdx == indice) {
+            if (nextIdx == -1) {
                 break;
             }
             coda.add(brani.get(nextIdx));
+            if (nextIdx == indice) {
+                break;
+            }
             tempIndex = nextIdx;
         }
         return coda;
