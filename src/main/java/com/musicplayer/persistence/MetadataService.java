@@ -230,7 +230,9 @@ public class MetadataService {
             pw.println("# INDICE GENERALE PLAYLIST");
             pw.println("# Formato: ID_Playlist,Nome_Playlist");
             for (com.musicplayer.model.Playlist pl : playlists) {
-                pw.println(pl.getId() + "," + pl.getNome());
+                if (!(pl instanceof com.musicplayer.model.SmartPlaylist)) {
+                    pw.println(pl.getId() + "," + pl.getNome());
+                }
             }
             pw.flush();
         } catch (IOException e) {
@@ -239,7 +241,7 @@ public class MetadataService {
     }
 
     public static void salvaPlaylistSpecificaSuCSV(com.musicplayer.model.Playlist pl) {
-        if (pl == null)
+        if (pl == null || pl instanceof com.musicplayer.model.SmartPlaylist)
             return;
         Path cartella = playlistDir(pl.getNome());
         Path csvPath = cartella.resolve("Playlist - " + pl.getNome() + ".csv");

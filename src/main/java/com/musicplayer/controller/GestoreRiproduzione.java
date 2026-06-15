@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GestoreRiproduzione {
+public class GestoreRiproduzione implements LibreriaObserver {
 
     private static GestoreRiproduzione instance;
 
@@ -23,6 +23,11 @@ public class GestoreRiproduzione {
     private PlaylistIterator iteratorCorrente;
     private PlaybackStrategy strategia = new SequentialStrategy();
     private boolean singleSongLoop = false;
+    private Playlist playlistCorrente;
+
+    public Playlist getPlaylistCorrente() {
+        return playlistCorrente;
+    }
 
     private GestoreRiproduzione() {
         // Costruttore privato
@@ -149,12 +154,14 @@ public class GestoreRiproduzione {
 
     public void play(Playable elemento) {
         if (elemento instanceof Brano b) {
+            this.playlistCorrente = null;
             Path pathDaUsare = Path.of(b.getPercorsoFile());
             if (!pathDaUsare.isAbsolute()) {
                 pathDaUsare = Path.of(System.getProperty("user.dir"), "Libreria").resolve(pathDaUsare.getFileName());
             }
             playFile(pathDaUsare);
         } else if (elemento instanceof Playlist p) {
+            this.playlistCorrente = p;
             PlaylistIterator iter;
             if (strategia instanceof ShuffleStrategy) {
                 iter = new ShuffleIterator(p.getBrani());
@@ -193,11 +200,29 @@ public class GestoreRiproduzione {
     }
 
     public void aggiornaCoda() {
-        if (iteratorCorrente == null) {
-            return;
+        if (playlistCorrente != null) {
+            aggiornaCoda(playlistCorrente.getBrani());
+        } else if (iteratorCorrente != null) {
+            List<IBrano> brani = iteratorCorrente.getBrani();
+            aggiornaCoda(brani);
         }
-        List<IBrano> brani = iteratorCorrente.getBrani();
-        aggiornaCoda(brani);
+    }
+
+    @Override
+    public void onBranoAggiunto(IBrano brano) {
+        // No action needed
+    }
+
+    @Override
+    public void onBranoEliminato(IBrano brano) {
+        // No action needed
+    }
+
+    @Override
+    public void onPlaylistAggiornata(Playlist playlist) {
+        if (playlistCorrente != null && playlist != null && playlistCorrente.getId().equals(playlist.getId())) {
+            aggiornaCoda();
+        }
     }
 
     /**
@@ -251,6 +276,7 @@ public class GestoreRiproduzione {
             nuovoIter.impostaBranoCorrente(currentBrano);
         }
         this.iteratorCorrente = nuovoIter;
+        notificaCodaAggiornata();
     }
 
     public void playNext() {
@@ -397,5 +423,10 @@ public class GestoreRiproduzione {
     private void notificaBranoRipetuto() {
         for (RiproduzioneObserver o : observers)
             o.onBranoRipetuto();
+    }
+
+    private void notificaCodaAggiornata() {
+        for (RiproduzioneObserver o : observers)
+            o.onCodaAggiornata();
     }
 }

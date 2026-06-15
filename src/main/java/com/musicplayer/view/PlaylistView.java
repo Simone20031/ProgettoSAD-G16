@@ -151,13 +151,13 @@ public class PlaylistView {
 
                 container.getChildren().addAll(labelTesto, btnOpzioni);
 
-                MenuItem aggiungiBraniItem = new MenuItem("➕ Aggiungi Brani");
+                MenuItem aggiungiBraniItem = new MenuItem("+ Aggiungi Brani");
                 aggiungiBraniItem.setOnAction(e -> handleAggiungiBraniAPlaylist(getItem()));
 
-                MenuItem rinominaItem = new MenuItem("✏️ Rinomina Playlist");
+                MenuItem rinominaItem = new MenuItem("Rinomina Playlist");
                 rinominaItem.setOnAction(e -> handleRinominaPlaylist(getItem()));
 
-                MenuItem eliminaItem = new MenuItem("🗑️ Elimina Playlist");
+                MenuItem eliminaItem = new MenuItem("Elimina Playlist");
                 eliminaItem.setStyle("-fx-text-fill: red;");
                 eliminaItem.setOnAction(e -> handleEliminaPlaylist(getItem()));
 
@@ -214,7 +214,9 @@ public class PlaylistView {
             return;
         playlistListView.getItems().clear();
         for (Playlist pl : libreriaController.getPlaylist()) {
-            playlistListView.getItems().add(pl.getNome());
+            if (!(pl instanceof SmartPlaylist)) {
+                playlistListView.getItems().add(pl.getNome());
+            }
         }
         if (selectedName != null) {
             playlistListView.getSelectionModel().select(selectedName);

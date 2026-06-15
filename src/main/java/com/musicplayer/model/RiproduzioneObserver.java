@@ -10,4 +10,5 @@ public interface RiproduzioneObserver {
     void onProgressoAggiornato(int secondi);
     void onBranoCambiato(String nuovoPercorso);
     void onBranoRipetuto();
+    void onCodaAggiornata();
 }

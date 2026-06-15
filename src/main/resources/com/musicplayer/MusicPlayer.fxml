@@ -55,6 +55,7 @@
           </HBox>
           <HBox alignment="TOP_CENTER" spacing="10" style="-fx-padding: 0 24 16 24;">
             <Button fx:id="addBtn" alignment="TOP_CENTER" contentDisplay="CENTER" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand; -fx-border-color: transparent;" text="Importa MP3"/>
+            <Button fx:id="undoBtn" alignment="TOP_CENTER" contentDisplay="CENTER" disable="true" style="-fx-background-color: transparent; -fx-text-fill: #555555; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: default; -fx-border-color: #555555; -fx-border-width: 1;" text="Annulla Ultima Operazione"/>
           </HBox>
           <HBox fx:id="playlistControlsBox" alignment="CENTER" spacing="16" style="-fx-padding: 0 24 16 24;">
             <Button fx:id="playlistPlayBtn" alignment="CENTER" ellipsisString="" style="-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-background-radius: 50%; -fx-min-width: 42; -fx-min-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-cursor: hand;" text="▶" textAlignment="CENTER">
@@ -91,9 +92,11 @@
           </VBox>
           <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 8 32 8 32; -fx-border-color: transparent transparent #282828 transparent; -fx-border-width: 0 0 1 0;">
             <Label maxWidth="40" minWidth="40" prefWidth="40" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="#"/>
-            <Label maxWidth="280" minWidth="280" prefWidth="280" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
-            <Label maxWidth="180" minWidth="180" prefWidth="180" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
-            <Label maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
+            <Label fx:id="lblHeaderTitolo" maxWidth="200" minWidth="200" prefWidth="200" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="TITOLO"/>
+            <Label fx:id="lblHeaderAutore" maxWidth="150" minWidth="150" prefWidth="150" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="AUTORE"/>
+            <Label fx:id="lblHeaderAnno" maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="ANNO"/>
+            <Label fx:id="lblHeaderGenere" maxWidth="100" minWidth="100" prefWidth="100" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="GENERE"/>
+            <Label fx:id="lblHeaderTag" maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;" text="TAG"/>
             <Pane HBox.hgrow="ALWAYS"/>
             <Label maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="🕒"/>
             <Label maxWidth="20" minWidth="20" prefWidth="20"/>
@@ -158,9 +161,11 @@
             <VBox spacing="0" style="-fx-background-color: #1e1e1e; -fx-background-radius: 8; -fx-padding: 0;" VBox.vgrow="ALWAYS">
               <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 8 24 8 24; -fx-border-color: transparent transparent #282828 transparent; -fx-border-width: 0 0 1 0;">
                 <Label maxWidth="40" minWidth="40" prefWidth="40" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="#"/>
-                <Label maxWidth="280" minWidth="280" prefWidth="280" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
-                <Label maxWidth="180" minWidth="180" prefWidth="180" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
-                <Label maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
+                <Label maxWidth="200" minWidth="200" prefWidth="200" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TITOLO"/>
+                <Label maxWidth="150" minWidth="150" prefWidth="150" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="AUTORE"/>
+                <Label maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="ANNO"/>
+                <Label maxWidth="100" minWidth="100" prefWidth="100" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="GENERE"/>
+                <Label maxWidth="120" minWidth="120" prefWidth="120" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="TAG"/>
                 <Pane HBox.hgrow="ALWAYS"/>
                 <Label maxWidth="60" minWidth="60" prefWidth="60" style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-font-weight: bold;" text="🕒"/>
               </HBox>
@@ -224,7 +229,23 @@
           </HBox>
           <VBox spacing="10" style="-fx-padding: 0 24 16 24;">
             <Label style="-fx-text-fill: #ffffff; -fx-font-size: 18px; -fx-font-weight: bold;" text="Top Playlists 🎵"/>
-            <HBox fx:id="topPlaylistsBox" spacing="16"/>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+               <Button fx:id="btnScrollLeftTop" text="&lt;" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;" />
+               <ScrollPane fx:id="scrollTopPlaylists" vbarPolicy="NEVER" hbarPolicy="NEVER" minHeight="110" prefHeight="110" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 0;" HBox.hgrow="ALWAYS">
+                  <HBox fx:id="topPlaylistsBox" spacing="16" />
+               </ScrollPane>
+               <Button fx:id="btnScrollRightTop" text="&gt;" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;" />
+            </HBox>
+          </VBox>
+          <VBox spacing="10" style="-fx-padding: 0 24 16 24;">
+            <Label style="-fx-text-fill: #ffffff; -fx-font-size: 18px; -fx-font-weight: bold;" text="Smart Playlists"/>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+               <Button fx:id="btnScrollLeftSmart" text="&lt;" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;" />
+               <ScrollPane fx:id="scrollSmartPlaylists" vbarPolicy="NEVER" hbarPolicy="NEVER" minHeight="110" prefHeight="110" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 0;" HBox.hgrow="ALWAYS">
+                  <HBox fx:id="smartPlaylistsBox" spacing="16" />
+               </ScrollPane>
+               <Button fx:id="btnScrollRightSmart" text="&gt;" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-font-weight: bold;" />
+            </HBox>
           </VBox>
           <VBox spacing="10" style="-fx-padding: 0 24 16 24;" VBox.vgrow="ALWAYS">
             <Label style="-fx-text-fill: #ffffff; -fx-font-size: 18px; -fx-font-weight: bold;" text="Top Brani 🎧"/>

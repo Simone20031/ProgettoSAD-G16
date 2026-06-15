@@ -5,6 +5,7 @@ import com.musicplayer.model.*;
 import com.musicplayer.controller.*;
 import com.musicplayer.strategy.*;
 import com.musicplayer.state.*;
+import com.musicplayer.command.*;
 
 
 import com.musicplayer.persistence.MetadataService;
@@ -48,6 +49,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Button addBtn;
     @FXML
+    private Button undoBtn;
+    @FXML
     private Button btnMostraLibreria;
     @FXML
     private Button btnMostraPiuAscoltati;
@@ -88,6 +91,17 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     @FXML
     private Label nextSongLabel;
 
+    @FXML
+    private Label lblHeaderTitolo;
+    @FXML
+    private Label lblHeaderAutore;
+    @FXML
+    private Label lblHeaderAnno;
+    @FXML
+    private Label lblHeaderGenere;
+    @FXML
+    private Label lblHeaderTag;
+
 
     private boolean playlistShuffleEnabled = false;
     private boolean playlistLoopEnabled = false;
@@ -108,6 +122,22 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private VBox viewHome;
     @FXML
     private HBox topPlaylistsBox;
+    @FXML
+    private javafx.scene.control.ScrollPane scrollTopPlaylists;
+    @FXML
+    private Button btnScrollLeftTop;
+    @FXML
+    private Button btnScrollRightTop;
+
+    @FXML
+    private HBox smartPlaylistsBox;
+    @FXML
+    private javafx.scene.control.ScrollPane scrollSmartPlaylists;
+    @FXML
+    private Button btnScrollLeftSmart;
+    @FXML
+    private Button btnScrollRightSmart;
+
     @FXML
     private TextField playlistNameField;
     @FXML
@@ -202,6 +232,40 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private TextField currentGenreField;
     private TextField currentYearField;
 
+    private final UndoManager undoManager = new UndoManager();
+
+    public void resetHeaderLabels() {
+        if (lblHeaderTitolo != null) lblHeaderTitolo.setText("TITOLO");
+        if (lblHeaderAutore != null) lblHeaderAutore.setText("AUTORE");
+        if (lblHeaderAnno != null) lblHeaderAnno.setText("ANNO");
+        if (lblHeaderGenere != null) lblHeaderGenere.setText("GENERE");
+        if (lblHeaderTag != null) lblHeaderTag.setText("TAG");
+    }
+
+    public void aggiornaStatoUndo() {
+        if (undoBtn != null) {
+            boolean canUndo = undoManager.canUndo();
+            undoBtn.setDisable(!canUndo);
+            if (canUndo) {
+                undoBtn.setStyle("-fx-background-color: #1DB954; -fx-text-fill: #000000; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand; -fx-border-color: transparent;");
+            } else {
+                undoBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #555555; -fx-padding: 8 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: default; -fx-border-color: #555555; -fx-border-width: 1;");
+                undoBtn.setTooltip(null);
+            }
+        }
+    }
+
+    public void mostraNotificaUndo(String messaggio) {
+        aggiornaStatoUndo();
+        if (undoBtn != null && messaggio != null) {
+            undoBtn.setTooltip(new Tooltip("Annulla: " + messaggio));
+        }
+    }
+
+    public UndoManager getUndoManager() {
+        return undoManager;
+    }
+
     public Map<String, SongMetadata> getMetadataMap() {
         return metadataMap;
     }
@@ -217,7 +281,15 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     MetadataService.caricaMappaDalCSV(metadataMap);
                     switchToView(viewLista);
                     mostraLibreriaGenerale();
-                }, primaryStage);
+                }, this::mostraNotificaUndo, primaryStage, undoManager);
+    }
+
+    private void animateScroll(javafx.scene.control.ScrollPane scrollPane, double targetHvalue) {
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline();
+        javafx.animation.KeyValue kv = new javafx.animation.KeyValue(scrollPane.hvalueProperty(), targetHvalue, javafx.animation.Interpolator.EASE_BOTH);
+        javafx.animation.KeyFrame kf = new javafx.animation.KeyFrame(javafx.util.Duration.millis(300), kv);
+        timeline.getKeyFrames().add(kf);
+        timeline.play();
     }
 
     @Override
@@ -228,7 +300,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             // Ignored intentionally
         }
 
+        this.gestoreRiproduzione = GestoreRiproduzione.getInstance();
         libreriaController.addObserver(this);
+        libreriaController.addObserver(gestoreRiproduzione);
         libreriaController.caricaDaCSV();
         MetadataService.caricaMappaDalCSV(metadataMap);
 
@@ -253,8 +327,52 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         resetSearchBtn.setOnAction(e -> azzeraFiltro());
 
+        if (lblHeaderTitolo != null) lblHeaderTitolo.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.TITOLO, lblHeaderTitolo));
+        if (lblHeaderAutore != null) lblHeaderAutore.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.AUTORE, lblHeaderAutore));
+        if (lblHeaderAnno != null) lblHeaderAnno.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.ANNO, lblHeaderAnno));
+        if (lblHeaderGenere != null) lblHeaderGenere.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.GENERE, lblHeaderGenere));
+        if (lblHeaderTag != null) lblHeaderTag.setOnMouseClicked(e -> handleOrdinamento(CampoOrdinamento.TAG, lblHeaderTag));
+
         refreshList();
         refreshPlaylistList();
+
+        btnScrollLeftTop.setOnAction(e -> {
+            double contentW = topPlaylistsBox.getWidth();
+            double viewportW = scrollTopPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollTopPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.max(0, Math.round((currentPx - 216) / 216.0) * 216.0);
+                animateScroll(scrollTopPlaylists, newPx / (contentW - viewportW));
+            }
+        });
+        btnScrollRightTop.setOnAction(e -> {
+            double contentW = topPlaylistsBox.getWidth();
+            double viewportW = scrollTopPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollTopPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.min(contentW - viewportW, Math.round((currentPx + 216) / 216.0) * 216.0);
+                animateScroll(scrollTopPlaylists, newPx / (contentW - viewportW));
+            }
+        });
+
+        btnScrollLeftSmart.setOnAction(e -> {
+            double contentW = smartPlaylistsBox.getWidth();
+            double viewportW = scrollSmartPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollSmartPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.max(0, Math.round((currentPx - 216) / 216.0) * 216.0);
+                animateScroll(scrollSmartPlaylists, newPx / (contentW - viewportW));
+            }
+        });
+        btnScrollRightSmart.setOnAction(e -> {
+            double contentW = smartPlaylistsBox.getWidth();
+            double viewportW = scrollSmartPlaylists.getViewportBounds().getWidth();
+            if (contentW > viewportW) {
+                double currentPx = scrollSmartPlaylists.getHvalue() * (contentW - viewportW);
+                double newPx = Math.min(contentW - viewportW, Math.round((currentPx + 216) / 216.0) * 216.0);
+                animateScroll(scrollSmartPlaylists, newPx / (contentW - viewportW));
+            }
+        });
 
         javafx.util.Callback<ListView<String>, javafx.scene.control.ListCell<String>> selectionCellFactory = lv -> new javafx.scene.control.ListCell<String>() {
             {
@@ -367,26 +485,37 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             switchToView(viewLista);
             mostraLibreriaGenerale();
         });
+        
+        if (undoBtn != null) {
+            undoBtn.setOnAction(e -> {
+                try {
+                    if (undoManager.canUndo()) {
+                        undoManager.annullaUltimaOperazione();
+                        refreshList();
+                        refreshPlaylistList();
+                        aggiornaStatoUndo();
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Operazione annullata con successo!");
+                        alert.show();
+                    } else {
+                        Alert alert = new Alert(Alert.AlertType.WARNING, "Nessuna operazione da annullare.");
+                        alert.show();
+                    }
+                } catch (Exception ex) {
+                    mostraErrore(new ValidazioneException("Errore durante l'annullamento: " + ex.getMessage()));
+                }
+            });
+            aggiornaStatoUndo();
+        }
+        
         btnAnnullaSelezione.setOnAction(e -> switchToView(viewLista));
 
-        btnConfermaSelezione.setOnAction(e -> {
-            String nomePlaylist = playlistSelectionListView.getSelectionModel().getSelectedItem();
-            if (nomePlaylist != null && branoInAttesaDiPlaylist != null) {
-                try {
-                    libreriaController.aggiungiAPlaylist(branoInAttesaDiPlaylist, nomePlaylist);
-                    switchToView(viewLista);
-                    detailsLabel.setText("Brano aggiunto a " + nomePlaylist);
-                } catch (ValidazioneException ve) {
-                    mostraErrore(ve);
-                }
-            }
-        });
         btnConfermaImport.setOnAction(e -> {
             try {
                 if (formBranoView != null) {
                     formBranoView.confermaImportBrano();
                 }
             } catch (Exception ve) {
+                ve.printStackTrace();
                 if (ve instanceof ValidazioneException) {
                     mostraErrore((ValidazioneException) ve);
                 } else {
@@ -417,7 +546,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             String contestoProvenienza = playlistSelezionata;
             if (branoInAttesaDiPlaylist != null) {
                 try {
-                    libreriaController.aggiungiAPlaylist(branoInAttesaDiPlaylist, nomePlaylistSelezionato);
+                    Command cmd = new AggiungiAPlaylistCmd(libreriaController, branoInAttesaDiPlaylist, nomePlaylistSelezionato);
+                    cmd.esegui();
+                    undoManager.aggiungiComando(cmd);
+                    mostraNotificaUndo("Brano aggiunto alla playlist");
                     branoInAttesaDiPlaylist = null;
                     refreshList();
                     refreshPlaylistList();
@@ -430,8 +562,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         mostraLibreriaGenerale();
                     }
                 } catch (ValidazioneException ve) {
+                    ve.printStackTrace();
                     mostraErrore(ve);
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
                 }
             } else if (braniInAttesaDiPlaylistBulk != null && !braniInAttesaDiPlaylistBulk.isEmpty()) {
@@ -449,14 +583,15 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         mostraLibreriaGenerale();
                     }
                 } catch (ValidazioneException ve) {
+                    ve.printStackTrace();
                     mostraErrore(ve);
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
                 }
             }
         });
-        // Inizializza GestoreRiproduzione e PlayerView
-        this.gestoreRiproduzione = GestoreRiproduzione.getInstance();
+        // Inizializza PlayerView
         this.playerView = new PlayerView(playBtn, stopBtn, skipBackBtn, skipBtn, loopBtn, currentTimeLabel, totalTimeLabel,
                 progressSlider,
                 gestoreRiproduzione, this);
@@ -592,6 +727,13 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     }
                 });
             }
+
+            @Override
+            public void onCodaAggiornata() {
+                javafx.application.Platform.runLater(() -> {
+                    aggiornaVisualizzazioneCoda();
+                });
+            }
         });
 
         songListView.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
@@ -627,6 +769,13 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
                 parentNode = parentNode.getParent();
             }
+        });
+
+        // Set Home Page as default view
+        javafx.application.Platform.runLater(() -> {
+            impostaTabAttivo("PIU_ASCOLTATI");
+            switchToView(viewHome);
+            mostraPiuaAscoltati();
         });
     }
 
@@ -667,7 +816,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             private final Label lblId = new Label();
             private final Label lblTitolo = new Label();
             private final Label lblAutore = new Label();
+            private final Label lblAnno = new Label();
             private final Label lblGenere = new Label();
+            private final Label lblTag = new Label();
             private final Label lblDurata = new Label();
             private final Pane spacer = new Pane();
             private final Button btnOpzioni = new Button("⋮");
@@ -708,17 +859,25 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 lblId.setPrefWidth(40);
                 lblId.setMaxWidth(40);
 
-                lblTitolo.setMinWidth(280);
-                lblTitolo.setPrefWidth(280);
-                lblTitolo.setMaxWidth(280);
+                lblTitolo.setMinWidth(200);
+                lblTitolo.setPrefWidth(200);
+                lblTitolo.setMaxWidth(200);
 
-                lblAutore.setMinWidth(180);
-                lblAutore.setPrefWidth(180);
-                lblAutore.setMaxWidth(180);
+                lblAutore.setMinWidth(150);
+                lblAutore.setPrefWidth(150);
+                lblAutore.setMaxWidth(150);
 
-                lblGenere.setMinWidth(120);
-                lblGenere.setPrefWidth(120);
-                lblGenere.setMaxWidth(120);
+                lblAnno.setMinWidth(60);
+                lblAnno.setPrefWidth(60);
+                lblAnno.setMaxWidth(60);
+
+                lblGenere.setMinWidth(100);
+                lblGenere.setPrefWidth(100);
+                lblGenere.setMaxWidth(100);
+
+                lblTag.setMinWidth(120);
+                lblTag.setPrefWidth(120);
+                lblTag.setMaxWidth(120);
 
                 lblDurata.setMinWidth(60);
                 lblDurata.setPrefWidth(60);
@@ -732,7 +891,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 container.setPadding(new javafx.geometry.Insets(10, 16, 10, 16));
                 container.setSpacing(10);
 
-                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblGenere, spacer, lblDurata, btnOpzioni);
+                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblAnno, lblGenere, lblTag, spacer, lblDurata, btnOpzioni);
 
                 btnOpzioni.setOnAction(e -> {
                     e.consume();
@@ -791,6 +950,82 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
                 selectedProperty().addListener((obs, o, isSelected) -> updateStyle(isSelected, isHover()));
                 hoverProperty().addListener((obs, o, isHover) -> updateStyle(isSelected(), isHover));
+
+                // Drag and drop event handlers for reordering
+                setOnDragDetected(event -> {
+                    if (getItem() == null) {
+                        return;
+                    }
+                    if (playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            javafx.scene.input.Dragboard db = startDragAndDrop(javafx.scene.input.TransferMode.MOVE);
+                            javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+                            content.putString(getItem());
+                            db.setContent(content);
+                            event.consume();
+                        }
+                    }
+                });
+
+                setOnDragOver(event -> {
+                    if (event.getGestureSource() != this && event.getDragboard().hasString() && playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            event.acceptTransferModes(javafx.scene.input.TransferMode.MOVE);
+                        }
+                    }
+                    event.consume();
+                });
+
+                setOnDragEntered(event -> {
+                    if (event.getGestureSource() != this && event.getDragboard().hasString() && playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            setStyle("-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 2 0 0 0;");
+                        }
+                    }
+                });
+
+                setOnDragExited(event -> {
+                    if (event.getGestureSource() != this && event.getDragboard().hasString() && playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            setStyle("-fx-background-color: transparent; -fx-padding: 4 8 4 8;");
+                        }
+                    }
+                });
+
+                setOnDragDropped(event -> {
+                    javafx.scene.input.Dragboard db = event.getDragboard();
+                    boolean success = false;
+                    if (db.hasString() && playlistSelezionata != null) {
+                        Playlist pl = libreriaController.getPlaylistMap().get(playlistSelezionata);
+                        if (pl != null && !(pl instanceof SmartPlaylist)) {
+                            @SuppressWarnings("unchecked")
+                            ListCell<String> sourceCell = (ListCell<String>) event.getGestureSource();
+                            int idxFrom = sourceCell.getIndex();
+                            int idxTo = getIndex();
+                            if (idxFrom >= 0 && idxTo >= 0 && idxFrom != idxTo) {
+                                try {
+                                    String targetStr = db.getString();
+                                    String fn = extractFilename(targetStr);
+                                    Brano brano = findBranoByFilename(fn);
+                                    if (brano != null) {
+                                        libreriaController.spostaBranoInPlaylist(brano, playlistSelezionata, idxTo);
+                                        success = true;
+                                    }
+                                } catch (Exception ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                    event.setDropCompleted(success);
+                    event.consume();
+                });
+
+                setOnDragDone(javafx.scene.input.DragEvent::consume);
             }
 
             private void updateStyle(boolean selected, boolean hovered) {
@@ -823,7 +1058,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     container.setStyle("-fx-background-color: #282828; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 4; -fx-background-radius: 6;");
                     lblTitolo.setStyle("-fx-text-fill: #1DB954; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #ffffff; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
@@ -831,7 +1068,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     container.setStyle("-fx-background-color: #3e3e3e; -fx-border-color: #1DB954; -fx-border-width: 0 0 0 2; -fx-background-radius: 6;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #ffffff; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
@@ -839,7 +1078,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     container.setStyle("-fx-background-color: #282828; -fx-background-radius: 6;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #ffffff; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
@@ -847,7 +1088,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     container.setStyle("-fx-background-color: transparent;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     btnOpzioni.setStyle(
                             "-fx-text-fill: #b3b3b3; -fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 16px;");
@@ -873,7 +1116,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
                     if (m != null) {
                         lblAutore.setText(m.author != null ? m.author : "");
+                        lblAnno.setText(m.year != null && !m.year.isBlank() ? m.year : "");
                         lblGenere.setText(m.genre != null ? m.genre : "");
+                        lblTag.setText(m.tag != null && !m.tag.isBlank() && !m.tag.equalsIgnoreCase("NESSUNO") ? m.tag : "");
 
                         String dur = "--:--";
                         try {
@@ -886,7 +1131,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         lblDurata.setText(dur);
                     } else {
                         lblAutore.setText("");
+                        lblAnno.setText("");
                         lblGenere.setText("");
+                        lblTag.setText("");
                         lblDurata.setText("--:--");
                     }
 
@@ -1007,7 +1254,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
 
         // Filtra la playlist corrente se siamo dentro a una playlist
-        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream().map(Playlist::getNome);
+        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream()
+                .filter(p -> !(p instanceof SmartPlaylist))
+                .map(Playlist::getNome);
         if (playlistSelezionata != null) {
             stream = stream.filter(nome -> !nome.equals(playlistSelezionata));
         }
@@ -1033,8 +1282,14 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         
         // Popola la sezione delle playlist
         topPlaylistsBox.getChildren().clear();
+        if (smartPlaylistsBox != null) {
+            smartPlaylistsBox.getChildren().clear();
+        }
+        
         List<Playlist> topPlaylists = libreriaController.getTopPlaylistsAscoltate();
         for (Playlist pl : topPlaylists) {
+            if (pl instanceof SmartPlaylist) continue;
+            
             VBox card = new VBox(5);
             card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
             card.setPrefWidth(200);
@@ -1059,10 +1314,45 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             topPlaylistsBox.getChildren().add(card);
         }
 
-        if (topPlaylists.isEmpty()) {
+        if (topPlaylistsBox.getChildren().isEmpty()) {
             Label empty = new Label("Nessuna playlist presente.");
             empty.setStyle("-fx-text-fill: #a7a7a7;");
             topPlaylistsBox.getChildren().add(empty);
+        }
+
+        if (smartPlaylistsBox != null) {
+            for (Playlist pl : libreriaController.getPlaylist()) {
+                if (!(pl instanceof SmartPlaylist)) continue;
+                
+                VBox card = new VBox(5);
+                card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
+                card.setPrefWidth(200);
+                card.setMinWidth(200);
+                
+                Label title = new Label(pl.getNome());
+                title.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;");
+                
+                Label count = new Label("Brani: " + pl.getBrani().size());
+                count.setStyle("-fx-text-fill: #1DB954; -fx-font-size: 12px; -fx-font-weight: bold;");
+                
+                card.getChildren().addAll(title, count);
+                
+                card.setOnMouseClicked(e -> {
+                    impostaPlaylist(pl.getNome());
+                    switchToView(viewLista);
+                    refreshList();
+                });
+                
+                card.setOnMouseEntered(e -> card.setStyle("-fx-background-color: #383838; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+                card.setOnMouseExited(e -> card.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+                
+                smartPlaylistsBox.getChildren().add(card);
+            }
+            if (smartPlaylistsBox.getChildren().isEmpty()) {
+                Label empty = new Label("Nessuna smart playlist generata.");
+                empty.setStyle("-fx-text-fill: #a7a7a7;");
+                smartPlaylistsBox.getChildren().add(empty);
+            }
         }
 
         // Popola la sezione dei brani
@@ -1212,8 +1502,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             try {
                 libreriaController.aggiungiAPlaylist(selezionato, playlistTarget);
             } catch (ValidazioneException ve) {
+                ve.printStackTrace();
                 mostraErrore(ve);
             } catch (Exception ex) {
+                ex.printStackTrace();
                 mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
             }
         });
@@ -1466,7 +1758,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             private final Label lblId = new Label();
             private final Label lblTitolo = new Label();
             private final Label lblAutore = new Label();
+            private final Label lblAnno = new Label();
             private final Label lblGenere = new Label();
+            private final Label lblTag = new Label();
             private final Label lblDurata = new Label();
             private final Pane spacer = new Pane();
 
@@ -1475,17 +1769,25 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 lblId.setPrefWidth(40);
                 lblId.setMaxWidth(40);
 
-                lblTitolo.setMinWidth(280);
-                lblTitolo.setPrefWidth(280);
-                lblTitolo.setMaxWidth(280);
+                lblTitolo.setMinWidth(200);
+                lblTitolo.setPrefWidth(200);
+                lblTitolo.setMaxWidth(200);
 
-                lblAutore.setMinWidth(180);
-                lblAutore.setPrefWidth(180);
-                lblAutore.setMaxWidth(180);
+                lblAutore.setMinWidth(150);
+                lblAutore.setPrefWidth(150);
+                lblAutore.setMaxWidth(150);
 
-                lblGenere.setMinWidth(120);
-                lblGenere.setPrefWidth(120);
-                lblGenere.setMaxWidth(120);
+                lblAnno.setMinWidth(60);
+                lblAnno.setPrefWidth(60);
+                lblAnno.setMaxWidth(60);
+
+                lblGenere.setMinWidth(100);
+                lblGenere.setPrefWidth(100);
+                lblGenere.setMaxWidth(100);
+
+                lblTag.setMinWidth(120);
+                lblTag.setPrefWidth(120);
+                lblTag.setMaxWidth(120);
 
                 lblDurata.setMinWidth(60);
                 lblDurata.setPrefWidth(60);
@@ -1497,7 +1799,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 container.setPadding(new javafx.geometry.Insets(10, 16, 10, 16));
                 container.setSpacing(10);
 
-                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblGenere, spacer, lblDurata);
+                container.getChildren().addAll(lblId, lblTitolo, lblAutore, lblAnno, lblGenere, lblTag, spacer, lblDurata);
 
                 selectedProperty().addListener((obs, o, isSelected) -> updateStyle(isSelected, isHover()));
                 hoverProperty().addListener((obs, o, isHover) -> updateStyle(isSelected(), isHover));
@@ -1509,21 +1811,27 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     lblId.setStyle("-fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 13px;");
                     lblTitolo.setStyle("-fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #000000; -fx-font-size: 13px;");
                 } else if (hovered) {
                     container.setStyle("-fx-background-color: #282828; -fx-background-radius: 6;");
                     lblId.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 13px;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 13px;");
                 } else {
                     container.setStyle("-fx-background-color: transparent;");
                     lblId.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblTitolo.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 14px;");
                     lblAutore.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
+                    lblAnno.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblGenere.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
+                    lblTag.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                     lblDurata.setStyle("-fx-text-fill: #b3b3b3; -fx-font-size: 13px;");
                 }
             }
@@ -1547,7 +1855,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
                     if (m != null) {
                         lblAutore.setText(m.author != null ? m.author : "");
+                        lblAnno.setText(m.year != null && !m.year.isBlank() ? m.year : "");
                         lblGenere.setText(m.genre != null ? m.genre : "");
+                        lblTag.setText(m.tag != null && !m.tag.isBlank() && !m.tag.equalsIgnoreCase("NESSUNO") ? m.tag : "");
 
                         String dur = "--:--";
                         try {
@@ -1560,7 +1870,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         lblDurata.setText(dur);
                     } else {
                         lblAutore.setText("");
+                        lblAnno.setText("");
                         lblGenere.setText("");
+                        lblTag.setText("");
                         lblDurata.setText("--:--");
                     }
 
@@ -1766,8 +2078,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
 
         try {
-            // Rimuove solo il riferimento dalla libreria (nessun file fisico eliminato)
-            libreriaController.eliminaBranoPerFilename(fn);
+            Command cmd = new RimuoviDaLibreriaCmd(libreriaController, branoDaEliminare);
+            cmd.esegui();
+            if (undoManager != null) {
+                undoManager.aggiungiComando(cmd);
+                mostraNotificaUndo("Brano rimosso dalla libreria");
+            }
             detailsLabel.setText("Brano rimosso dalla libreria.");
             syncAndRefresh();
         } catch (Exception ex) {
@@ -1958,6 +2274,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         filtroAttivo.setTag(tagSel);
 
         refreshList();
+        aggiornaIteratoreCorrente();
     }
 
     private void azzeraFiltro() {
@@ -1973,6 +2290,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         if (searchTagCombo != null)
             searchTagCombo.setValue("");
         refreshList();
+        aggiornaIteratoreCorrente();
     }
 
     public void showAlert(String msg, Alert.AlertType type) {
@@ -2025,6 +2343,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             refreshPlaylistList();
             refreshList();
             aggiornaIteratoreCorrente();
+            if (libreriaController.getUltimoCampoOrdinamento() == null) {
+                resetHeaderLabels();
+            }
+            aggiornaStatoUndo();
         });
     }
 
@@ -2236,7 +2558,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             return;
         }
 
-        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream().map(Playlist::getNome);
+        java.util.stream.Stream<String> stream = libreriaController.getPlaylist().stream()
+                .filter(p -> !(p instanceof SmartPlaylist))
+                .map(Playlist::getNome);
         if (playlistSelezionata != null) {
             stream = stream.filter(nome -> !nome.equals(playlistSelezionata));
         }
@@ -2250,5 +2574,24 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         playlistSelectionListView.getItems().setAll(opzioni);
         switchToView(viewSelezionePlaylist);
+    }
+
+    private void handleOrdinamento(CampoOrdinamento campo, Label labelCliccata) {
+        libreriaController.ordinaLibreria(campo, playlistSelezionata);
+        
+        if (lblHeaderTitolo != null) lblHeaderTitolo.setText("TITOLO");
+        if (lblHeaderAutore != null) lblHeaderAutore.setText("AUTORE");
+        if (lblHeaderAnno != null) lblHeaderAnno.setText("ANNO");
+        if (lblHeaderGenere != null) lblHeaderGenere.setText("GENERE");
+        if (lblHeaderTag != null) lblHeaderTag.setText("TAG");
+        
+        CampoOrdinamento ultimo = libreriaController.getUltimoCampoOrdinamento();
+        if (ultimo != null) {
+            boolean crescente = libreriaController.isUltimoOrdineCrescente();
+            labelCliccata.setText(campo.getEtichetta().toUpperCase() + (crescente ? " ▲" : " ▼"));
+        }
+        
+        refreshList();
+        aggiornaIteratoreCorrente();
     }
 }

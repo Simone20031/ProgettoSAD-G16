@@ -50,7 +50,7 @@ public class LibreriaController {
     private final List<LibreriaObserver> observers = new ArrayList<>();
 
     public void addObserver(LibreriaObserver observer) {
-        if (!observers.contains(observer)) {
+        if (observer != null && !observers.contains(observer)) {
             observers.add(observer);
         }
     }
@@ -288,6 +288,28 @@ public class LibreriaController {
         return libreria.cercaBrani(filtro);
     }
 
+    public void ordinaLibreria(CampoOrdinamento campo, String playlistName) {
+        libreria.ordinaBrani(campo);
+        if (playlistName != null) {
+            Playlist p = playlistMap.get(playlistName);
+            if (p != null) {
+                if (libreria.getUltimoCampoOrdinamento() == null) {
+                    p.ripristinaOrdineOriginale();
+                } else {
+                    p.ordina(new com.musicplayer.strategy.OrdinaBrani(), libreria.getUltimoCampoOrdinamento(), libreria.isUltimoOrdineCrescente());
+                }
+            }
+        }
+    }
+
+    public CampoOrdinamento getUltimoCampoOrdinamento() {
+        return libreria.getUltimoCampoOrdinamento();
+    }
+
+    public boolean isUltimoOrdineCrescente() {
+        return libreria.isUltimoOrdineCrescente();
+    }
+
     public void registraAscolto(Playable p) {
         if (p == null) return;
         p.incrementPlayCount();
@@ -364,6 +386,72 @@ public class LibreriaController {
         }
 
         MetadataService.caricaPlaylistDaCSV(playlistMap, this::findBranoByFilename);
+        generaSmartPlaylistTematiche();
+    }
+
+    private void gestisciConflittoSmartPlaylist(String nome) {
+        if (playlistMap.containsKey(nome) && !(playlistMap.get(nome) instanceof SmartPlaylist)) {
+            Playlist old = playlistMap.remove(nome);
+            com.musicplayer.persistence.MetadataService.eliminaPlaylistFisica(old.getNome());
+            com.musicplayer.persistence.MetadataService.salvaIndicePlaylistSuCSV(playlistMap.values());
+        }
+    }
+
+    public void generaSmartPlaylistTematiche() {
+        java.util.Set<Genere> generi = new java.util.HashSet<>();
+        java.util.Set<Integer> decenni = new java.util.HashSet<>();
+        java.util.Set<Tag> tags = new java.util.HashSet<>();
+
+        for (IBrano ib : libreria.getBrani()) {
+            if (ib instanceof Brano b) {
+                if (b.getGenereEnum() != null && b.getGenereEnum() != Genere.NESSUNO) {
+                    generi.add(b.getGenereEnum());
+                }
+                if (b.getAnno() > 0) {
+                    decenni.add((b.getAnno() / 10) * 10);
+                }
+                if (b.getTag() != null && b.getTag() != Tag.NESSUNO) {
+                    tags.add(b.getTag());
+                }
+            }
+        }
+
+        for (Genere g : generi) {
+            String nome = "Genere: " + g.getEtichetta();
+            gestisciConflittoSmartPlaylist(nome);
+            if (!playlistMap.containsKey(nome)) {
+                FiltroRicerca f = new FiltroRicerca();
+                f.setGenere(g);
+                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f, libreria);
+                playlistMap.put(nome, sp);
+                addObserver(sp);
+            }
+        }
+
+        for (Integer d : decenni) {
+            String decStr = String.valueOf(d).substring(2);
+            String nome = "Anni " + decStr;
+            gestisciConflittoSmartPlaylist(nome);
+            if (!playlistMap.containsKey(nome)) {
+                FiltroRicerca f = new FiltroRicerca();
+                f.setDecennio(d);
+                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f, libreria);
+                playlistMap.put(nome, sp);
+                addObserver(sp);
+            }
+        }
+
+        for (Tag t : tags) {
+            String nome = "Tag: " + t.name();
+            gestisciConflittoSmartPlaylist(nome);
+            if (!playlistMap.containsKey(nome)) {
+                FiltroRicerca f = new FiltroRicerca();
+                f.setTag(t);
+                SmartPlaylist sp = new SmartPlaylist(java.util.UUID.randomUUID().toString().substring(0, 8), nome, f, libreria);
+                playlistMap.put(nome, sp);
+                addObserver(sp);
+            }
+        }
     }
 
     // =========================================================================
@@ -445,6 +533,49 @@ public class LibreriaController {
                 MetadataService.salvaPlaylistSpecificaSuCSV(pl);
                 // Task 22.1: Aggiorna la coda di riproduzione con la lista aggiornata
                 // senza interrompere l'audio in corso.
+                GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
+            } catch (IllegalArgumentException e) {
+                // Brano già presente, ignoriamo
+            }
+        }
+
+        for (LibreriaObserver obs : observers) {
+            obs.onPlaylistAggiornata(pl);
+        }
+    }
+
+    public void aggiungiAPlaylist(Brano brano, String playlistName, int index) throws ValidazioneException {
+        if (playlistName == null || playlistName.isBlank())
+            return;
+
+        String targetName = playlistName;
+        boolean exists = false;
+        for (String existingName : playlistMap.keySet()) {
+            if (existingName.equalsIgnoreCase(playlistName)) {
+                targetName = existingName;
+                exists = true;
+                break;
+            }
+        }
+
+        if (exists && brano == null) {
+            throw new ValidazioneException("Una playlist con lo stesso nome esiste già!");
+        }
+
+        // Se la playlist non esiste, creala
+        if (!exists) {
+            String univoqueId = java.util.UUID.randomUUID().toString().substring(0, 8);
+            Playlist nuovaPlaylist = new Playlist(univoqueId, targetName);
+            playlistMap.put(targetName, nuovaPlaylist);
+            MetadataService.salvaIndicePlaylistSuCSV(playlistMap.values());
+            MetadataService.salvaPlaylistSpecificaSuCSV(nuovaPlaylist);
+        }
+
+        Playlist pl = playlistMap.get(targetName);
+        if (brano != null) {
+            try {
+                pl.aggiungiBrano(brano, index);
+                MetadataService.salvaPlaylistSpecificaSuCSV(pl);
                 GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
             } catch (IllegalArgumentException e) {
                 // Brano già presente, ignoriamo
@@ -617,6 +748,10 @@ public class LibreriaController {
     public void spostaBranoInPlaylist(Brano brano, String playlistName, int nuovaPosizione) throws ValidazioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brano != null) {
+            if (libreria.getUltimoCampoOrdinamento() != null) {
+                libreria.ordinaBrani(null);
+                pl.ripristinaOrdineOriginale();
+            }
             pl.spostaBrano(brano, nuovaPosizione);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
             // Task 22.1: Aggiorna la coda di riproduzione dopo lo spostamento
@@ -629,8 +764,11 @@ public class LibreriaController {
     }
 
     public void eliminaPlaylist(String nome) throws IOException {
-        if (playlistMap.remove(nome) != null) {
-            MetadataService.eliminaPlaylistFisica(nome);
+        Playlist p = playlistMap.remove(nome);
+        if (p != null) {
+            if (!(p instanceof SmartPlaylist)) {
+                MetadataService.eliminaPlaylistFisica(nome);
+            }
             MetadataService.salvaIndicePlaylistSuCSV(playlistMap.values());
             for (LibreriaObserver obs : observers) {
                 obs.onPlaylistAggiornata(null);
@@ -642,6 +780,9 @@ public class LibreriaController {
         Playlist p = playlistMap.get(vecchioNome);
         if (p == null)
             return;
+        if (p instanceof SmartPlaylist) {
+            throw new ValidazioneException("Non è possibile rinominare una playlist automatica (SmartPlaylist).");
+        }
         boolean caseChangeOnly = vecchioNome.equalsIgnoreCase(nuovoNome);
         if (!caseChangeOnly) {
             for (String existingName : playlistMap.keySet()) {

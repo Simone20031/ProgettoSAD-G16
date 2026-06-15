@@ -1,27 +1,36 @@
 package com.musicplayer.command;
 
 import com.musicplayer.model.*;
-
+import com.musicplayer.controller.LibreriaController;
 
 public class RimuoviDaPlaylistCmd implements Command {
-    private final Playlist playlist;
-    private final IBrano brano;
+    private final LibreriaController controller;
+    private final Brano brano;
+    private final String playlistName;
+    private int originalIndex = -1;
 
-    public RimuoviDaPlaylistCmd(Playlist playlist, IBrano brano) {
-        this.playlist = playlist;
+    public RimuoviDaPlaylistCmd(LibreriaController controller, Brano brano, String playlistName) {
+        this.controller = controller;
         this.brano = brano;
+        this.playlistName = playlistName;
     }
 
     @Override
     public void esegui() throws ValidazioneException {
-        // Se si volessero aggiungere controlli di validazione per la rimozione,
-        // andrebbero messi qui. Per ora, la traccia richiede solo di invocare rimuoviBrano().
-        playlist.rimuoviBrano(brano);
+        java.util.Map<String, Playlist> playlistMap = controller.getPlaylistMap();
+        Playlist pl = playlistMap != null ? playlistMap.get(playlistName) : null;
+        if (pl != null) {
+            originalIndex = pl.getBrani().indexOf(brano);
+        }
+        controller.rimuoviDaPlaylist(brano, playlistName);
     }
 
     @Override
-    public void annulla() {
-        // Il rollback della rimozione è reinserire il brano.
-        playlist.aggiungiBrano(brano);
+    public void annulla() throws ValidazioneException {
+        if (originalIndex >= 0) {
+            controller.aggiungiAPlaylist(brano, playlistName, originalIndex);
+        } else {
+            controller.aggiungiAPlaylist(brano, playlistName);
+        }
     }
 }

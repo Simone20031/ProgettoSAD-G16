@@ -7,20 +7,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.musicplayer.strategy.OrdinamentoStrategy;
+import com.musicplayer.strategy.OrdinaBrani;
+
 /**
  * Libreria: collezione centrale di brani e playlist.
  * Pattern: Singleton + Observer.
  */
-public class Libreria {
+public class Libreria implements ICatalogo {
 
     // ── Singleton ─────────────────────────────────────────────────────────────
 
     private static Libreria instance;
 
     private final List<IBrano> catalogo = new ArrayList<>();
+    private final List<IBrano> catalogoOriginale = new ArrayList<>();
 
-    // Playlist non implementata in questo momento
     // private final List<Playlist> playlist = new ArrayList<>();
+
+    private OrdinamentoStrategy ordinamentoStrategy = new OrdinaBrani();
+    private CampoOrdinamento ultimoCampoOrdinamento = null;
+    private boolean ultimoOrdineCrescente = true;
 
     private Libreria() {
     }
@@ -37,6 +44,7 @@ public class Libreria {
         if (b == null || catalogo.contains(b))
             return;
         catalogo.add(b);
+        catalogoOriginale.add(b);
         // observer disabilitato in questo momento
     }
 
@@ -47,6 +55,7 @@ public class Libreria {
             if (p instanceof IBrano b) {
                 if (b != null && !set.contains(b)) {
                     catalogo.add(b);
+                    catalogoOriginale.add(b);
                     set.add(b);
                 }
             }
@@ -70,6 +79,7 @@ public class Libreria {
 
         // Basta una sola riga per rimuovere l'oggetto
         catalogo.remove(b);
+        catalogoOriginale.remove(b);
 
         // Non aggiungere altro qui, la logica di pulizia delle playlist
         // la stiamo gestendo direttamente nel LibreriaController
@@ -85,6 +95,7 @@ public class Libreria {
             }
         }
         catalogo.removeAll(toRemove);
+        catalogoOriginale.removeAll(toRemove);
     }
 
     // ── Gestione playlist ─────────────────────────────────────────────────────
@@ -114,6 +125,37 @@ public class Libreria {
         if (filtro == null)
             return getBrani();
         return filtro.applica(getBrani());
+    }
+
+    public void ordinaBrani(CampoOrdinamento campo) {
+        if (campo == null) {
+            ultimoCampoOrdinamento = null;
+            catalogo.clear();
+            catalogo.addAll(catalogoOriginale);
+            return;
+        }
+        if (ultimoCampoOrdinamento == campo) {
+            if (ultimoOrdineCrescente) {
+                ultimoOrdineCrescente = false;
+                ordinamentoStrategy.ordina(catalogo, ultimoCampoOrdinamento, ultimoOrdineCrescente);
+            } else {
+                ultimoCampoOrdinamento = null;
+                catalogo.clear();
+                catalogo.addAll(catalogoOriginale);
+            }
+        } else {
+            ultimoCampoOrdinamento = campo;
+            ultimoOrdineCrescente = true;
+            ordinamentoStrategy.ordina(catalogo, ultimoCampoOrdinamento, ultimoOrdineCrescente);
+        }
+    }
+
+    public CampoOrdinamento getUltimoCampoOrdinamento() {
+        return ultimoCampoOrdinamento;
+    }
+
+    public boolean isUltimoOrdineCrescente() {
+        return ultimoOrdineCrescente;
     }
 
     public boolean isEmpty() {
