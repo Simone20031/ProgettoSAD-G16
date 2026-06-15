@@ -34,7 +34,7 @@ public class Brano implements IBrano {
         this.playCount = 0;
     }
 
-    // Getter per i campi principali (usati da view e CSV)
+
     public String getId() {
         return id;
     }
@@ -63,7 +63,7 @@ public class Brano implements IBrano {
         return tag;
     }
 
-    // ── IBrano ────────────────────────────────────────────────────────────────
+
 
     @Override
     public String getTitolo() {
@@ -90,12 +90,12 @@ public class Brano implements IBrano {
         this.playCount++;
     }
 
-    // Setter for loading from metadata
+
     public void setPlayCount(int playCount) {
         this.playCount = Math.max(0, playCount);
     }
 
-    // ── Dettagli (usati da view e CSV) ────────────────────────────────────────
+
 
     @Override
     public Map<String, String> getDettagli() {
@@ -111,7 +111,7 @@ public class Brano implements IBrano {
         return m;
     }
 
-    // Setter per aggiornare i dettagli (usato da view e CSV)
+
     public void setDettagli(Map<String, String> dati) throws ValidazioneException {
         if (dati == null)
             return;
@@ -155,7 +155,7 @@ public class Brano implements IBrano {
         this.percorsoFile = percorso == null ? "" : percorso;
     }
 
-    // ── Validazione ───────────────────────────────────────────────────────────
+
 
     /**
      * 1.6 - Validazione dei dati del Brano.
@@ -185,7 +185,7 @@ public class Brano implements IBrano {
 
     }
 
-    // ── Accessori ─────────────────────────────────────────────────────────────
+
 
     public void rimuoviTag() {
         this.tag = Tag.NESSUNO;

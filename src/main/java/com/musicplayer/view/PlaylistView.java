@@ -420,7 +420,12 @@ public class PlaylistView {
         
         if (!braniDaAggiungere.isEmpty()) {
             try {
-                libreriaController.aggiungiBraniAPlaylist(braniDaAggiungere, playlistPerAggiuntaBrani);
+                com.musicplayer.command.Command cmd = new com.musicplayer.command.AggiungiMassivoCmd(libreriaController, braniDaAggiungere, playlistPerAggiuntaBrani);
+                cmd.esegui();
+                if (libreriaView.getUndoManager() != null) {
+                    libreriaView.getUndoManager().aggiungiComando(cmd);
+                    libreriaView.mostraNotificaUndo("Brani aggiunti alla playlist");
+                }
                 libreriaView.impostaPlaylist(playlistPerAggiuntaBrani);
                 playlistPerAggiuntaBrani = null;
             } catch (Exception ex) {

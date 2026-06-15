@@ -226,7 +226,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
     private Stage primaryStage;
     private String playlistSelezionata = null;
     private Brano branoInAttesaDiPlaylist = null;
-    private List<Brano> braniInAttesaDiPlaylistBulk = null;
+    private List<Brano> braniInAttesaDiPlaylistMassivo = null;
     private TextField currentTitleField;
     private TextField currentAuthorField;
     private TextField currentGenreField;
@@ -528,8 +528,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             if (branoInAttesaDiPlaylist != null) {
                 branoInAttesaDiPlaylist = null;
             }
-            if (braniInAttesaDiPlaylistBulk != null) {
-                braniInAttesaDiPlaylistBulk = null;
+            if (braniInAttesaDiPlaylistMassivo != null) {
+                braniInAttesaDiPlaylistMassivo = null;
             }
             refreshList();
             switchToView(viewLista);
@@ -568,10 +568,15 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     ex.printStackTrace();
                     mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
                 }
-            } else if (braniInAttesaDiPlaylistBulk != null && !braniInAttesaDiPlaylistBulk.isEmpty()) {
+            } else if (braniInAttesaDiPlaylistMassivo != null && !braniInAttesaDiPlaylistMassivo.isEmpty()) {
                 try {
-                    libreriaController.aggiungiBraniAPlaylist(braniInAttesaDiPlaylistBulk, nomePlaylistSelezionato);
-                    braniInAttesaDiPlaylistBulk = null;
+                    Command cmd = new AggiungiMassivoCmd(libreriaController, braniInAttesaDiPlaylistMassivo, nomePlaylistSelezionato);
+                    cmd.esegui();
+                    if (undoManager != null) {
+                        undoManager.aggiungiComando(cmd);
+                        mostraNotificaUndo("Brani aggiunti alla playlist");
+                    }
+                    braniInAttesaDiPlaylistMassivo = null;
                     refreshList();
                     refreshPlaylistList();
                     Alert alert = new Alert(Alert.AlertType.INFORMATION, "Brani aggiunti con successo!");
@@ -905,16 +910,16 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
                     if (selectedItems.size() > 1) {
                         MenuItem miAggiungi = new MenuItem(playlistSelezionata == null ? "Aggiungi a playlist" : "Aggiungi a un'altra playlist");
-                        miAggiungi.setOnAction(ev -> aggiungiBraniAPlaylistBulk(selectedItems));
+                        miAggiungi.setOnAction(ev -> aggiungiBraniAPlaylistMassivo(selectedItems));
                         
                         if (playlistSelezionata == null) {
                             MenuItem miElimina = new MenuItem("Elimina definitivamente dalla libreria");
-                            miElimina.setOnAction(ev -> eliminaBraniBulk(selectedItems));
+                            miElimina.setOnAction(ev -> eliminaBraniMassivo(selectedItems));
                             menu.getItems().addAll(miElimina, miAggiungi);
                         } else {
                             menu.getItems().add(miAggiungi);
                             MenuItem miRimuovi = new MenuItem("Rimuovi dalla playlist corrente");
-                            miRimuovi.setOnAction(ev -> rimuoviBraniDaPlaylistBulk(selectedItems, playlistSelezionata));
+                            miRimuovi.setOnAction(ev -> rimuoviBraniDaPlaylistMassivo(selectedItems, playlistSelezionata));
                             menu.getItems().add(miRimuovi);
                         }
                     } else if (!selectedItems.isEmpty()) {
@@ -2483,7 +2488,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         pause.play();
     }
 
-    public void eliminaBraniBulk(List<String> items) {
+    public void eliminaBraniMassivo(List<String> items) {
         if (items == null || items.isEmpty())
             return;
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Eliminare i " + items.size() + " brani selezionati?", ButtonType.YES, ButtonType.NO);
@@ -2496,7 +2501,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         brani.add(b);
                     }
                 }
-                libreriaController.eliminaBrani(brani);
+                Command cmd = new RimuoviMassivoLibreriaCmd(libreriaController, brani);
+                cmd.esegui();
+                if (undoManager != null) {
+                    undoManager.aggiungiComando(cmd);
+                    mostraNotificaUndo("Rimozione massiva brani dalla libreria");
+                }
                 metadataMap.clear();
                 MetadataService.caricaMappaDalCSV(metadataMap);
                 refreshList();
@@ -2508,7 +2518,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
     }
 
-    public void aggiungiBraniAPlaylistBulk(List<String> items) {
+    public void aggiungiBraniAPlaylistMassivo(List<String> items) {
         if (items == null || items.isEmpty())
             return;
         List<Brano> brani = new ArrayList<>();
@@ -2519,11 +2529,11 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             }
         }
         if (!brani.isEmpty()) {
-            apriSelezionePlaylistBulk(brani);
+            apriSelezionePlaylistMassivo(brani);
         }
     }
 
-    public void rimuoviBraniDaPlaylistBulk(List<String> items, String playlistName) {
+    public void rimuoviBraniDaPlaylistMassivo(List<String> items, String playlistName) {
         if (items == null || items.isEmpty() || playlistName == null)
             return;
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Rimuovere i " + items.size() + " brani selezionati da questa playlist?", ButtonType.YES, ButtonType.NO);
@@ -2536,7 +2546,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         brani.add(b);
                     }
                 }
-                libreriaController.rimuoviDaPlaylist(brani, playlistName);
+                Command cmd = new RimuoviMassivoCmd(libreriaController, brani, playlistName);
+                cmd.esegui();
+                if (undoManager != null) {
+                    undoManager.aggiungiComando(cmd);
+                    mostraNotificaUndo("Rimozione massiva brani da playlist");
+                }
                 refreshList();
                 refreshPlaylistList();
             } catch (ValidazioneException ve) {
@@ -2547,8 +2562,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
     }
 
-    public void apriSelezionePlaylistBulk(List<Brano> brani) {
-        this.braniInAttesaDiPlaylistBulk = brani;
+    public void apriSelezionePlaylistMassivo(List<Brano> brani) {
+        this.braniInAttesaDiPlaylistMassivo = brani;
         this.branoInAttesaDiPlaylist = null;
 
         if (libreriaController.getPlaylist().isEmpty()) {

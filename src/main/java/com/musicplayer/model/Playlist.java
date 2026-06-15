@@ -40,10 +40,9 @@ public class Playlist implements Playable {
     // ── Gestione brani ────────────────────────────────────────────────────────
 
     /**
-     * Task - 10.1: Implementare Playlist.aggiungiBrano()
+     * Aggiunge un brano alla playlist.
      * Verifica tramite contieneBrano() che il brano non sia già presente.
-     * In caso di duplicato o brano nullo, segnala l'errore al chiamante lanciando
-     * un'eccezione.
+     * In caso di duplicato o brano nullo, lancia un'eccezione.
      */
     public void aggiungiBrano(IBrano b) {
         if (b == null) {
@@ -152,8 +151,8 @@ public class Playlist implements Playable {
         return List.copyOf(brani);
     }
 
-    public void ordina(com.musicplayer.strategy.OrdinamentoStrategy strategy, CampoOrdinamento campo, boolean crescente) {
-        strategy.ordina(brani, campo, crescente);
+    public void ordina(com.musicplayer.strategy.OrdinamentoStrategy strategy) {
+        strategy.ordina(brani);
         aggiornaOrdinamento();
     }
 
@@ -186,7 +185,7 @@ public class Playlist implements Playable {
         this.playCount++;
     }
 
-    // Setter for loading from metadata
+
     public void setPlayCount(int playCount) {
         this.playCount = Math.max(0, playCount);
     }
