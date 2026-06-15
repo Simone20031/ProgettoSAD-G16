@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.musicplayer.strategy.OrdinamentoStrategy;
-import com.musicplayer.strategy.OrdinaBrani;
 
 /**
  * Libreria: collezione centrale di brani e playlist.
@@ -25,9 +24,20 @@ public class Libreria implements ICatalogo {
 
     // private final List<Playlist> playlist = new ArrayList<>();
 
-    private OrdinamentoStrategy ordinamentoStrategy = new OrdinaBrani();
     private CampoOrdinamento ultimoCampoOrdinamento = null;
     private boolean ultimoOrdineCrescente = true;
+
+    public static OrdinamentoStrategy getStrategyFor(CampoOrdinamento campo, boolean crescente) {
+        if (campo == null) return null;
+        switch (campo) {
+            case TITOLO: return crescente ? new com.musicplayer.strategy.OrdinaTitoloAsc() : new com.musicplayer.strategy.OrdinaTitoloDesc();
+            case AUTORE: return crescente ? new com.musicplayer.strategy.OrdinaAutoreAsc() : new com.musicplayer.strategy.OrdinaAutoreDesc();
+            case ANNO: return crescente ? new com.musicplayer.strategy.OrdinaAnnoAsc() : new com.musicplayer.strategy.OrdinaAnnoDesc();
+            case GENERE: return crescente ? new com.musicplayer.strategy.OrdinaGenereAsc() : new com.musicplayer.strategy.OrdinaGenereDesc();
+            case TAG: return crescente ? new com.musicplayer.strategy.OrdinaTagAsc() : new com.musicplayer.strategy.OrdinaTagDesc();
+        }
+        return null;
+    }
 
     private Libreria() {
     }
@@ -137,7 +147,8 @@ public class Libreria implements ICatalogo {
         if (ultimoCampoOrdinamento == campo) {
             if (ultimoOrdineCrescente) {
                 ultimoOrdineCrescente = false;
-                ordinamentoStrategy.ordina(catalogo, ultimoCampoOrdinamento, ultimoOrdineCrescente);
+                OrdinamentoStrategy strategy = getStrategyFor(ultimoCampoOrdinamento, ultimoOrdineCrescente);
+                if (strategy != null) strategy.ordina(catalogo);
             } else {
                 ultimoCampoOrdinamento = null;
                 catalogo.clear();
@@ -146,7 +157,8 @@ public class Libreria implements ICatalogo {
         } else {
             ultimoCampoOrdinamento = campo;
             ultimoOrdineCrescente = true;
-            ordinamentoStrategy.ordina(catalogo, ultimoCampoOrdinamento, ultimoOrdineCrescente);
+            OrdinamentoStrategy strategy = getStrategyFor(ultimoCampoOrdinamento, ultimoOrdineCrescente);
+            if (strategy != null) strategy.ordina(catalogo);
         }
     }
 

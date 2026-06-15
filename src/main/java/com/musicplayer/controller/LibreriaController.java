@@ -43,6 +43,7 @@ public class LibreriaController {
 
     private final Libreria libreria = Libreria.getInstance();
     private final BranoFactory factory = new BranoFactory();
+    private final StatisticheAscolto statisticheAscolto;
 
     private static final String LIB_DIR = "Libreria";
 
@@ -53,6 +54,12 @@ public class LibreriaController {
         if (observer != null && !observers.contains(observer)) {
             observers.add(observer);
         }
+    }
+
+    public LibreriaController() {
+        this.statisticheAscolto = new StatisticheAscolto(libreria, playlistMap);
+        this.addObserver(statisticheAscolto);
+        GestoreRiproduzione.getInstance().addObserver(statisticheAscolto);
     }
 
     // =========================================================================
@@ -296,7 +303,8 @@ public class LibreriaController {
                 if (libreria.getUltimoCampoOrdinamento() == null) {
                     p.ripristinaOrdineOriginale();
                 } else {
-                    p.ordina(new com.musicplayer.strategy.OrdinaBrani(), libreria.getUltimoCampoOrdinamento(), libreria.isUltimoOrdineCrescente());
+                    com.musicplayer.strategy.OrdinamentoStrategy strategy = Libreria.getStrategyFor(libreria.getUltimoCampoOrdinamento(), libreria.isUltimoOrdineCrescente());
+                    if (strategy != null) p.ordina(strategy);
                 }
             }
         }
@@ -312,14 +320,9 @@ public class LibreriaController {
 
     public void registraAscolto(Playable p) {
         if (p == null) return;
-        p.incrementPlayCount();
+        statisticheAscolto.registraAscolto(p);
         if (p instanceof Brano b) {
             String filename = PathUtils.filenameFromPath(b.getPercorsoFile());
-            // Need to pass the raw tag from the brano (we don't have the original raw tag here, but we can reconstruct it from SongMetadata if needed, 
-            // but Brano's getTag().name() is the fallback. A better way is to use MetadataService.aggiornaMetadata(filename, b))
-            // Actually, wait, MetadataService.aggiornaMetadata(String, Brano) uses new SongMetadata(Brano), which loses multiple tags.
-            // Let's use the full SongMetadata from memory or just modify the playCount in the file directly.
-            // The cleanest way is to load the existing SongMetadata, update playCount, and save it.
             Map<String, SongMetadata> map = new HashMap<>();
             MetadataService.caricaMappaDalCSV(map);
             SongMetadata m = map.get(filename);
@@ -335,17 +338,11 @@ public class LibreriaController {
     }
 
     public List<IBrano> getTopBraniAscoltati() {
-        List<IBrano> sorted = new ArrayList<>(libreria.getBrani());
-        // Rimuoviamo i brani con 0 ascolti per la home page
-        sorted.removeIf(b -> b.getPlayCount() == 0);
-        sorted.sort((b1, b2) -> Integer.compare(b2.getPlayCount(), b1.getPlayCount()));
-        return sorted.subList(0, Math.min(5, sorted.size()));
+        return statisticheAscolto.getTopBrani(5);
     }
 
     public List<Playlist> getTopPlaylistsAscoltate() {
-        List<Playlist> sorted = new ArrayList<>(playlistMap.values());
-        sorted.sort((p1, p2) -> Integer.compare(p2.getPlayCount(), p1.getPlayCount()));
-        return sorted.subList(0, Math.min(5, sorted.size()));
+        return statisticheAscolto.getTopPlaylist(5);
     }
 
     /**
