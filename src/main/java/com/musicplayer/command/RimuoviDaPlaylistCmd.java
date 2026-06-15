@@ -2,6 +2,8 @@ package com.musicplayer.command;
 
 import com.musicplayer.model.*;
 import com.musicplayer.controller.LibreriaController;
+import com.musicplayer.controller.RiproduzioneException;
+import com.musicplayer.persistence.PersistenzaException;
 
 public class RimuoviDaPlaylistCmd implements Command {
     private final LibreriaController controller;
@@ -16,7 +18,7 @@ public class RimuoviDaPlaylistCmd implements Command {
     }
 
     @Override
-    public void esegui() throws ValidazioneException {
+    public void esegui() throws ValidazioneException, PersistenzaException, RiproduzioneException, PlaylistException {
         java.util.Map<String, Playlist> playlistMap = controller.getPlaylistMap();
         Playlist pl = playlistMap != null ? playlistMap.get(playlistName) : null;
         if (pl != null) {
@@ -26,7 +28,7 @@ public class RimuoviDaPlaylistCmd implements Command {
     }
 
     @Override
-    public void annulla() throws ValidazioneException {
+    public void annulla() throws ValidazioneException, PersistenzaException, RiproduzioneException, PlaylistException {
         if (originalIndex >= 0) {
             controller.aggiungiAPlaylist(brano, playlistName, originalIndex);
         } else {

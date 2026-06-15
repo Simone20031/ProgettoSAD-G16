@@ -3,6 +3,7 @@ package com.musicplayer.command;
 import com.musicplayer.controller.LibreriaController;
 import com.musicplayer.model.Brano;
 import com.musicplayer.model.ValidazioneException;
+import com.musicplayer.persistence.PersistenzaException;
 import java.io.IOException;
 
 public class AggiungiALibreriaCmd implements Command {
@@ -28,7 +29,7 @@ public class AggiungiALibreriaCmd implements Command {
     }
 
     @Override
-    public void esegui() throws ValidazioneException {
+    public void esegui() throws ValidazioneException, PersistenzaException {
         try {
             controller.aggiungiBrano(titolo, autore, genere, anno, percorsoFile, durataSec, tagRaw);
             
@@ -38,18 +39,20 @@ public class AggiungiALibreriaCmd implements Command {
             branoAggiunto = controller.trovaBranoDaNome(filename);
             
         } catch (IOException e) {
-            throw new ValidazioneException("Errore IO durante l'aggiunta del brano: " + e.getMessage());
+            throw new PersistenzaException("Errore IO durante l'aggiunta del brano: " + e.getMessage(),
+                    PersistenzaException.TipoPersistenza.ERRORE_SCRITTURA, e);
         }
     }
 
     @Override
-    public void annulla() throws ValidazioneException {
+    public void annulla() throws ValidazioneException, PersistenzaException {
         try {
             if (branoAggiunto != null) {
                 controller.eliminaBrano(branoAggiunto);
             }
         } catch (IOException e) {
-            throw new ValidazioneException("Errore IO durante l'annullamento dell'aggiunta del brano: " + e.getMessage());
+            throw new PersistenzaException("Errore IO durante l'annullamento dell'aggiunta del brano: " + e.getMessage(),
+                    PersistenzaException.TipoPersistenza.ERRORE_SCRITTURA, e);
         }
     }
 }

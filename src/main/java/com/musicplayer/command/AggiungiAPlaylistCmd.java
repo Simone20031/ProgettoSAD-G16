@@ -2,6 +2,8 @@ package com.musicplayer.command;
 
 import com.musicplayer.model.*;
 import com.musicplayer.controller.LibreriaController;
+import com.musicplayer.controller.RiproduzioneException;
+import com.musicplayer.persistence.PersistenzaException;
 
 public class AggiungiAPlaylistCmd implements Command {
     private final LibreriaController controller;
@@ -15,12 +17,12 @@ public class AggiungiAPlaylistCmd implements Command {
     }
 
     @Override
-    public void esegui() throws ValidazioneException {
+    public void esegui() throws ValidazioneException, PersistenzaException, PlaylistException {
         controller.aggiungiAPlaylist(brano, playlistName);
     }
 
     @Override
-    public void annulla() throws ValidazioneException {
+    public void annulla() throws ValidazioneException, RiproduzioneException, PersistenzaException, PlaylistException {
         controller.rimuoviDaPlaylist(brano, playlistName);
     }
 }

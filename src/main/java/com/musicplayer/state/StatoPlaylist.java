@@ -2,6 +2,7 @@ package com.musicplayer.state;
 
 import com.musicplayer.model.*;
 import com.musicplayer.controller.*;
+import com.musicplayer.persistence.PersistenzaException;
 import com.musicplayer.view.*;
 
 
@@ -33,9 +34,14 @@ public class StatoPlaylist implements StatoUI {
                     view.getUndoManager().aggiungiComando(cmd);
                     view.mostraNotificaUndo("Brano rimosso dalla playlist");
                 }
+            } catch (RiproduzioneException re) {
+                re.printStackTrace();
+                view.mostraErrore(new ValidazioneException(re.getMessage()));
+            } catch (PersistenzaException pe) {
+                pe.printStackTrace();
+                view.mostraErrore(new ValidazioneException("Errore disco: " + pe.getMessage()));
             } catch (ValidazioneException ve) {
                 ve.printStackTrace();
-                // Sfruttiamo il quarto parametro 'view' per mostrare il popup di errore a schermo
                 view.mostraErrore(ve);
             } catch (Exception e) {
                 e.printStackTrace();

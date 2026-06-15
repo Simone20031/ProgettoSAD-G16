@@ -3,6 +3,7 @@ package com.musicplayer.command;
 import com.musicplayer.controller.LibreriaController;
 import com.musicplayer.model.Brano;
 import com.musicplayer.model.ValidazioneException;
+import com.musicplayer.persistence.PersistenzaException;
 import com.musicplayer.PathUtils;
 
 import java.io.File;
@@ -25,7 +26,7 @@ public class RimuoviMassivoLibreriaCmd implements Command {
     }
 
     @Override
-    public void esegui() throws ValidazioneException {
+    public void esegui() throws ValidazioneException, PersistenzaException {
         try {
             for (Brano b : brani) {
                 String filename = PathUtils.filenameFromPath(b.getPercorsoFile());
@@ -44,12 +45,13 @@ public class RimuoviMassivoLibreriaCmd implements Command {
 
             controller.eliminaBrani(new ArrayList<>(brani));
         } catch (IOException e) {
-            throw new ValidazioneException("Errore IO durante la rimozione massiva: " + e.getMessage());
+            throw new PersistenzaException("Errore IO durante la rimozione massiva: " + e.getMessage(),
+                    PersistenzaException.TipoPersistenza.ERRORE_SCRITTURA, e);
         }
     }
 
     @Override
-    public void annulla() throws ValidazioneException {
+    public void annulla() throws ValidazioneException, PersistenzaException {
         try {
             int i = 0;
             for (Brano b : brani) {
@@ -60,7 +62,8 @@ public class RimuoviMassivoLibreriaCmd implements Command {
                 i++;
             }
         } catch (IOException e) {
-            throw new ValidazioneException("Errore IO durante l'annullamento della rimozione massiva: " + e.getMessage());
+            throw new PersistenzaException("Errore IO durante l'annullamento della rimozione massiva: " + e.getMessage(),
+                    PersistenzaException.TipoPersistenza.ERRORE_SCRITTURA, e);
         }
     }
 }
