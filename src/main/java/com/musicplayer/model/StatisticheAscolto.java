@@ -13,10 +13,7 @@ public class StatisticheAscolto implements LibreriaObserver, RiproduzioneObserve
 
     private final Libreria libreria;
     private final Map<String, Playlist> playlistMap;
-    
-    // Possiamo mantenere le statistiche in memoria per ottimizzare getTopBrani
-    // ma siccome il playCount e' gia' salvato dentro i Brani,
-    // possiamo anche delegare il sorting alla lista dei brani.
+
 
     public StatisticheAscolto(Libreria libreria, Map<String, Playlist> playlistMap) {
         this.libreria = libreria;

@@ -29,9 +29,7 @@ public class GestoreRiproduzione implements LibreriaObserver {
         return playlistCorrente;
     }
 
-    private GestoreRiproduzione() {
-        // Costruttore privato
-    }
+    private GestoreRiproduzione() {}
 
     public static GestoreRiproduzione getInstance() {
         if (instance == null) {
@@ -40,7 +38,6 @@ public class GestoreRiproduzione implements LibreriaObserver {
         return instance;
     }
 
-    // Aggiunto per permettere reset nei test isolati
     public static void resetInstance() {
         instance = null;
     }
@@ -63,23 +60,10 @@ public class GestoreRiproduzione implements LibreriaObserver {
         this.statoCorrente = stato;
     }
 
-    // [REFACTORING FUTURO]: Introdurre l'interfaccia Playable (Brano e Playlist la
-    // implementano).
-    // - GestoreRiproduzione.playFile(Path) diventerà play(Playable elemento)
-    // - Con un PlaylistIterator (SequentialIterator / ShuffleIterator /
-    // LoopIterator)
-    // sarà possibile riprodurre automaticamente i brani di una playlist in sequenza
-    // - GestoreRiproduzione gestirà next() usando la strategia PlaybackStrategy
-    // corrente
-    // - Questo abilitherà anche la riproduzione con shuffle e loop
-    // Priorità: Media — non bloccante per le funzionalità attuali.
     public void playFile(Path file) {
         if (file == null)
             return;
 
-
-
-        // 2. DISTRUGGI VECCHIO PLAYER SE E' DIVERSO
         if (mediaPlayer != null) {
             mediaPlayer.stop();
             mediaPlayer.dispose();
@@ -87,7 +71,6 @@ public class GestoreRiproduzione implements LibreriaObserver {
             media = null;
         }
 
-        // 3. CREA NUOVO PLAYER
         try {
             media = new Media(file.toUri().toString());
             mediaPlayer = new MediaPlayer(media);
@@ -209,14 +192,10 @@ public class GestoreRiproduzione implements LibreriaObserver {
     }
 
     @Override
-    public void onBranoAggiunto(IBrano brano) {
-        // No action needed
-    }
+    public void onBranoAggiunto(IBrano brano) {}
 
     @Override
-    public void onBranoEliminato(IBrano brano) {
-        // No action needed
-    }
+    public void onBranoEliminato(IBrano brano) {}
 
     @Override
     public void onPlaylistAggiornata(Playlist playlist) {
@@ -342,8 +321,6 @@ public class GestoreRiproduzione implements LibreriaObserver {
         if (mediaPlayer != null) {
             mediaPlayer.pause();
             mediaPlayer.seek(Duration.ZERO);
-            // In questo modo usiamo internamente la pausa ma lo stato visivo è Stop.
-            // Così se l'utente sposta lo slider e fa play, riprende dalla nuova posizione.
             notificaStop();
         }
     }

@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,7 +25,7 @@ public class ComandiMassiviTest {
         undoManager = new UndoManager();
         controller = new LibreriaController();
         tempDir = Files.createTempDirectory("test_libreria_massivo");
-        
+
         // Pulizia iniziale
         Libreria.getInstance().eliminaBrani(Libreria.getInstance().getBrani());
     }
@@ -73,8 +72,10 @@ public class ComandiMassiviTest {
         f1.deleteOnExit();
         f2.deleteOnExit();
 
-        Command addCmd1 = new AggiungiALibreriaCmd(controller, "Titolo1", "Autore1", "Pop", 2024, f1.getAbsolutePath(), 180, "NESSUNO");
-        Command addCmd2 = new AggiungiALibreriaCmd(controller, "Titolo2", "Autore2", "Pop", 2024, f2.getAbsolutePath(), 200, "NESSUNO");
+        Command addCmd1 = new AggiungiALibreriaCmd(controller, "Titolo1", "Autore1", "Pop", 2024, f1.getAbsolutePath(),
+                180, "NESSUNO");
+        Command addCmd2 = new AggiungiALibreriaCmd(controller, "Titolo2", "Autore2", "Pop", 2024, f2.getAbsolutePath(),
+                200, "NESSUNO");
         addCmd1.esegui();
         addCmd2.esegui();
 

@@ -38,15 +38,12 @@ import java.util.Collection;
  */
 public class LibreriaController {
 
-    // ── Dipendenze ────────────────────────────────────────────────────────────
-
     private final Libreria libreria = Libreria.getInstance();
     private final BranoFactory factory = new BranoFactory();
     private final StatisticheAscolto statisticheAscolto;
 
     private static final String LIB_DIR = "Libreria";
 
-    // Lista degli iscritti alle notifiche (Observer Pattern)
     private final List<LibreriaObserver> observers = new ArrayList<>();
 
     public void addObserver(LibreriaObserver observer) {
@@ -61,9 +58,7 @@ public class LibreriaController {
         GestoreRiproduzione.getInstance().addObserver(statisticheAscolto);
     }
 
-    // =========================================================================
-    // Gestione brani
-    // =========================================================================
+
 
     /**
      * Crea un nuovo brano tramite factory, copia il file fisico nella Libreria,
@@ -129,18 +124,14 @@ public class LibreriaController {
         if (brano == null || dati == null)
             return;
 
-        // Aggiorno il Brano in RAM e valida (lancia ValidazioneException se i dati non
-        // vanno)
+
         libreria.modificaBrano(brano, dati);
 
-        // Costruisco un SongMetadata che porta la stringa tag RAW dal form,
-        // bypassando la conversione enum → evita la perdita dei tag multipli.
+
         String filename = PathUtils.filenameFromPath(brano.getPercorsoFile());
 
-        // Aggiunto "SongMetadata." prima di buildSongMetadata
         SongMetadata metaAggiornato = SongMetadata.buildSongMetadata(brano, filename, dati.get("tag"));
 
-        // 3. Riscrivo la riga nel CSV
         MetadataService.aggiornaMetadata(filename, metaAggiornato);
     }
 
@@ -158,8 +149,7 @@ public class LibreriaController {
         if (brano == null)
             return;
 
-        // Aggiorna il campo enum sul Brano in RAM con il primo tag (compatibilità
-        // Usa setDettagli con solo il tag per aggiornare l'enum in RAM
+
         Map<String, String> soloTag = new HashMap<>();
         soloTag.put("titolo", brano.getTitolo());
         soloTag.put("autore", brano.getAutore());
@@ -169,7 +159,7 @@ public class LibreriaController {
         soloTag.put("tag", stringaTagRaw);
         libreria.modificaBrano(brano, soloTag);
 
-        // Persisti nel CSV con la stringa RAW completa (non l'enum serializzato)
+
         String filename = PathUtils.filenameFromPath(brano.getPercorsoFile());
 
         SongMetadata meta = SongMetadata.buildSongMetadata(brano, filename, stringaTagRaw);
@@ -199,9 +189,6 @@ public class LibreriaController {
         }
     }
 
-    /**
-     * Elimina il brano: file fisico + riga CSV + modello in RAM.
-     */
     /**
      * Elimina il brano: file fisico + riga CSV + modello in RAM + rimozione da
      * tutte le playlist.
@@ -268,23 +255,16 @@ public class LibreriaController {
                 });
     }
 
-    // Nel LibreriaController.java
     public Brano trovaBranoDaNome(String nome) {
-        // Usiamo getBrani() che esiste già nella tua classe Libreria
         for (IBrano b : libreria.getBrani()) {
             if (b instanceof Brano brano && PathUtils.filenameFromPath(brano.getPercorsoFile()).equals(nome)) {
-                // Dobbiamo fare un cast perché getBrani restituisce IBrano
                 return brano;
             }
         }
         return null;
     }
 
-    // RIMOSSI PLACEHOLDER PLAYLIST
 
-    // =========================================================================
-    // Lettura modello
-    // =========================================================================
 
     public List<IBrano> getBrani() {
         return libreria.getBrani();
@@ -453,9 +433,7 @@ public class LibreriaController {
         }
     }
 
-    // =========================================================================
-    // Privati
-    // =========================================================================
+
 
     private Path libDir() {
         Path p = Path.of(System.getProperty("user.dir"), LIB_DIR);
@@ -483,11 +461,6 @@ public class LibreriaController {
         return null;
     }
 
-    // =========================================================================
-    // Gestione Playlist
-    // =========================================================================
-
-    // Mappa per tracciare le playlist in RAM (Chiave: Nome della Playlist)
     private final Map<String, Playlist> playlistMap = new HashMap<>();
 
     public java.util.Map<String, Playlist> getPlaylistMap() {
@@ -516,7 +489,7 @@ public class LibreriaController {
             throw new ValidazioneException("Una playlist con lo stesso nome esiste già!");
         }
 
-        // Se la playlist non esiste, creala
+
         if (!exists) {
             String univoqueId = java.util.UUID.randomUUID().toString().substring(0, 8);
             Playlist nuovaPlaylist = new Playlist(univoqueId, targetName);
@@ -530,8 +503,7 @@ public class LibreriaController {
             try {
                 pl.aggiungiBrano(brano);
                 MetadataService.salvaPlaylistSpecificaSuCSV(pl);
-                // Task 22.1: Aggiorna la coda di riproduzione con la lista aggiornata
-                // senza interrompere l'audio in corso.
+
                 GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
             } catch (IllegalArgumentException e) {
                 // Brano già presente, ignoriamo
@@ -589,16 +561,14 @@ public class LibreriaController {
     public void rimuoviDaPlaylist(Brano brano, String playlistName) throws ValidazioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brano != null) {
-            // Task 22.2: Protezione rimozione — impedisci di rimuovere il brano attualmente
-            // in riproduzione e mostra l'avviso richiesto dall'AC.
+
             Path branoPath = libDir().resolve(PathUtils.filenameFromPath(brano.getPercorsoFile()));
             if (GestoreRiproduzione.getInstance().isCurrentFile(branoPath)) {
                 throw new ValidazioneException("Traccia in riproduzione, attendere la fine o saltarla.");
             }
             pl.rimuoviBrano(brano);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
-            // Task 22.1: Aggiorna la coda di riproduzione con la lista aggiornata
-            // senza interrompere l'audio in corso.
+
             GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
             for (LibreriaObserver obs : observers) {
                 obs.onPlaylistAggiornata(pl);
@@ -638,8 +608,7 @@ public class LibreriaController {
         if (braniCollection != null && !braniCollection.isEmpty()) {
             pl.aggiungiBrani(braniCollection);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
-            // Aggiorna la coda di riproduzione con la lista aggiornata senza interrompere
-            // l'audio
+
             GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
         }
 
@@ -758,8 +727,7 @@ public class LibreriaController {
             }
             pl.spostaBrano(brano, nuovaPosizione);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
-            // Task 22.1: Aggiorna la coda di riproduzione dopo lo spostamento
-            // senza interrompere l'audio in corso.
+
             GestoreRiproduzione.getInstance().aggiornaCoda(pl.getBrani());
             for (LibreriaObserver obs : observers) {
                 obs.onPlaylistAggiornata(pl);
