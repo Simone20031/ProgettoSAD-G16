@@ -570,7 +570,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 }
             } else if (braniInAttesaDiPlaylistBulk != null && !braniInAttesaDiPlaylistBulk.isEmpty()) {
                 try {
-                    libreriaController.aggiungiBraniAPlaylist(braniInAttesaDiPlaylistBulk, nomePlaylistSelezionato);
+                    Command cmd = new AggiungiMassivoCmd(libreriaController, braniInAttesaDiPlaylistBulk, nomePlaylistSelezionato);
+                    cmd.esegui();
+                    if (undoManager != null) {
+                        undoManager.aggiungiComando(cmd);
+                        mostraNotificaUndo("Brani aggiunti alla playlist");
+                    }
                     braniInAttesaDiPlaylistBulk = null;
                     refreshList();
                     refreshPlaylistList();
@@ -2496,7 +2501,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         brani.add(b);
                     }
                 }
-                libreriaController.eliminaBrani(brani);
+                Command cmd = new RimuoviMassivoLibreriaCmd(libreriaController, brani);
+                cmd.esegui();
+                if (undoManager != null) {
+                    undoManager.aggiungiComando(cmd);
+                    mostraNotificaUndo("Rimozione massiva brani dalla libreria");
+                }
                 metadataMap.clear();
                 MetadataService.caricaMappaDalCSV(metadataMap);
                 refreshList();
@@ -2536,7 +2546,12 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                         brani.add(b);
                     }
                 }
-                libreriaController.rimuoviDaPlaylist(brani, playlistName);
+                Command cmd = new RimuoviMassivoCmd(libreriaController, brani, playlistName);
+                cmd.esegui();
+                if (undoManager != null) {
+                    undoManager.aggiungiComando(cmd);
+                    mostraNotificaUndo("Rimozione massiva brani da playlist");
+                }
                 refreshList();
                 refreshPlaylistList();
             } catch (ValidazioneException ve) {
