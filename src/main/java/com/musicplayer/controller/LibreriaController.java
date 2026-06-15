@@ -471,7 +471,7 @@ public class LibreriaController {
         return playlistMap.values();
     }
 
-    public void aggiungiAPlaylist(Brano brano, String playlistName) throws ValidazioneException {
+    public void aggiungiAPlaylist(Brano brano, String playlistName) throws PlaylistException {
         if (playlistName == null || playlistName.isBlank())
             return;
 
@@ -486,7 +486,8 @@ public class LibreriaController {
         }
 
         if (exists && brano == null) {
-            throw new ValidazioneException("Una playlist con lo stesso nome esiste già!");
+            throw new PlaylistException("Una playlist con lo stesso nome esiste già!",
+                    PlaylistException.TipoPlaylist.NOME_DUPLICATO);
         }
 
 
@@ -515,7 +516,7 @@ public class LibreriaController {
         }
     }
 
-    public void aggiungiAPlaylist(Brano brano, String playlistName, int index) throws ValidazioneException {
+    public void aggiungiAPlaylist(Brano brano, String playlistName, int index) throws PlaylistException {
         if (playlistName == null || playlistName.isBlank())
             return;
 
@@ -530,7 +531,8 @@ public class LibreriaController {
         }
 
         if (exists && brano == null) {
-            throw new ValidazioneException("Una playlist con lo stesso nome esiste già!");
+            throw new PlaylistException("Una playlist con lo stesso nome esiste già!",
+                    PlaylistException.TipoPlaylist.NOME_DUPLICATO);
         }
 
         // Se la playlist non esiste, creala
@@ -558,13 +560,14 @@ public class LibreriaController {
         }
     }
 
-    public void rimuoviDaPlaylist(Brano brano, String playlistName) throws ValidazioneException {
+    public void rimuoviDaPlaylist(Brano brano, String playlistName) throws ValidazioneException, RiproduzioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brano != null) {
 
             Path branoPath = libDir().resolve(PathUtils.filenameFromPath(brano.getPercorsoFile()));
             if (GestoreRiproduzione.getInstance().isCurrentFile(branoPath)) {
-                throw new ValidazioneException("Traccia in riproduzione, attendere la fine o saltarla.");
+                throw new RiproduzioneException("Traccia in riproduzione, attendere la fine o saltarla.",
+                        RiproduzioneException.TipoRiproduzione.TRACCIA_IN_RIPRODUZIONE);
             }
             pl.rimuoviBrano(brano);
             MetadataService.salvaPlaylistSpecificaSuCSV(pl);
@@ -577,7 +580,7 @@ public class LibreriaController {
     }
 
     public void aggiungiBraniAPlaylist(Collection<? extends Playable> braniCollection, String playlistName)
-            throws ValidazioneException {
+            throws PlaylistException {
         if (playlistName == null || playlistName.isBlank())
             return;
 
@@ -592,7 +595,8 @@ public class LibreriaController {
         }
 
         if (exists && (braniCollection == null || braniCollection.isEmpty())) {
-            throw new ValidazioneException("Una playlist con lo stesso nome esiste già!");
+            throw new PlaylistException("Una playlist con lo stesso nome esiste già!",
+                    PlaylistException.TipoPlaylist.NOME_DUPLICATO);
         }
 
         // Se la playlist non esiste, creala
@@ -618,7 +622,7 @@ public class LibreriaController {
     }
 
     public void rimuoviDaPlaylist(Collection<? extends Playable> brani, String playlistName)
-            throws ValidazioneException {
+            throws ValidazioneException, RiproduzioneException {
         Playlist pl = playlistMap.get(playlistName);
         if (pl != null && brani != null && !brani.isEmpty()) {
             // Controlla se almeno uno dei brani è in riproduzione
@@ -626,7 +630,8 @@ public class LibreriaController {
                 if (p instanceof Brano brano) {
                     Path branoPath = libDir().resolve(PathUtils.filenameFromPath(brano.getPercorsoFile()));
                     if (GestoreRiproduzione.getInstance().isCurrentFile(branoPath)) {
-                        throw new ValidazioneException("Traccia in riproduzione, attendere la fine o saltarla.");
+                        throw new RiproduzioneException("Traccia in riproduzione, attendere la fine o saltarla.",
+                                RiproduzioneException.TipoRiproduzione.TRACCIA_IN_RIPRODUZIONE);
                     }
                 }
             }
@@ -748,19 +753,21 @@ public class LibreriaController {
         }
     }
 
-    public void rinominaPlaylist(String vecchioNome, String nuovoNome) throws IOException, ValidazioneException {
+    public void rinominaPlaylist(String vecchioNome, String nuovoNome) throws IOException, PlaylistException {
         Playlist p = playlistMap.get(vecchioNome);
         if (p == null)
             return;
         if (p instanceof SmartPlaylist) {
-            throw new ValidazioneException("Non è possibile rinominare una playlist automatica (SmartPlaylist).");
+            throw new PlaylistException("Non è possibile rinominare una playlist automatica (SmartPlaylist).",
+                    PlaylistException.TipoPlaylist.SMART_PLAYLIST_PROTETTA);
         }
         boolean caseChangeOnly = vecchioNome.equalsIgnoreCase(nuovoNome);
         if (!caseChangeOnly) {
             for (String existingName : playlistMap.keySet()) {
                 if (existingName.equalsIgnoreCase(nuovoNome)) {
-                    throw new ValidazioneException("Una playlist con questo nome esiste già!");
-                }
+                        throw new PlaylistException("Una playlist con questo nome esiste già!",
+                                PlaylistException.TipoPlaylist.NOME_DUPLICATO);
+                    }
             }
         }
 

@@ -61,9 +61,9 @@ public class CreaPlaylistTest {
     public void testCreaPlaylist_NomeDuplicatoEsatto_LanciaEccezione() throws Exception {
         controller.aggiungiAPlaylist(null, "Preferiti");
 
-        ValidazioneException ex = assertThrows(ValidazioneException.class,
+        PlaylistException ex = assertThrows(PlaylistException.class,
                 () -> controller.aggiungiAPlaylist(null, "Preferiti"),
-                "Un nome duplicato deve lanciare ValidazioneException.");
+                "Un nome duplicato deve lanciare PlaylistException.");
 
         assertEquals("Una playlist con lo stesso nome esiste già!", ex.getMessage());
     }
@@ -72,7 +72,7 @@ public class CreaPlaylistTest {
     public void testCreaPlaylist_NomeDuplicatoCaseInsensitive_LanciaEccezione() throws Exception {
         controller.aggiungiAPlaylist(null, "Preferiti");
 
-        ValidazioneException ex = assertThrows(ValidazioneException.class,
+        PlaylistException ex = assertThrows(PlaylistException.class,
                 () -> controller.aggiungiAPlaylist(null, "PREFERITI"),
                 "Il controllo duplicati deve essere case-insensitive.");
 

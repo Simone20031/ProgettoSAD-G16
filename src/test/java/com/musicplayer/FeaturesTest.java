@@ -43,11 +43,11 @@ public class FeaturesTest {
         try {
             controller.aggiungiAPlaylist(null, "Rock");
             
-            assertThrows(ValidazioneException.class, () -> {
+            assertThrows(PlaylistException.class, () -> {
                 controller.aggiungiAPlaylist(null, "rock");
             });
 
-            assertThrows(ValidazioneException.class, () -> {
+            assertThrows(PlaylistException.class, () -> {
                 controller.aggiungiAPlaylist(null, "ROCK");
             });
         } finally {

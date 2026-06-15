@@ -1506,9 +1506,9 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         textDialog.showAndWait().map(String::trim).filter(s -> !s.isEmpty()).ifPresent(playlistTarget -> {
             try {
                 libreriaController.aggiungiAPlaylist(selezionato, playlistTarget);
-            } catch (ValidazioneException ve) {
-                ve.printStackTrace();
-                mostraErrore(ve);
+            } catch (com.musicplayer.model.PlaylistException pe) {
+                pe.printStackTrace();
+                mostraErrore(new ValidazioneException(pe.getMessage()));
             } catch (Exception ex) {
                 ex.printStackTrace();
                 mostraErrore(new ValidazioneException("Errore durante l'aggiunta: " + ex.getMessage()));
@@ -2108,8 +2108,10 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                 libreriaController.aggiungiAPlaylist(brano, nome);
                 refreshPlaylistList();
                 detailsLabel.setText("Brano aggiunto alla playlist '" + nome + "'.");
-            } catch (ValidazioneException e) {
-                mostraErrore(e);
+            } catch (com.musicplayer.model.PlaylistException pe) {
+                mostraErrore(new ValidazioneException(pe.getMessage()));
+            } catch (Exception e) {
+                mostraErrore(new ValidazioneException("Errore: " + e.getMessage()));
             }
         });
     }

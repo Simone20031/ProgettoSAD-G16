@@ -1,8 +1,11 @@
 package com.musicplayer.command;
 
 import com.musicplayer.controller.LibreriaController;
+import com.musicplayer.controller.RiproduzioneException;
+import com.musicplayer.model.PlaylistException;
 import com.musicplayer.model.Playable;
 import com.musicplayer.model.ValidazioneException;
+import com.musicplayer.persistence.PersistenzaException;
 import java.util.Collection;
 
 public class AggiungiMassivoCmd implements Command {
@@ -17,12 +20,12 @@ public class AggiungiMassivoCmd implements Command {
     }
 
     @Override
-    public void esegui() throws ValidazioneException {
+    public void esegui() throws ValidazioneException, PersistenzaException, PlaylistException {
         controller.aggiungiBraniAPlaylist(brani, playlistName);
     }
 
     @Override
-    public void annulla() throws ValidazioneException {
+    public void annulla() throws ValidazioneException, PersistenzaException, RiproduzioneException, PlaylistException {
         controller.rimuoviDaPlaylist(brani, playlistName);
     }
 }

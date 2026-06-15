@@ -227,8 +227,8 @@ public class PlaylistView {
         String nome = playlistNameField.getText();
         try {
             if (nome == null || nome.trim().isEmpty()) {
-                throw new ValidazioneException("Il nome della playlist non può essere vuoto.",
-                        ValidazioneException.TipoErrore.CAMPO_MANCANTE, "Nome");
+                throw new PlaylistException("Il nome della playlist non può essere vuoto.",
+                        PlaylistException.TipoPlaylist.NOME_VUOTO);
             }
             
             String cleanInput = nome.trim();
@@ -249,8 +249,8 @@ public class PlaylistView {
             }
             
             libreriaView.switchToView(viewLista);
-        } catch (ValidazioneException ex) {
-            libreriaView.mostraErrore(ex);
+        } catch (PlaylistException ex) {
+            libreriaView.mostraErrore(new ValidazioneException(ex.getMessage()));
         } catch (Exception ex) {
             libreriaView.mostraErrore(new ValidazioneException("Errore gestione playlist: " + ex.getMessage()));
         }

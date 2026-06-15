@@ -51,7 +51,7 @@ public class RinominaPlaylistTest {
         controller.aggiungiAPlaylist(null, "Pop");
         Playlist p2 = controller.getPlaylistMap().get("Pop");
         
-        ValidazioneException ex = assertThrows(ValidazioneException.class, () -> {
+        PlaylistException ex = assertThrows(PlaylistException.class, () -> {
             controller.rinominaPlaylist("Pop", "Rock");
         });
         
@@ -65,7 +65,7 @@ public class RinominaPlaylistTest {
         controller.aggiungiAPlaylist(null, "Pop");
         Playlist p2 = controller.getPlaylistMap().get("Pop");
         
-        ValidazioneException ex = assertThrows(ValidazioneException.class, () -> {
+        PlaylistException ex = assertThrows(PlaylistException.class, () -> {
             controller.rinominaPlaylist("Pop", "ROCK");
         });
         

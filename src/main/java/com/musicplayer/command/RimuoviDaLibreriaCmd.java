@@ -3,6 +3,7 @@ package com.musicplayer.command;
 import com.musicplayer.controller.LibreriaController;
 import com.musicplayer.model.Brano;
 import com.musicplayer.model.ValidazioneException;
+import com.musicplayer.persistence.PersistenzaException;
 import com.musicplayer.PathUtils;
 
 import java.io.File;
@@ -22,7 +23,7 @@ public class RimuoviDaLibreriaCmd implements Command {
     }
 
     @Override
-    public void esegui() throws ValidazioneException {
+    public void esegui() throws ValidazioneException, PersistenzaException {
         try {
             // Salva una copia di backup prima di rimuoverlo
             String filename = PathUtils.filenameFromPath(brano.getPercorsoFile());
@@ -37,20 +38,23 @@ public class RimuoviDaLibreriaCmd implements Command {
 
             controller.eliminaBrano(brano);
         } catch (IOException e) {
-            throw new ValidazioneException("Errore IO durante la rimozione del brano: " + e.getMessage());
+            throw new PersistenzaException("Errore IO durante la rimozione del brano: " + e.getMessage(),
+                    PersistenzaException.TipoPersistenza.ERRORE_SCRITTURA, e);
         }
     }
 
     @Override
-    public void annulla() throws ValidazioneException {
+    public void annulla() throws ValidazioneException, PersistenzaException {
         try {
             if (backupFile != null && backupFile.exists()) {
                 controller.aggiungiBrano(backupFile, brano);
             } else {
-                throw new ValidazioneException("Impossibile ripristinare il file: backup non trovato.");
+                throw new PersistenzaException("Impossibile ripristinare il file: backup non trovato.",
+                        PersistenzaException.TipoPersistenza.BACKUP_NON_TROVATO);
             }
         } catch (IOException e) {
-            throw new ValidazioneException("Errore IO durante l'annullamento della rimozione del brano: " + e.getMessage());
+            throw new PersistenzaException("Errore IO durante l'annullamento della rimozione del brano: " + e.getMessage(),
+                    PersistenzaException.TipoPersistenza.ERRORE_SCRITTURA, e);
         }
     }
 }
