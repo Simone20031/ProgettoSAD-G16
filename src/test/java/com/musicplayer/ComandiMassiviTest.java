@@ -15,7 +15,7 @@ import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class BulkCommandsTest {
+public class ComandiMassiviTest {
 
     private UndoManager undoManager;
     private LibreriaController controller;
@@ -25,7 +25,7 @@ public class BulkCommandsTest {
     void setUp() throws IOException {
         undoManager = new UndoManager();
         controller = new LibreriaController();
-        tempDir = Files.createTempDirectory("test_libreria_bulk");
+        tempDir = Files.createTempDirectory("test_libreria_massivo");
         
         // Pulizia iniziale
         Libreria.getInstance().eliminaBrani(Libreria.getInstance().getBrani());
@@ -33,7 +33,7 @@ public class BulkCommandsTest {
 
     @Test
     void testAggiungiERimuoviMassivoPlaylistUndo() throws Exception {
-        String playlistName = "BulkPlaylist";
+        String playlistName = "MassivoPlaylist";
         BranoFactory bf = new BranoFactory();
         Brano b1 = bf.creaBrano("Test1", "Autore1", "Pop", 2020, "path1", 120, Tag.NESSUNO);
         Brano b2 = bf.creaBrano("Test2", "Autore2", "Pop", 2020, "path2", 150, Tag.NESSUNO);
@@ -68,8 +68,8 @@ public class BulkCommandsTest {
 
     @Test
     void testRimuoviMassivoLibreriaUndo() throws Exception {
-        File f1 = File.createTempFile("test_brano_bulk1", ".mp3", tempDir.toFile());
-        File f2 = File.createTempFile("test_brano_bulk2", ".mp3", tempDir.toFile());
+        File f1 = File.createTempFile("test_brano_massivo1", ".mp3", tempDir.toFile());
+        File f2 = File.createTempFile("test_brano_massivo2", ".mp3", tempDir.toFile());
         f1.deleteOnExit();
         f2.deleteOnExit();
 
