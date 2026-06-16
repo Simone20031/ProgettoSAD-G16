@@ -42,7 +42,7 @@ public class LibreriaController {
     private final BranoFactory factory = new BranoFactory();
     private final StatisticheAscolto statisticheAscolto;
 
-    private static final String LIB_DIR = "Libreria";
+    private static final String LIB_DIR = com.musicplayer.PathUtils.getLibraryPath();
 
     private final List<LibreriaObserver> observers = new ArrayList<>();
 

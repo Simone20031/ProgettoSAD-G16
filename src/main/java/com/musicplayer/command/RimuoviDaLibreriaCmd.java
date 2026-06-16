@@ -27,7 +27,7 @@ public class RimuoviDaLibreriaCmd implements Command {
         try {
             // Salva una copia di backup prima di rimuoverlo
             String filename = PathUtils.filenameFromPath(brano.getPercorsoFile());
-            Path originalPath = Path.of(System.getProperty("user.dir"), "Libreria", filename);
+            Path originalPath = Path.of(System.getProperty("user.dir"), com.musicplayer.PathUtils.getLibraryPath(), filename);
             if (Files.exists(originalPath)) {
                 Path tempDir = Files.createTempDirectory("musicplayer_backup");
                 tempDir.toFile().deleteOnExit();

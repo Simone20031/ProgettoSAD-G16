@@ -30,7 +30,7 @@ public class RimuoviMassivoLibreriaCmd implements Command {
         try {
             for (Brano b : brani) {
                 String filename = PathUtils.filenameFromPath(b.getPercorsoFile());
-                Path originalPath = Path.of(System.getProperty("user.dir"), "Libreria", filename);
+                Path originalPath = Path.of(System.getProperty("user.dir"), com.musicplayer.PathUtils.getLibraryPath(), filename);
                 if (Files.exists(originalPath)) {
                     Path tempDir = Files.createTempDirectory("musicplayer_backup");
                     tempDir.toFile().deleteOnExit();
