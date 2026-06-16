@@ -32,6 +32,15 @@ public class RinominaPlaylistTest {
             controller.eliminaPlaylist("Indie Rock");
             controller.eliminaPlaylist("Pop");
             controller.eliminaPlaylist("ROCK");
+            
+            String[] playlists = {"Rock", "Indie Rock", "Pop", "ROCK"};
+            for (String p : playlists) {
+                java.io.File dir = new java.io.File(com.musicplayer.PathUtils.getLibraryPath() + "/Playlist - " + p);
+                if (dir.exists()) {
+                    for (java.io.File f : dir.listFiles()) f.delete();
+                    dir.delete();
+                }
+            }
         } catch (Exception e) {}
     }
 

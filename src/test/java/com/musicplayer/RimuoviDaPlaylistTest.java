@@ -12,6 +12,27 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class RimuoviDaPlaylistTest {
 
+    @org.junit.jupiter.api.AfterEach
+    public void cleanup() {
+        try {
+            LibreriaController c = new LibreriaController();
+            c.eliminaPlaylist("Rock Classico");
+            c.eliminaPlaylist("Pop");
+            
+            // Hard physical cleanup just in case Controller fails to clean it up
+            java.io.File dir1 = new java.io.File(com.musicplayer.PathUtils.getLibraryPath() + "/Playlist - Rock Classico");
+            if (dir1.exists()) {
+                for (java.io.File f : dir1.listFiles()) f.delete();
+                dir1.delete();
+            }
+            java.io.File dir2 = new java.io.File(com.musicplayer.PathUtils.getLibraryPath() + "/Playlist - Pop");
+            if (dir2.exists()) {
+                for (java.io.File f : dir2.listFiles()) f.delete();
+                dir2.delete();
+            }
+        } catch (Exception e) {}
+    }
+
     @Test
     public void testRimozioneBranoPresente() throws Exception {
         LibreriaController controller = new LibreriaController();

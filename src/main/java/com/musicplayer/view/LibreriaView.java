@@ -522,6 +522,7 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
                         com.musicplayer.persistence.MetadataService.caricaMappaDalCSV(metadataMap);
                         refreshList();
+                        refreshPlaylistList(); // Aggiorna i contatori nel carosello
                         aggiornaStatoCuore(currentFilename);
                     }
                 } catch (Exception ex) {
@@ -1409,8 +1410,57 @@ public class LibreriaView implements Initializable, LibreriaObserver {
         }
 
         if (smartPlaylistsBox != null) {
+            // -- Card Preferiti --
+            VBox prefCard = new VBox(5);
+            prefCard.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;");
+            prefCard.setPrefWidth(200);
+            prefCard.setMinWidth(200);
+
+            Label prefTitle = new Label("Preferiti");
+            prefTitle.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;");
+
+            java.util.List<Brano> braniPreferiti = new java.util.ArrayList<>();
+            for (com.musicplayer.model.IBrano ib : libreriaController.getBrani()) {
+                if (ib instanceof Brano b) {
+                    com.musicplayer.persistence.SongMetadata m = metadataMap.get(com.musicplayer.PathUtils.filenameFromPath(b.getPercorsoFile()));
+                    if (m != null && m.tag != null && m.tag.contains("Preferiti")) {
+                        braniPreferiti.add(b);
+                    } else if (b.getTag() != null && b.getTag().getEtichetta().contains("Preferiti")) {
+                        // Fallback nel caso in cui metadataMap non fosse aggiornato
+                        braniPreferiti.add(b);
+                    }
+                }
+            }
+
+            Label prefCount = new Label("Brani: " + braniPreferiti.size());
+            prefCount.setStyle("-fx-text-fill: #1DB954; -fx-font-size: 12px; -fx-font-weight: bold;");
+
+            prefCard.getChildren().addAll(prefTitle, prefCount);
+
+            prefCard.setOnMouseClicked(e -> {
+                Playlist pPref = libreriaController.getPlaylistMap().get("Preferiti");
+                if (pPref == null) {
+                    pPref = new com.musicplayer.model.SmartPlaylist("pref-id", "Preferiti", null, null) {
+                        @Override public void ricalcola() { }
+                    };
+                    libreriaController.getPlaylistMap().put("Preferiti", pPref);
+                }
+                pPref.rimuoviBrani(pPref.getBrani());
+                pPref.aggiungiBrani(braniPreferiti);
+
+                impostaPlaylist("Preferiti");
+                switchToView(viewLista);
+                refreshList();
+            });
+
+            prefCard.setOnMouseEntered(e -> prefCard.setStyle("-fx-background-color: #383838; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+            prefCard.setOnMouseExited(e -> prefCard.setStyle("-fx-background-color: #282828; -fx-padding: 16; -fx-background-radius: 8; -fx-cursor: hand;"));
+            
+            smartPlaylistsBox.getChildren().add(prefCard);
+            // ---------------------
+
             for (Playlist pl : libreriaController.getPlaylist()) {
-                if (!(pl instanceof SmartPlaylist))
+                if (!(pl instanceof com.musicplayer.model.SmartPlaylist))
                     continue;
 
                 VBox card = new VBox(5);
