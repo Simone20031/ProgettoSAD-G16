@@ -29,6 +29,28 @@ public class UndoManagerTest {
         Libreria.getInstance().eliminaBrani(Libreria.getInstance().getBrani());
     }
 
+    @org.junit.jupiter.api.AfterEach
+    public void cleanup() {
+        try {
+            java.io.File libDir = new java.io.File(com.musicplayer.PathUtils.getLibraryPath());
+            if (libDir.exists() && libDir.listFiles() != null) {
+                for (java.io.File f : libDir.listFiles()) {
+                    if (f.getName().startsWith("test_")) {
+                        f.delete();
+                    }
+                }
+            }
+            controller.eliminaPlaylist("MyTestPlaylist");
+            
+            // Clean up from memory as well just in case
+            for (com.musicplayer.model.IBrano b : new java.util.ArrayList<>(controller.getBrani())) {
+                if (((com.musicplayer.model.Brano) b).getPercorsoFile().contains("test_")) {
+                    controller.eliminaBrano((com.musicplayer.model.Brano) b);
+                }
+            }
+        } catch (Exception e) {}
+    }
+
     @Test
     void testAggiungiERimuoviLibreriaUndo() throws Exception {
         // Simuliamo l'aggiunta di un brano

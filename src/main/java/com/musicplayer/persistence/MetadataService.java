@@ -148,7 +148,7 @@ public class MetadataService {
     }
 
     private static Path resolveMetaFile() {
-        Path libDir = Path.of(System.getProperty("user.dir"), "Libreria");
+        Path libDir = Path.of(System.getProperty("user.dir"), com.musicplayer.PathUtils.getLibraryPath());
         try {
             if (!Files.exists(libDir))
                 Files.createDirectories(libDir);
@@ -217,7 +217,7 @@ public class MetadataService {
     // =========================================================================
 
     private static Path libDir() {
-        return Path.of(System.getProperty("user.dir"), "Libreria");
+        return Path.of(System.getProperty("user.dir"), com.musicplayer.PathUtils.getLibraryPath());
     }
 
     private static Path playlistDir(String nomePlaylist) {

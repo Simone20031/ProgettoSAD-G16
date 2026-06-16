@@ -31,6 +31,15 @@ public class EliminaPlaylistTest {
         try {
             controller.eliminaPlaylist("Rock");
             controller.eliminaPlaylist("Pop");
+            
+            String[] playlists = {"Rock", "Pop"};
+            for (String p : playlists) {
+                java.io.File dir = new java.io.File(com.musicplayer.PathUtils.getLibraryPath() + "/Playlist - " + p);
+                if (dir.exists()) {
+                    for (java.io.File f : dir.listFiles()) f.delete();
+                    dir.delete();
+                }
+            }
         } catch (Exception e) {}
     }
 
