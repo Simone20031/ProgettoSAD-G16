@@ -23,7 +23,10 @@ public class GestoreRiproduzione implements LibreriaObserver {
     private PlaylistIterator iteratorCorrente;
     private PlaybackStrategy strategia = new SequentialStrategy();
     private boolean singleSongLoop = false;
-    private double globalVolume = 0.5;
+    private static final double DEFAULT_VOLUME = 0.5;
+    private static final double MAX_PROGRESS_PERCENT = 100.0;
+
+    private double globalVolume = DEFAULT_VOLUME;
 
     public void setVolume(double vol) {
         this.globalVolume = vol;
@@ -153,7 +156,7 @@ public class GestoreRiproduzione implements LibreriaObserver {
             this.playlistCorrente = null;
             Path pathDaUsare = Path.of(b.getPercorsoFile());
             if (!pathDaUsare.isAbsolute()) {
-                pathDaUsare = Path.of(System.getProperty("user.dir"), "Libreria").resolve(pathDaUsare.getFileName());
+                pathDaUsare = Path.of(System.getProperty("user.dir"), com.musicplayer.PathUtils.getLibraryPath()).resolve(pathDaUsare.getFileName());
             }
             playFile(pathDaUsare);
         } else if (elemento instanceof Playlist p) {
@@ -192,7 +195,7 @@ public class GestoreRiproduzione implements LibreriaObserver {
         if (total <= 0) {
             return 0.0f;
         }
-        return (float) (current / total * 100.0);
+        return (float) (current / total * MAX_PROGRESS_PERCENT);
     }
 
     public void aggiornaCoda() {
@@ -277,7 +280,7 @@ public class GestoreRiproduzione implements LibreriaObserver {
             if (nextBrano instanceof Brano b) {
                 Path pathDaUsare = Path.of(b.getPercorsoFile());
                 if (!pathDaUsare.isAbsolute()) {
-                    pathDaUsare = Path.of(System.getProperty("user.dir"), "Libreria")
+                    pathDaUsare = Path.of(System.getProperty("user.dir"), com.musicplayer.PathUtils.getLibraryPath())
                             .resolve(pathDaUsare.getFileName());
                 }
                 playFile(pathDaUsare);
@@ -296,7 +299,7 @@ public class GestoreRiproduzione implements LibreriaObserver {
             if (prevBrano instanceof Brano b) {
                 Path pathDaUsare = Path.of(b.getPercorsoFile());
                 if (!pathDaUsare.isAbsolute()) {
-                    pathDaUsare = Path.of(System.getProperty("user.dir"), "Libreria")
+                    pathDaUsare = Path.of(System.getProperty("user.dir"), com.musicplayer.PathUtils.getLibraryPath())
                             .resolve(pathDaUsare.getFileName());
                 }
                 playFile(pathDaUsare);
