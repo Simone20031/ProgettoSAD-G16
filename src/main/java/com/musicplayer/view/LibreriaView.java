@@ -20,6 +20,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.Pane;
 
 import javafx.stage.Stage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 
 import java.io.IOException;
 import java.net.URL;
@@ -303,6 +306,19 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     switchToView(viewLista);
                     mostraLibreriaGenerale();
                 }, this::mostraNotificaUndo, primaryStage, undoManager);
+
+        this.primaryStage.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.getAccelerators().put(
+                    new KeyCodeCombination(KeyCode.Z, KeyCombination.SHORTCUT_DOWN),
+                    () -> {
+                        if (undoBtn != null && !undoBtn.isDisable()) {
+                            undoBtn.fire();
+                        }
+                    }
+                );
+            }
+        });
     }
 
     private void animateScroll(javafx.scene.control.ScrollPane scrollPane, double targetHvalue) {
