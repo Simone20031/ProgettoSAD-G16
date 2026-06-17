@@ -233,18 +233,32 @@ public class PlaylistView {
             String cleanInput = nome.trim();
             if (playlistDaRinominare != null) {
                 // Rinomina
-                libreriaController.rinominaPlaylist(playlistDaRinominare, cleanInput);
+                com.musicplayer.command.Command cmd = new com.musicplayer.command.RinominaPlaylistCmd(libreriaController, playlistDaRinominare, cleanInput);
+                cmd.esegui();
+
                 if (playlistDaRinominare.equals(libreriaView.getPlaylistSelezionata())) {
                     libreriaView.impostaPlaylist(cleanInput);
                 }
                 libreriaView.refreshPlaylistList();
+                
+                if (libreriaView.getUndoManager() != null) {
+                    libreriaView.getUndoManager().aggiungiComando(cmd);
+                    libreriaView.mostraNotificaUndo("Rinomina playlist");
+                }
                 playlistDaRinominare = null;
             } else {
                 // Creazione nuova
-                libreriaController.aggiungiAPlaylist(null, cleanInput);
+                com.musicplayer.command.Command cmd = new com.musicplayer.command.CreaPlaylistCmd(libreriaController, cleanInput);
+                cmd.esegui();
+
                 libreriaView.impostaPlaylist(cleanInput);
                 libreriaView.refreshList();
                 libreriaView.refreshPlaylistList();
+
+                if (libreriaView.getUndoManager() != null) {
+                    libreriaView.getUndoManager().aggiungiComando(cmd);
+                    libreriaView.mostraNotificaUndo("Creazione playlist");
+                }
             }
 
             libreriaView.switchToView(viewLista);
@@ -275,7 +289,14 @@ public class PlaylistView {
                 ButtonType.NO);
         if (confirm.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
             try {
-                libreriaController.eliminaPlaylist(nomePlaylist);
+                com.musicplayer.command.Command cmd = new com.musicplayer.command.EliminaPlaylistCmd(libreriaController, nomePlaylist);
+                cmd.esegui();
+                
+                if (libreriaView.getUndoManager() != null) {
+                    libreriaView.getUndoManager().aggiungiComando(cmd);
+                    libreriaView.mostraNotificaUndo("Eliminazione playlist");
+                }
+
                 if (nomePlaylist.equals(libreriaView.getPlaylistSelezionata())) {
                     libreriaView.mostraLibreriaGenerale();
                 }

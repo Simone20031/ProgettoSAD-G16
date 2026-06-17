@@ -25,4 +25,8 @@ public class UndoManager {
     public boolean canUndo() {
         return !undoStack.isEmpty();
     }
+
+    public void svuota() {
+        undoStack.clear();
+    }
 }

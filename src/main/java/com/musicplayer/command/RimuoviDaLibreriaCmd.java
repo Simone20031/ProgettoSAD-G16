@@ -16,6 +16,7 @@ public class RimuoviDaLibreriaCmd implements Command {
     private final LibreriaController controller;
     private final Brano brano;
     private File backupFile;
+    private final java.util.Map<String, Integer> playlistIndexMap = new java.util.HashMap<>();
 
     public RimuoviDaLibreriaCmd(LibreriaController controller, Brano brano) {
         this.controller = controller;
@@ -25,6 +26,17 @@ public class RimuoviDaLibreriaCmd implements Command {
     @Override
     public void esegui() throws ValidazioneException, PersistenzaException {
         try {
+            // Salva le associazioni con le playlist prima di eliminare
+            java.util.Map<String, com.musicplayer.model.Playlist> playlistMap = controller.getPlaylistMap();
+            if (playlistMap != null) {
+                for (com.musicplayer.model.Playlist p : playlistMap.values()) {
+                    int idx = p.getBrani().indexOf(brano);
+                    if (idx >= 0) {
+                        playlistIndexMap.put(p.getNome(), idx);
+                    }
+                }
+            }
+
             // Salva una copia di backup prima di rimuoverlo
             String filename = PathUtils.filenameFromPath(brano.getPercorsoFile());
             Path originalPath = Path.of(System.getProperty("user.dir"), com.musicplayer.PathUtils.getLibraryPath(), filename);
@@ -44,10 +56,15 @@ public class RimuoviDaLibreriaCmd implements Command {
     }
 
     @Override
-    public void annulla() throws ValidazioneException, PersistenzaException {
+    public void annulla() throws ValidazioneException, PersistenzaException, com.musicplayer.model.PlaylistException {
         try {
             if (backupFile != null && backupFile.exists()) {
                 controller.aggiungiBrano(backupFile, brano);
+                
+                // Ripristina le associazioni alle playlist nelle posizioni originali
+                for (java.util.Map.Entry<String, Integer> entry : playlistIndexMap.entrySet()) {
+                    controller.aggiungiAPlaylist(brano, entry.getKey(), entry.getValue());
+                }
             } else {
                 throw new PersistenzaException("Impossibile ripristinare il file: backup non trovato.",
                         PersistenzaException.TipoPersistenza.BACKUP_NON_TROVATO);
