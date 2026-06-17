@@ -50,7 +50,7 @@
       </VBox>
       <StackPane fx:id="contentStack">
         <VBox fx:id="viewLista" style="-fx-background-color: linear-gradient(to bottom, #112a1c 0%, #121212 40%);">
-          <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+          <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
             <content>
               <VBox>
                 <HBox alignment="TOP_CENTER" style="-fx-padding: 24 24 16 24;">
@@ -110,7 +110,7 @@
           </ScrollPane>
         </VBox>
         <VBox fx:id="viewCreazione" alignment="CENTER" spacing="0" style="-fx-background-color: linear-gradient(to bottom, #0d2318 0%, #121212 35%);" visible="false">
-          <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+          <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
             <content>
               <VBox alignment="CENTER" spacing="0" style="-fx-padding: 60 48 60 48;">
                 <VBox alignment="CENTER" maxWidth="500" spacing="30" style="-fx-background-color: #121212; -fx-padding: 40; -fx-background-radius: 12; -fx-border-color: #333333; -fx-border-radius: 12; -fx-border-width: 1;">
@@ -133,7 +133,7 @@
           </ScrollPane>
         </VBox>
         <VBox fx:id="viewSelezionePlaylist" spacing="0" style="-fx-background-color: linear-gradient(to bottom, #0d2318 0%, #121212 35%);" visible="false">
-          <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+          <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
             <content>
               <VBox spacing="24" style="-fx-padding: 36 48 36 48;">
                 <VBox spacing="6">
@@ -150,7 +150,7 @@
           </ScrollPane>
         </VBox>
         <VBox fx:id="viewSelezioneBrano" spacing="0" style="-fx-background-color: linear-gradient(to bottom, #0d2318 0%, #121212 35%);" visible="false">
-          <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+          <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
             <content>
               <VBox spacing="24" style="-fx-padding: 24 24 24 24;" VBox.vgrow="ALWAYS">
                 <VBox alignment="CENTER" spacing="6">
@@ -189,7 +189,7 @@
         </VBox>
         <!-- VIEW AGGIUNTA BRANO inline (sostituisce il vecchio popup) -->
         <VBox fx:id="viewAggiuntaBrano" spacing="0" style="-fx-background-color: linear-gradient(to bottom, #0d2318 0%, #121212 35%);" visible="false">
-          <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+          <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
             <content>
               <VBox spacing="24" style="-fx-padding: 36 48 36 48;">
                 <!-- Header -->
