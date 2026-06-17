@@ -1,8 +1,5 @@
 package com.musicplayer.persistence;
 
-
-
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +15,13 @@ import java.util.Map;
  * MetadataService: responsabile esclusivamente della persistenza CSV.
  */
 public class MetadataService {
+
+    public static final String HEADER_PLAYLIST = "# Playlist: ";
+    public static final String HEADER_PLAYCOUNT = "# PlayCount: ";
+    public static final String HEADER_FORMAT = "# Formato: ";
+    public static final String CSV_SEPARATOR = ";";
+    public static final String PLAYLIST_PREFIX = "Playlist - ";
+    public static final String INDICE_GENERALE_TITLE = "# INDICE GENERALE PLAYLIST";
 
     // Manteniamo una reference statica al player temporaneo per evitare
     // che il Garbage Collector di JavaFX lo distrugga prima che scatti l'evento
@@ -159,7 +163,7 @@ public class MetadataService {
     }
 
     private static String toCSVLine(SongMetadata m) {
-        return String.join(";",
+        return String.join(CSV_SEPARATOR,
                 safe(m.filename),
                 safe(m.title),
                 safe(m.author),
@@ -171,14 +175,14 @@ public class MetadataService {
     }
 
     private static String safe(String s) {
-        if (s != null && s.contains(";")) {
-            System.err.println("Warning: Il separatore ';' è stato trovato nel dato '" + s + "'. Sarà sostituito con uno spazio.");
+        if (s != null && s.contains(CSV_SEPARATOR)) {
+            System.err.println("Warning: Il separatore '" + CSV_SEPARATOR + "' è stato trovato nel dato '" + s + "'. Sarà sostituito con uno spazio.");
         }
-        return s == null ? "" : s.replace(";", " ");
+        return s == null ? "" : s.replace(CSV_SEPARATOR, " ");
     }
 
     private static SongMetadata fromCSVLine(String line) {
-        String[] p = line.split(";", -1);
+        String[] p = line.split(CSV_SEPARATOR, -1);
         try {
             String filename = p.length > 0 ? p[0] : "";
             String title = p.length > 1 ? p[1] : "";
@@ -205,7 +209,7 @@ public class MetadataService {
         for (String line : Files.readAllLines(metaFile, StandardCharsets.UTF_8)) {
             if (line.isBlank())
                 continue;
-            String[] p = line.split(";", -1);
+            String[] p = line.split(CSV_SEPARATOR, -1);
             String fn = p.length > 0 ? p[0] : "";
             if (!fn.equals(excludeFilename))
                 out.add(line);
@@ -221,13 +225,13 @@ public class MetadataService {
     }
 
     private static Path playlistDir(String nomePlaylist) {
-        return libDir().resolve("Playlist - " + nomePlaylist);
+        return libDir().resolve(PLAYLIST_PREFIX + nomePlaylist);
     }
 
     public static void salvaIndicePlaylistSuCSV(java.util.Collection<com.musicplayer.model.Playlist> playlists) {
         Path csvPath = libDir().resolve("lista_playlist.csv");
         try (java.io.PrintWriter pw = new java.io.PrintWriter(Files.newBufferedWriter(csvPath))) {
-            pw.println("# INDICE GENERALE PLAYLIST");
+            pw.println(INDICE_GENERALE_TITLE);
             pw.println("# Formato: ID_Playlist,Nome_Playlist");
             for (com.musicplayer.model.Playlist pl : playlists) {
                 if (!(pl instanceof com.musicplayer.model.SmartPlaylist)) {
@@ -244,16 +248,16 @@ public class MetadataService {
         if (pl == null || pl instanceof com.musicplayer.model.SmartPlaylist)
             return;
         Path cartella = playlistDir(pl.getNome());
-        Path csvPath = cartella.resolve("Playlist - " + pl.getNome() + ".csv");
+        Path csvPath = cartella.resolve(PLAYLIST_PREFIX + pl.getNome() + ".csv");
 
         try {
             if (!Files.exists(cartella)) {
                 Files.createDirectories(cartella);
             }
             try (java.io.PrintWriter pw = new java.io.PrintWriter(Files.newBufferedWriter(csvPath))) {
-                pw.println("# Playlist: " + pl.getNome());
-                pw.println("# PlayCount: " + pl.getPlayCount());
-                pw.println("# Formato: ID_Playlist,PercorsoAssoluto_MP3");
+                pw.println(HEADER_PLAYLIST + pl.getNome());
+                pw.println(HEADER_PLAYCOUNT + pl.getPlayCount());
+                pw.println(HEADER_FORMAT + "ID_Playlist,PercorsoAssoluto_MP3");
                 for (com.musicplayer.model.IBrano ib : pl.getBrani()) {
                     if (ib instanceof com.musicplayer.model.Brano b) {
                         pw.println(pl.getId() + "," + b.getPercorsoFile());
@@ -273,65 +277,72 @@ public class MetadataService {
 
         try (java.nio.file.DirectoryStream<Path> stream = Files.newDirectoryStream(lib)) {
             for (Path entry : stream) {
-                if (Files.isDirectory(entry) && entry.getFileName().toString().startsWith("Playlist - ")) {
-                    String folderName = entry.getFileName().toString();
-                    Path csvPath = entry.resolve(folderName + ".csv");
-                    if (Files.exists(csvPath)) {
-                        String realName = null;
-                        String id = java.util.UUID.randomUUID().toString().substring(0, 8); // fallback ID
-                        
-                        int playCount = 0;
-                        
-                        // 1. Leggi il VERO nome (case-sensitive) e PlayCount dall'header del CSV
-                        try (java.io.BufferedReader br = Files.newBufferedReader(csvPath)) {
-                            String linea;
-                            while ((linea = br.readLine()) != null) {
-                                if (linea.startsWith("# Playlist: ")) {
-                                    realName = linea.substring("# Playlist: ".length()).trim();
-                                } else if (linea.startsWith("# PlayCount: ")) {
-                                    try {
-                                        playCount = Integer.parseInt(linea.substring("# PlayCount: ".length()).trim());
-                                    } catch (NumberFormatException ignored) {}
-                                } else if (linea.startsWith("# Formato: ")) {
-                                    break;
-                                }
-                            }
-                        } catch (IOException e) {
-                            System.err.println("Errore lettura header CSV: " + e.getMessage());
-                        }
-
-                        if (realName == null) realName = folderName.replace("Playlist - ", "");
-
-                        com.musicplayer.model.Playlist pl = playlistMap.get(realName);
-                        if (pl == null) {
-                            pl = new com.musicplayer.model.Playlist(id, realName);
-                            playlistMap.put(realName, pl);
-                        }
-                        pl.setPlayCount(playCount);
-
-                        // 2. Carica i brani per questa playlist
-                        try (java.io.BufferedReader br = Files.newBufferedReader(csvPath)) {
-                            String linea;
-                            while ((linea = br.readLine()) != null) {
-                                if (linea.isBlank() || linea.startsWith("#")) continue;
-                                String[] parti = linea.split(",", 2); 
-                                if (parti.length >= 2 && !parti[1].trim().isEmpty()) {
-                                    String percorsoAssoluto = parti[1].trim();
-                                    String filename = com.musicplayer.PathUtils.filenameFromPath(percorsoAssoluto);
-                                    com.musicplayer.model.Brano b = findBrano.apply(filename);
-                                    if (b != null) {
-                                        try { pl.aggiungiBrano(b); } catch (IllegalArgumentException ignored) {}
-                                    }
-                                }
-                            }
-                        } catch (IOException e) {
-                            System.err.println("Errore lettura brani della playlist " + realName + ": " + e.getMessage());
-                        }
-                    }
+                if (Files.isDirectory(entry) && entry.getFileName().toString().startsWith(PLAYLIST_PREFIX)) {
+                    processaCartellaPlaylist(entry, playlistMap, findBrano);
                 }
             }
         } catch (IOException e) {
             System.err.println("Errore navigazione directory libreria: " + e.getMessage());
+        }
+    }
+
+    private static void processaCartellaPlaylist(Path entry, java.util.Map<String, com.musicplayer.model.Playlist> playlistMap,
+            java.util.function.Function<String, com.musicplayer.model.Brano> findBrano) {
+        String folderName = entry.getFileName().toString();
+        Path csvPath = entry.resolve(folderName + ".csv");
+        if (!Files.exists(csvPath)) return;
+
+        String realName = null;
+        int playCount = 0;
+        
+        // 1. Leggi header
+        try (java.io.BufferedReader br = Files.newBufferedReader(csvPath)) {
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                if (linea.startsWith(HEADER_PLAYLIST)) {
+                    realName = linea.substring(HEADER_PLAYLIST.length()).trim();
+                } else if (linea.startsWith(HEADER_PLAYCOUNT)) {
+                    try { playCount = Integer.parseInt(linea.substring(HEADER_PLAYCOUNT.length()).trim()); } catch (NumberFormatException ignored) {}
+                } else if (linea.startsWith(HEADER_FORMAT)) {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Errore lettura header CSV: " + e.getMessage());
+        }
+
+        if (realName == null) realName = folderName.replace(PLAYLIST_PREFIX, "");
+
+        com.musicplayer.model.Playlist pl = playlistMap.get(realName);
+        if (pl == null) {
+            String id = java.util.UUID.randomUUID().toString().substring(0, 8);
+            pl = new com.musicplayer.model.Playlist(id, realName);
+            playlistMap.put(realName, pl);
+        }
+        pl.setPlayCount(playCount);
+
+        // 2. Leggi brani
+        leggiBraniPlaylistDaCSV(csvPath, pl, findBrano, realName);
+    }
+
+    private static void leggiBraniPlaylistDaCSV(Path csvPath, com.musicplayer.model.Playlist pl,
+            java.util.function.Function<String, com.musicplayer.model.Brano> findBrano, String realName) {
+        try (java.io.BufferedReader br = Files.newBufferedReader(csvPath)) {
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                if (linea.isBlank() || linea.startsWith("#")) continue;
+                String[] parti = linea.split(",", 2); 
+                if (parti.length >= 2 && !parti[1].trim().isEmpty()) {
+                    String percorsoAssoluto = parti[1].trim();
+                    String filename = com.musicplayer.PathUtils.filenameFromPath(percorsoAssoluto);
+                    com.musicplayer.model.Brano b = findBrano.apply(filename);
+                    if (b != null) {
+                        try { pl.aggiungiBrano(b); } catch (IllegalArgumentException ignored) {}
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Errore lettura brani della playlist " + realName + ": " + e.getMessage());
         }
     }
 
@@ -352,8 +363,8 @@ public class MetadataService {
 
     public static void rinominaPlaylistFisica(String vecchioNome, String nuovoNome, boolean isCaseChangeOnly)
             throws IOException {
-        Path vecchiaCartella = libDir().resolve("Playlist - " + vecchioNome);
-        Path nuovaCartella = libDir().resolve("Playlist - " + nuovoNome);
+        Path vecchiaCartella = libDir().resolve(PLAYLIST_PREFIX + vecchioNome);
+        Path nuovaCartella = libDir().resolve(PLAYLIST_PREFIX + nuovoNome);
 
         if (Files.exists(vecchiaCartella)) {
             // Se la cartella di destinazione esiste già (orfana) e non stiamo facendo un
@@ -370,8 +381,8 @@ public class MetadataService {
                 Files.move(vecchiaCartella, nuovaCartella, StandardCopyOption.REPLACE_EXISTING);
             }
 
-            Path vecchioCSV = nuovaCartella.resolve("Playlist - " + vecchioNome + ".csv");
-            Path nuovoCSV = nuovaCartella.resolve("Playlist - " + nuovoNome + ".csv");
+            Path vecchioCSV = nuovaCartella.resolve(PLAYLIST_PREFIX + vecchioNome + ".csv");
+            Path nuovoCSV = nuovaCartella.resolve(PLAYLIST_PREFIX + nuovoNome + ".csv");
             if (Files.exists(vecchioCSV)) {
                 if (isCaseChangeOnly) {
                     Path tempCSV = nuovaCartella
