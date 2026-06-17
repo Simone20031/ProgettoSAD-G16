@@ -425,7 +425,8 @@ public class PlaylistView {
             }
         }
         branoSelectionListView.getItems().setAll(filtrati);
-        branoSelectionListView.setPrefHeight(Math.max(200, filtrati.size() * 40 + 20));
+        branoSelectionListView.setPrefHeight(Math.max(200, filtrati.size() * 50 + 20));
+        branoSelectionListView.setMinHeight(branoSelectionListView.getPrefHeight());
     }
 
     private void eseguiAggiuntaBrani() {
