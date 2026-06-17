@@ -19,6 +19,7 @@ public class RimuoviMassivoLibreriaCmd implements Command {
     private final LibreriaController controller;
     private final Collection<Brano> brani;
     private final List<File> backupFiles = new ArrayList<>();
+    private final java.util.Map<Brano, java.util.Map<String, Integer>> playlistAssociations = new java.util.HashMap<>();
 
     public RimuoviMassivoLibreriaCmd(LibreriaController controller, Collection<Brano> brani) {
         this.controller = controller;
@@ -28,6 +29,21 @@ public class RimuoviMassivoLibreriaCmd implements Command {
     @Override
     public void esegui() throws ValidazioneException, PersistenzaException {
         try {
+            // Salva le associazioni con le playlist per tutti i brani prima di eliminare
+            java.util.Map<String, com.musicplayer.model.Playlist> playlistMap = controller.getPlaylistMap();
+            if (playlistMap != null) {
+                for (Brano b : brani) {
+                    java.util.Map<String, Integer> bMap = new java.util.HashMap<>();
+                    for (com.musicplayer.model.Playlist p : playlistMap.values()) {
+                        int idx = p.getBrani().indexOf(b);
+                        if (idx >= 0) {
+                            bMap.put(p.getNome(), idx);
+                        }
+                    }
+                    playlistAssociations.put(b, bMap);
+                }
+            }
+
             for (Brano b : brani) {
                 String filename = PathUtils.filenameFromPath(b.getPercorsoFile());
                 Path originalPath = Path.of(System.getProperty("user.dir"), com.musicplayer.PathUtils.getLibraryPath(), filename);
@@ -51,13 +67,21 @@ public class RimuoviMassivoLibreriaCmd implements Command {
     }
 
     @Override
-    public void annulla() throws ValidazioneException, PersistenzaException {
+    public void annulla() throws ValidazioneException, PersistenzaException, com.musicplayer.model.PlaylistException {
         try {
             int i = 0;
             for (Brano b : brani) {
                 File backupFile = backupFiles.get(i);
                 if (backupFile != null && backupFile.exists()) {
                     controller.aggiungiBrano(backupFile, b);
+                    
+                    // Ripristina le associazioni per il brano b
+                    java.util.Map<String, Integer> bMap = playlistAssociations.get(b);
+                    if (bMap != null) {
+                        for (java.util.Map.Entry<String, Integer> entry : bMap.entrySet()) {
+                            controller.aggiungiAPlaylist(b, entry.getKey(), entry.getValue());
+                        }
+                    }
                 }
                 i++;
             }

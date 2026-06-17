@@ -20,6 +20,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.Pane;
 
 import javafx.stage.Stage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 
 import java.io.IOException;
 import java.net.URL;
@@ -303,6 +306,19 @@ public class LibreriaView implements Initializable, LibreriaObserver {
                     switchToView(viewLista);
                     mostraLibreriaGenerale();
                 }, this::mostraNotificaUndo, primaryStage, undoManager);
+
+        this.primaryStage.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.getAccelerators().put(
+                    new KeyCodeCombination(KeyCode.Z, KeyCombination.SHORTCUT_DOWN),
+                    () -> {
+                        if (undoBtn != null && !undoBtn.isDisable()) {
+                            undoBtn.fire();
+                        }
+                    }
+                );
+            }
+        });
     }
 
     private void animateScroll(javafx.scene.control.ScrollPane scrollPane, double targetHvalue) {
@@ -1354,7 +1370,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
 
         // Carica le playlist nel ListView
         playlistSelectionListView.getItems().setAll(opzioni);
-        playlistSelectionListView.setPrefHeight(Math.max(200, opzioni.size() * 40 + 10));
+        playlistSelectionListView.setPrefHeight(Math.max(200, opzioni.size() * 50 + 10));
+        playlistSelectionListView.setMinHeight(playlistSelectionListView.getPrefHeight());
 
         switchToView(viewSelezionePlaylist);
     }
@@ -1513,7 +1530,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             }
         }
 
-        topSongsListView.setPrefHeight(Math.max(200, topSongsListView.getItems().size() * 45 + 20));
+        topSongsListView.setPrefHeight(Math.max(200, topSongsListView.getItems().size() * 65 + 20));
+        topSongsListView.setMinHeight(topSongsListView.getPrefHeight());
 
         String itemToSelect = null;
         for (String item : topSongsListView.getItems()) {
@@ -1569,7 +1587,8 @@ public class LibreriaView implements Initializable, LibreriaObserver {
             }
         }
 
-        songListView.setPrefHeight(Math.max(200, songListView.getItems().size() * 45 + 20));
+        songListView.setPrefHeight(Math.max(200, songListView.getItems().size() * 65 + 20));
+        songListView.setMinHeight(songListView.getPrefHeight());
 
         if (songListView.getItems().isEmpty()) {
             if (playlistSelezionata != null) {

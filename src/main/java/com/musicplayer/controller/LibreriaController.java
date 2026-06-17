@@ -753,6 +753,18 @@ public class LibreriaController {
         }
     }
 
+    public void ripristinaPlaylist(Playlist pl) throws IOException, PlaylistException {
+        if (pl == null) return;
+        playlistMap.put(pl.getNome(), pl);
+        MetadataService.salvaIndicePlaylistSuCSV(playlistMap.values());
+        if (!(pl instanceof SmartPlaylist)) {
+            MetadataService.salvaPlaylistSpecificaSuCSV(pl);
+        }
+        for (LibreriaObserver obs : observers) {
+            obs.onPlaylistAggiornata(pl);
+        }
+    }
+
     public void rinominaPlaylist(String vecchioNome, String nuovoNome) throws IOException, PlaylistException {
         Playlist p = playlistMap.get(vecchioNome);
         if (p == null)
