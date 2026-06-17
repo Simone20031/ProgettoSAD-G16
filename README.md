@@ -42,6 +42,7 @@ L'architettura del software si basa sul pattern **MVC** (Model-View-Controller),
 | Pattern | Tipo | Classi Principali | Scopo |
 |---|---|---|---|
 | **Factory Method** | Creazionale | `BranoFactory`, `BranoCreator` | Creazione strutturata degli oggetti musicali (`Brano`) con validazione centralizzata |
+| **Singleton** | Creazionale | `Libreria`, `GestoreRiproduzione` | Garantisce un'unica istanza globale per i componenti centrali del sistema (collezione brani e player audio) |
 | **Proxy** | Strutturale | `BranoProxy`, `IBrano` | Virtual Proxy per il caricamento lazy dei metadati dal CSV — i dettagli vengono caricati solo quando effettivamente richiesti |
 | **Adapter** | Strutturale | `Mp3Adapter`, `Mp3LibFile`, `Playable` | Adatta l'interfaccia di una libreria esterna per file MP3 (`Mp3LibFile`) all'interfaccia `Playable` del sistema |
 | **Observer** | Comportamentale | `LibreriaObserver`, `RiproduzioneObserver`, `StatisticheAscolto`, `SmartPlaylist` | Notifica automatica dei cambiamenti nella libreria (aggiunta/rimozione brani) e nello stato del player |
@@ -82,7 +83,10 @@ ProgettoSAD-G16/
     │   │   │   ├── RimuoviDaPlaylistCmd.java
     │   │   │   ├── AggiungiMassivoCmd.java
     │   │   │   ├── RimuoviMassivoCmd.java
-    │   │   │   └── RimuoviMassivoLibreriaCmd.java
+    │   │   │   ├── RimuoviMassivoLibreriaCmd.java
+    │   │   │   ├── CreaPlaylistCmd.java
+    │   │   │   ├── EliminaPlaylistCmd.java
+    │   │   │   └── RinominaPlaylistCmd.java
     │   │   ├── controller/             # 🎮 Controller (logica applicativa)
     │   │   │   ├── LibreriaController.java      # Controller principale MVC
     │   │   │   ├── GestoreRiproduzione.java     # Gestione player + coda musicale
